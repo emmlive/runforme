@@ -1,159 +1,180 @@
 import { useEffect, useRef, useState } from "react";
 import {
-    GoogleMap,
-    Marker,
-    DirectionsRenderer,
-    useJsApiLoader,
+  GoogleMap,
+  Marker,
+  DirectionsRenderer,
+  useJsApiLoader,
 } from "@react-google-maps/api";
-import { io } from "socket.io-client";
-
-const socket = io("http://localhost:5050", {
-    transports: ["websocket"],
-});
+import { socket } from "../lib/socket";
 
 const containerStyle = {
-    width: "100%",
-    height: "100%",
+  width: "100%",
+  height: "100%",
 };
 
-export default function LiveMap({ run }) {
-    const [runnerLocation, setRunnerLocation] = useState(null);
-    const [directions, setDirections] = useState(null);
-    const [eta, setEta] = useState(null);
+const defaultCenter = {
+  lat: 41.8781,
+  lng: -87.6298,
+};
 
-    const mapRef = useRef(null);
+function LocalMapPlaceholder({ run }) {
+  return (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        minHeight: 360,
+        background: "linear-gradient(135deg, #111827, #1f2937)",
+        color: "white",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 20,
+        textAlign: "center",
+        borderBottom: "1px solid #222",
+      }}
+    >
+      <div>
+        <div style={{ fontSize: 13, letterSpacing: 2, marginBottom: 12, opacity: 0.8 }}>MAP PREVIEW</div>
+        <strong>Local Map Preview</strong>
+        <p style={{ opacity: 0.75, marginTop: 8, marginBottom: 0 }}>
+          Google Maps is disabled for local development.
+        </p>
+        {run?.location && (
+          <p style={{ opacity: 0.9, marginTop: 12 }}>
+            Current run: {run.location}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
 
-    ////////////////////////////////////////////////////////
-    // LOAD GOOGLE MAPS (FIXED KEY)
-    ////////////////////////////////////////////////////////
-    const { isLoaded, loadError } = useJsApiLoader({
-        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-    });
+function GoogleLiveMap({ run, googleMapsApiKey }) {
+  const [runnerLocation, setRunnerLocation] = useState(null);
+  const [directions, setDirections] = useState(null);
+  const [eta, setEta] = useState(null);
 
-    ////////////////////////////////////////////////////////
-    // DEBUG KEY (REMOVE LATER)
-    ////////////////////////////////////////////////////////
-    useEffect(() => {
-        console.log("MAP KEY:", import.meta.env.VITE_GOOGLE_MAPS_API_KEY);
-    }, []);
+  const mapRef = useRef(null);
 
-    ////////////////////////////////////////////////////////
-    // JOIN RUN ROOM
-    ////////////////////////////////////////////////////////
-    useEffect(() => {
-        if (!run?.id) return;
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey,
+  });
 
-        socket.emit("join.run", run.id);
-        console.log("👀 Joined run room:", run.id);
-    }, [run?.id]);
+  useEffect(() => {
+    if (!run?.id) return;
 
-    ////////////////////////////////////////////////////////
-    // LIVE LOCATION
-    ////////////////////////////////////////////////////////
-    useEffect(() => {
-        const handler = (data) => {
-            if (!data?.lat || !data?.lng) return;
+    socket.emit("join.run", run.id);
+    console.log("Joined run room:", run.id);
+  }, [run?.id]);
 
-            const coords = { lat: data.lat, lng: data.lng };
+  useEffect(() => {
+    if (!isLoaded) return;
 
-            setRunnerLocation(coords);
-
-            if (mapRef.current) {
-                mapRef.current.panTo(coords);
-            }
-
-            // 🔥 Calculate route
-            if (run?.lat && run?.lng) {
-                calculateRoute(coords, {
-                    lat: run.lat,
-                    lng: run.lng,
-                });
-            }
-        };
-
-        socket.on("runner.location", handler);
-
-        return () => socket.off("runner.location", handler);
-    }, [run]);
-
-    ////////////////////////////////////////////////////////
-    // ROUTE CALCULATION
-    ////////////////////////////////////////////////////////
     const calculateRoute = (origin, destination) => {
-        if (!window.google) return;
+      if (!window.google) return;
 
-        const directionsService = new window.google.maps.DirectionsService();
+      const directionsService = new window.google.maps.DirectionsService();
 
-        directionsService.route(
-            {
-                origin,
-                destination,
-                travelMode: window.google.maps.TravelMode.DRIVING,
-            },
-            (result, status) => {
-                if (status === "OK") {
-                    setDirections(result);
+      directionsService.route(
+        {
+          origin,
+          destination,
+          travelMode: window.google.maps.TravelMode.DRIVING,
+        },
+        (result, status) => {
+          if (status === "OK") {
+            setDirections(result);
 
-                    const leg = result.routes[0].legs[0];
-                    setEta(leg.duration.text);
-                } else {
-                    console.warn("Route error:", status);
-                }
-            }
-        );
+            const leg = result.routes?.[0]?.legs?.[0];
+            setEta(leg?.duration?.text || null);
+          } else {
+            console.warn("Route error:", status);
+          }
+        }
+      );
     };
 
-    ////////////////////////////////////////////////////////
-    // SAFE RENDER STATES
-    ////////////////////////////////////////////////////////
-    if (loadError) {
-        return <div style={{ padding: 20 }}>❌ Map failed to load</div>;
-    }
+    const handler = (data) => {
+      if (!data?.lat || !data?.lng) return;
 
-    if (!isLoaded) {
-        return <div style={{ padding: 20 }}>Loading map...</div>;
-    }
+      const coords = { lat: data.lat, lng: data.lng };
+      setRunnerLocation(coords);
 
-    ////////////////////////////////////////////////////////
-    // UI
-    ////////////////////////////////////////////////////////
+      if (mapRef.current) {
+        mapRef.current.panTo(coords);
+      }
+
+      if (run?.lat && run?.lng) {
+        calculateRoute(coords, {
+          lat: run.lat,
+          lng: run.lng,
+        });
+      }
+    };
+
+    socket.on("runner.location", handler);
+
+    return () => socket.off("runner.location", handler);
+  }, [isLoaded, run]);
+
+  if (loadError) {
+    return <LocalMapPlaceholder run={run} />;
+  }
+
+  if (!isLoaded) {
     return (
-        <div style={{ height: "100%", position: "relative" }}>
-            <GoogleMap
-                mapContainerStyle={containerStyle}
-                center={runnerLocation || { lat: 41.8781, lng: -87.6298 }}
-                zoom={14}
-                onLoad={(map) => (mapRef.current = map)}
-            >
-                {/* Runner */}
-                {runnerLocation && <Marker position={runnerLocation} />}
-
-                {/* Destination */}
-                {run?.lat && run?.lng && (
-                    <Marker position={{ lat: run.lat, lng: run.lng }} />
-                )}
-
-                {/* Route */}
-                {directions && <DirectionsRenderer directions={directions} />}
-            </GoogleMap>
-
-            {/* ETA */}
-            {eta && (
-                <div
-                    style={{
-                        position: "absolute",
-                        top: 10,
-                        left: 10,
-                        background: "#000",
-                        padding: "6px 10px",
-                        borderRadius: 6,
-                        color: "#fff",
-                        fontSize: 14,
-                    }}
-                >
-                    🚗 ETA: {eta}
-                </div>
-            )}
-        </div>
+      <div style={{ padding: 20, color: "white", background: "#111" }}>
+        Loading map...
+      </div>
     );
+  }
+
+  const center = runnerLocation || defaultCenter;
+
+  return (
+    <div style={{ width: "100%", height: "100%", position: "relative" }}>
+      <GoogleMap
+        mapContainerStyle={containerStyle}
+        center={center}
+        zoom={14}
+        onLoad={(map) => {
+          mapRef.current = map;
+        }}
+      >
+        {runnerLocation && <Marker position={runnerLocation} />}
+        {directions && <DirectionsRenderer directions={directions} />}
+      </GoogleMap>
+
+      {eta && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 12,
+            left: 12,
+            background: "white",
+            padding: "8px 12px",
+            borderRadius: 8,
+            fontWeight: 700,
+          }}
+        >
+          ETA: {eta}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function LiveMap({ run }) {
+  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const hasRealGoogleMapsKey =
+    Boolean(googleMapsApiKey) &&
+    !googleMapsApiKey.toLowerCase().includes("dummy") &&
+    !googleMapsApiKey.toLowerCase().includes("placeholder");
+
+  if (!hasRealGoogleMapsKey) {
+    return <LocalMapPlaceholder run={run} />;
+  }
+
+  return <GoogleLiveMap run={run} googleMapsApiKey={googleMapsApiKey} />;
 }
