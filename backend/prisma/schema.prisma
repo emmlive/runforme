@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/* ============================
+   USER
+============================ */
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  role      String   // "requester" | "runner"
+  createdAt DateTime @default(now())
+
+  /* ⭐ RATING AGGREGATES */
+  averageRating Float?
+  totalRatings  Int     @default(0)
+
+  /* RELATIONS */
+  runs            Run[]    @relation("RequesterRuns")
+  offers          Offer[]  @relation("RunnerOffers")
+  assignedRuns    Run[]    @relation("AssignedRuns")
+
+  ratingsGiven    Rating[] @relation("RatingsGiven")
+  ratingsReceived Rating[] @relation("RatingsReceived")
+
+  @@index([role])
+}
+
+/* ============================
+   RUN
+============================ */
+model Run {
+  id                Int      @id @default(autoincrement())
+  requesterId       Int
+  status            String   // "open" | "assigned" | "in_progress" | "completed"
+  location          String
+  item              String
+  payout            Int
+  createdAt         DateTime @default(now())
+
+  /* ESCROW FIELDS */
+  paymentIntentId   String?
+  paymentStatus     String?
+
+  /* RUNNER BINDING */
+  assignedRunnerId  Int?
+  assignedRunner    User?   @relation("AssignedRuns", fields: [assignedRunnerId], references: [id])
+
+  /* RELATIONS */
+  requester         User    @relation("RequesterRuns", fields: [requesterId], references: [id])
+  offers            Offer[] @relation("RunOffers")
+  ratings           Rating[]
+
+  @@index([requesterId])
+  @@index([assignedRunnerId])
+  @@index([paymentIntentId])
+}
+
+/* ============================
+   OFFER
+============================ */
+model Offer {
+  id        Int      @id @default(autoincrement())
+  runId     Int
+  runnerId  Int
+  message   String
+  status    String   // "pending" | "accepted" | "rejected"
+  createdAt DateTime @default(now())
+
+  run       Run   @relation("RunOffers", fields: [runId], references: [id])
+  runner    User  @relation("RunnerOffers", fields: [runnerId], references: [id])
+
+  @@index([runId])
+  @@index([runnerId])
+}
+
+/* ============================
+   RATING
+============================ */
+model Rating {
+  id           Int      @id @default(autoincrement())
+  runId        Int
+  requesterId  Int
+  runnerId     Int
+  score        Int
+  comment      String?
+  createdAt    DateTime @default(now())
+
+  run          Run   @relation(fields: [runId], references: [id])
+  requester    User  @relation("RatingsGiven", fields: [requesterId], references: [id])
+  runner       User  @relation("RatingsReceived", fields: [runnerId], references: [id])
+
+  @@unique([runId, requesterId])  // Prevent duplicate rating per run
+  @@index([runnerId])
+  @@index([runId])
+}
+
+/* ============================
+   STRIPE WEBHOOK EVENTS (Idempotency)
+============================ */
+model StripeWebhookEvent {
+  id        String   @id
+  type      String
+  runId     Int?
+  applied   Boolean  @default(false)
+  rawEvent  Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([applied])
+  @@index([runId])
+}
