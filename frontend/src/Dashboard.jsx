@@ -102,7 +102,7 @@ function RunTimeline({ status }) {
   );
 }
 
-function RunCard({ run, completed = false }) {
+function RunCard({ run, completed = false, selected = false, onSelect }) {
   const statusTone = statusStyles[run.status] || statusStyles.open;
   const paymentText =
     paymentLabels[run.paymentStatus] ||
@@ -110,6 +110,16 @@ function RunCard({ run, completed = false }) {
 
   return (
     <div
+      onClick={onSelect}
+      role={onSelect ? "button" : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+      onKeyDown={(event) => {
+        if (!onSelect) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect();
+        }
+      }}
       style={{
         background: "white",
         padding: 22,
@@ -118,7 +128,12 @@ function RunCard({ run, completed = false }) {
         boxShadow: completed
           ? "0 2px 10px rgba(15,23,42,0.04)"
           : "0 8px 24px rgba(15,23,42,0.08)",
-        border: completed ? "1px solid #e5e7eb" : "1px solid #f1f5f9",
+        border: selected
+          ? "2px solid #111827"
+          : completed
+            ? "1px solid #e5e7eb"
+            : "1px solid #f1f5f9",
+        cursor: onSelect ? "pointer" : "default",
       }}
     >
       <div
@@ -179,6 +194,129 @@ function RunCard({ run, completed = false }) {
   );
 }
 
+
+function getNextStep(status) {
+  if (status === "open") return "Waiting for a runner to accept this run.";
+  if (status === "assigned") return "Runner assigned. Next step: runner arrival.";
+  if (status === "arrived") return "Runner has arrived. Next step: completion.";
+  if (status === "in_progress") return "Run is in progress.";
+  if (status === "completed") return "Run completed. Review payment and history.";
+  return "Monitoring run status.";
+}
+
+function RunDetailPanel({ run, onClose }) {
+  if (!run) return null;
+
+  const statusTone = statusStyles[run.status] || statusStyles.open;
+  const paymentText =
+    paymentLabels[run.paymentStatus] ||
+    (run.paymentStatus ? run.paymentStatus : "Payment not started");
+
+  return (
+    <section
+      style={{
+        background: "#0f172a",
+        color: "white",
+        borderRadius: 22,
+        padding: 24,
+        marginBottom: 28,
+        boxShadow: "0 14px 34px rgba(15,23,42,0.18)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 16,
+          alignItems: "flex-start",
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 12, opacity: 0.7, fontWeight: 800, letterSpacing: 1.5 }}>
+            RUN DETAIL
+          </div>
+          <h2 style={{ margin: "8px 0 4px", fontSize: 26 }}>
+            {run.location || "Unknown location"}
+          </h2>
+          <p style={{ margin: 0, color: "#cbd5e1" }}>
+            {run.item || "Run request"}
+          </p>
+        </div>
+
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <Badge tone={statusTone}>{statusLabels[run.status] || run.status}</Badge>
+          <button
+            onClick={onClose}
+            style={{
+              border: "1px solid rgba(255,255,255,0.2)",
+              background: "rgba(255,255,255,0.08)",
+              color: "white",
+              borderRadius: 10,
+              padding: "8px 10px",
+              cursor: "pointer",
+              fontWeight: 800,
+            }}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 20 }}>
+        <RunTimeline status={run.status} />
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+          gap: 12,
+          marginTop: 22,
+        }}
+      >
+        <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 14, padding: 14 }}>
+          <div style={{ color: "#94a3b8", fontSize: 12, fontWeight: 800 }}>Payout</div>
+          <div style={{ marginTop: 5, fontSize: 20, fontWeight: 900 }}>${run.payout}</div>
+        </div>
+
+        <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 14, padding: 14 }}>
+          <div style={{ color: "#94a3b8", fontSize: 12, fontWeight: 800 }}>Runner</div>
+          <div style={{ marginTop: 5, fontSize: 18, fontWeight: 900 }}>
+            {run.assignedRunnerId ? `Runner #${run.assignedRunnerId}` : "Unassigned"}
+          </div>
+        </div>
+
+        <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 14, padding: 14 }}>
+          <div style={{ color: "#94a3b8", fontSize: 12, fontWeight: 800 }}>Payment</div>
+          <div style={{ marginTop: 5, fontSize: 16, fontWeight: 900 }}>{paymentText}</div>
+        </div>
+
+        <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 14, padding: 14 }}>
+          <div style={{ color: "#94a3b8", fontSize: 12, fontWeight: 800 }}>Created</div>
+          <div style={{ marginTop: 5, fontSize: 14, fontWeight: 900 }}>
+            {formatDate(run.createdAt)}
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          marginTop: 18,
+          background: "rgba(59,130,246,0.16)",
+          border: "1px solid rgba(147,197,253,0.28)",
+          borderRadius: 14,
+          padding: 14,
+          color: "#dbeafe",
+          fontWeight: 700,
+        }}
+      >
+        {getNextStep(run.status)}
+      </div>
+    </section>
+  );
+}
+
+
 export default function Dashboard({ onLogout }) {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -193,6 +331,7 @@ export default function Dashboard({ onLogout }) {
     payout: "25",
   });
   const [creatingRun, setCreatingRun] = useState(false);
+  const [selectedRunId, setSelectedRunId] = useState(null);
 
   const showSuccess = (message) => {
     setNotification({ type: "success", message });
@@ -295,6 +434,14 @@ export default function Dashboard({ onLogout }) {
     () => runs.filter((run) => run.status === "completed"),
     [runs]
   );
+
+  const selectedRun = useMemo(() => {
+    if (selectedRunId) {
+      return runs.find((run) => run.id === selectedRunId) || null;
+    }
+
+    return activeRuns[0] || completedRuns[0] || null;
+  }, [runs, selectedRunId, activeRuns, completedRuns]);
 
   const handleLogout = () => {
     if (onLogout) {
@@ -410,6 +557,11 @@ export default function Dashboard({ onLogout }) {
           </div>
         </div>
 
+        <RunDetailPanel
+          run={selectedRun}
+          onClose={() => setSelectedRunId(null)}
+        />
+
         <section
           style={{
             background: "white",
@@ -522,7 +674,14 @@ export default function Dashboard({ onLogout }) {
               No active runs.
             </div>
           ) : (
-            activeRuns.map((run) => <RunCard key={run.id} run={run} />)
+            activeRuns.map((run) => (
+              <RunCard
+                key={run.id}
+                run={run}
+                selected={selectedRun?.id === run.id}
+                onSelect={() => setSelectedRunId(run.id)}
+              />
+            ))
           )}
         </section>
 
@@ -544,7 +703,13 @@ export default function Dashboard({ onLogout }) {
             </div>
           ) : (
             completedRuns.map((run) => (
-              <RunCard key={run.id} run={run} completed />
+              <RunCard
+                key={run.id}
+                run={run}
+                completed
+                selected={selectedRun?.id === run.id}
+                onSelect={() => setSelectedRunId(run.id)}
+              />
             ))
           )}
         </section>
