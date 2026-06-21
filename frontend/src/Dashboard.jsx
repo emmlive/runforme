@@ -187,6 +187,17 @@ export default function Dashboard({ onLogout }) {
   const [runs, setRuns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
+  const [newRun, setNewRun] = useState({
+    location: "",
+    item: "",
+    payout: "25",
+  });
+  const [creatingRun, setCreatingRun] = useState(false);
+
+  const showSuccess = (message) => {
+    setNotification({ type: "success", message });
+    setTimeout(() => setNotification(null), 3000);
+  };
 
   const showError = (message) => {
     setNotification({ type: "error", message });
@@ -234,6 +245,46 @@ export default function Dashboard({ onLogout }) {
     const interval = setInterval(fetchRuns, 8000);
     return () => clearInterval(interval);
   }, [fetchRuns, navigate, token]);
+
+  const createRun = async (event) => {
+    event.preventDefault();
+
+    const location = newRun.location.trim();
+    const item = newRun.item.trim();
+    const payout = Number(newRun.payout);
+
+    if (!location || !item || !Number.isFinite(payout) || payout <= 0) {
+      showError("Enter a location, item, and valid payout.");
+      return;
+    }
+
+    try {
+      setCreatingRun(true);
+
+      const response = await fetch(`${API_URL}/api/runs`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ location, item, payout }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data.success === false) {
+        throw new Error(data.error || "Failed to create run");
+      }
+
+      setNewRun({ location: "", item: "", payout: "25" });
+      showSuccess("Run created and sent to available runners.");
+      await fetchRuns();
+    } catch (err) {
+      showError(err.message || "Failed to create run");
+    } finally {
+      setCreatingRun(false);
+    }
+  };
 
   const activeRuns = useMemo(
     () => runs.filter((run) => run.status !== "completed"),
@@ -358,6 +409,99 @@ export default function Dashboard({ onLogout }) {
             </div>
           </div>
         </div>
+
+        <section
+          style={{
+            background: "white",
+            borderRadius: 18,
+            padding: 22,
+            marginBottom: 34,
+            border: "1px solid #e5e7eb",
+            boxShadow: "0 4px 14px rgba(15,23,42,0.04)",
+          }}
+        >
+          <h2 style={{ fontSize: 22, marginTop: 0, marginBottom: 14, color: "#0f172a" }}>
+            Create Run
+          </h2>
+
+          <form
+            onSubmit={createRun}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1.2fr 1.6fr 0.7fr auto",
+              gap: 12,
+              alignItems: "end",
+            }}
+          >
+            <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+              Location
+              <input
+                value={newRun.location}
+                onChange={(event) =>
+                  setNewRun((prev) => ({ ...prev, location: event.target.value }))
+                }
+                placeholder="Chicago Loop"
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  border: "1px solid #cbd5e1",
+                  fontSize: 14,
+                }}
+              />
+            </label>
+
+            <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+              Item / Task
+              <input
+                value={newRun.item}
+                onChange={(event) =>
+                  setNewRun((prev) => ({ ...prev, item: event.target.value }))
+                }
+                placeholder="Pickup documents"
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  border: "1px solid #cbd5e1",
+                  fontSize: 14,
+                }}
+              />
+            </label>
+
+            <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+              Payout
+              <input
+                type="number"
+                min="1"
+                value={newRun.payout}
+                onChange={(event) =>
+                  setNewRun((prev) => ({ ...prev, payout: event.target.value }))
+                }
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  border: "1px solid #cbd5e1",
+                  fontSize: 14,
+                }}
+              />
+            </label>
+
+            <button
+              type="submit"
+              disabled={creatingRun}
+              style={{
+                padding: "13px 16px",
+                borderRadius: 12,
+                background: creatingRun ? "#94a3b8" : "#111827",
+                color: "white",
+                border: "none",
+                cursor: creatingRun ? "not-allowed" : "pointer",
+                fontWeight: 800,
+              }}
+            >
+              {creatingRun ? "Creating..." : "Create Run"}
+            </button>
+          </form>
+        </section>
 
         <section style={{ marginBottom: 34 }}>
           <h2 style={{ fontSize: 22, marginBottom: 14, color: "#0f172a" }}>
