@@ -67,6 +67,23 @@ function formatDate(value) {
   }
 }
 
+function useIsMobile(breakpoint = 760) {
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth <= breakpoint;
+  });
+
+  useEffect(() => {
+    const update = () => setIsMobile(window.innerWidth <= breakpoint);
+    update();
+
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [breakpoint]);
+
+  return isMobile;
+}
+
 function RunTimeline({ status }) {
   const steps = [
     ["open", "Requested"],
@@ -107,6 +124,7 @@ function RunCard({ run, completed = false, selected = false, onSelect }) {
   const paymentText =
     paymentLabels[run.paymentStatus] ||
     (run.paymentStatus ? run.paymentStatus : "Payment not started");
+  const isMobile = useIsMobile();
 
   return (
     <div
@@ -161,7 +179,7 @@ function RunCard({ run, completed = false, selected = false, onSelect }) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))",
           gap: 12,
           marginTop: 18,
         }}
@@ -207,6 +225,7 @@ function getNextStep(status) {
 function RunDetailPanel({ run, onClose }) {
   if (!run) return null;
 
+  const isMobile = useIsMobile();
   const statusTone = statusStyles[run.status] || statusStyles.open;
   const paymentText =
     paymentLabels[run.paymentStatus] ||
@@ -269,7 +288,7 @@ function RunDetailPanel({ run, onClose }) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+          gridTemplateColumns: isMobile ? "1fr" : "repeat(4, minmax(0, 1fr))",
           gap: 12,
           marginTop: 22,
         }}
@@ -320,6 +339,7 @@ function RunDetailPanel({ run, onClose }) {
 export default function Dashboard({ onLogout }) {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+  const isMobile = useIsMobile();
 
   const [role, setRole] = useState(null);
   const [runs, setRuns] = useState([]);
@@ -457,18 +477,19 @@ export default function Dashboard({ onLogout }) {
   return (
     <div
       style={{
-        padding: 32,
+        padding: isMobile ? 16 : 32,
         fontFamily: "Inter, system-ui, sans-serif",
         background: "#f8fafc",
         minHeight: "100vh",
       }}
     >
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", width: "100%" }}>
         <div
           style={{
             display: "flex",
+            flexDirection: isMobile ? "column" : "row",
             justifyContent: "space-between",
-            alignItems: "center",
+            alignItems: isMobile ? "flex-start" : "center",
             gap: 16,
             marginBottom: 26,
           }}
@@ -530,7 +551,7 @@ export default function Dashboard({ onLogout }) {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+            gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
             gap: 14,
             marginBottom: 28,
           }}
@@ -580,7 +601,7 @@ export default function Dashboard({ onLogout }) {
             onSubmit={createRun}
             style={{
               display: "grid",
-              gridTemplateColumns: "1.2fr 1.6fr 0.7fr auto",
+              gridTemplateColumns: isMobile ? "1fr" : "1.2fr 1.6fr 0.7fr auto",
               gap: 12,
               alignItems: "end",
             }}
