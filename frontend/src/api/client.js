@@ -1,7 +1,7 @@
 export async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem("token");
 
-  const res = await fetch(`http://192.168.12.139:5050${endpoint}`, {
+  const res = await fetch(`http://localhost:5050${endpoint}`, {
     method: options.method || "GET",
     headers: {
       "Content-Type": "application/json",
