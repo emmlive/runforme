@@ -51,6 +51,8 @@ export default function RunnerDashboard({ user, onLogout }) {
 
     setRuns([]); // 🔥 CLEAN RESET
 
+    fetchRuns(); // Load existing offers on page load/refresh
+
     socket.off("run.offer");
     socket.off("run.updated");
 
