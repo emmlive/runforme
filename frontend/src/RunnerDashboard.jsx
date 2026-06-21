@@ -152,14 +152,32 @@ export default function RunnerDashboard({ user, onLogout }) {
   ////////////////////////////////////////////////////////
   // ONLINE TOGGLE
   ////////////////////////////////////////////////////////
-  function toggleOnline() {
-    if (!online) {
-      setOnline(true);
-      setStatusMessage("Online");
-    } else {
-      setOnline(false);
-      setStatusMessage("Offline");
-      stopGpsStreaming();
+  async function toggleOnline() {
+    const nextOnline = !online;
+
+    try {
+      const res = await apiRequest("/api/runners/status", {
+        method: "POST",
+        body: { online: nextOnline },
+      });
+
+      if (!res.success) {
+        throw new Error(res.error || "Failed to update runner status");
+      }
+
+      setOnline(nextOnline);
+
+      if (nextOnline) {
+        setStatusMessage(
+          navigator.geolocation ? "Online" : "Online - GPS unavailable"
+        );
+      } else {
+        setStatusMessage("Offline");
+        stopGpsStreaming();
+      }
+    } catch (err) {
+      console.error("Runner status update failed:", err);
+      setStatusMessage("Status failed");
     }
   }
 
@@ -253,7 +271,7 @@ export default function RunnerDashboard({ user, onLogout }) {
             borderRadius: 6
           }}
         >
-          {online ? "Online" : "Offline"}
+          {statusMessage}
         </button>
       </div>
 

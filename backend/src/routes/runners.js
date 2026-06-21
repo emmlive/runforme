@@ -6,6 +6,57 @@ const router = express.Router();
 console.log("📍 ACTIVE JS RUNNERS ROUTE LOADED");
 
 /* ============================
+   RUNNER STATUS
+============================ */
+router.post("/status", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "runner") {
+      return res.status(403).json({
+        success: false,
+        error: "Only runners can update status",
+      });
+    }
+
+    const isOnline =
+      req.body.online === true || req.body.online === "true";
+    const isOffline =
+      req.body.online === false || req.body.online === "false";
+
+    if (!isOnline && !isOffline) {
+      return res.status(400).json({
+        success: false,
+        error: "online must be true or false",
+      });
+    }
+
+    const payload = {
+      runnerId: req.user.id,
+      online: isOnline,
+      status: isOnline ? "online" : "offline",
+      updatedAt: new Date().toISOString(),
+    };
+
+    const io = req.app.get("io");
+
+    if (io) {
+      io.emit("runner.status", payload);
+      io.to(`runner:${req.user.id}`).emit("runner.status.updated", payload);
+    }
+
+    return res.json({
+      success: true,
+      runner: payload,
+    });
+  } catch (err) {
+    console.error("Runner status update error:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to update runner status",
+    });
+  }
+});
+
+/* ============================
    RUNNER LOCATION
 ============================ */
 router.post("/location", auth, async (req, res) => {
