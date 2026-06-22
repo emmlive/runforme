@@ -3,6 +3,54 @@ import { apiRequest } from "./api/client";
 import { socket } from "./lib/socket"; // ✅ shared socket (FIX)
 import LiveMap from "./components/LiveMap";
 
+function getCompletionSafety(run) {
+  if (!run) {
+    return {
+      disabled: true,
+      title: "No active run",
+      detail: "Select an active run before completing.",
+    };
+  }
+
+  const receiptRequired = Number(run.maxRunnerSpend || 0) > 0;
+  const receiptUploaded = run.receiptStatus === "uploaded";
+  const manualReviewRequired =
+    Boolean(run.requiresManualReview) ||
+    run.receiptStatus === "review_required" ||
+    run.payoutStatus === "manual_review_required";
+
+  if (manualReviewRequired) {
+    return {
+      disabled: true,
+      title: "Waiting for requester manual review",
+      detail: "This run has a receipt or spend issue that must be approved before completion.",
+    };
+  }
+
+  if (receiptRequired && !receiptUploaded) {
+    return {
+      disabled: true,
+      title: "Waiting for receipt proof",
+      detail: "Submit receipt amount and proof before completing this purchase run.",
+    };
+  }
+
+  if (!run.deliveryConfirmedAt) {
+    return {
+      disabled: true,
+      title: "Waiting for delivery PIN confirmation",
+      detail: "Ask the requester for their delivery PIN, then confirm delivery.",
+    };
+  }
+
+  return {
+    disabled: false,
+    title: "Ready to complete",
+    detail: "Receipt proof and delivery confirmation are complete.",
+  };
+}
+
+
 export default function RunnerDashboard({ user, onLogout }) {
   const [online, setOnline] = useState(false);
   const [runs, setRuns] = useState([]);
@@ -587,16 +635,57 @@ export default function RunnerDashboard({ user, onLogout }) {
                 )}
               </div>
 
-              <button
-                onClick={() => markComplete(activeRun.id)}
-                disabled={!activeRun.deliveryConfirmedAt}
-                style={{
-                  opacity: activeRun.deliveryConfirmedAt ? 1 : 0.5,
-                  cursor: activeRun.deliveryConfirmedAt ? "pointer" : "not-allowed",
-                }}
-              >
-                Complete
-              </button>
+              {(() => {
+                const completionSafety = getCompletionSafety(activeRun);
+
+                return (
+                  <div style={{
+                    border: "1px solid #333",
+                    borderRadius: 10,
+                    padding: 12,
+                    background: "#111827"
+                  }}>
+                    <div style={{
+                      fontSize: 12,
+                      opacity: 0.75,
+                      fontWeight: 800,
+                      letterSpacing: 1
+                    }}>
+                      COMPLETION STATUS
+                    </div>
+
+                    <p style={{
+                      marginTop: 8,
+                      marginBottom: 4,
+                      color: completionSafety.disabled ? "#fde68a" : "#86efac",
+                      fontWeight: 800
+                    }}>
+                      {completionSafety.title}
+                    </p>
+
+                    <p style={{
+                      marginTop: 0,
+                      color: "#cbd5e1",
+                      fontSize: 13,
+                      lineHeight: 1.5
+                    }}>
+                      {completionSafety.detail}
+                    </p>
+
+                    <button
+                      onClick={() => markComplete(activeRun.id)}
+                      disabled={completionSafety.disabled}
+                      style={{
+                        opacity: completionSafety.disabled ? 0.5 : 1,
+                        cursor: completionSafety.disabled ? "not-allowed" : "pointer",
+                        width: "100%",
+                      }}
+                    >
+                      {completionSafety.disabled ? completionSafety.title : "Complete Run"}
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>
