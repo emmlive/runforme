@@ -496,7 +496,7 @@ function RunDetailPanel({ run, onClose, onApproveManualReview, approvingManualRe
               fontWeight: 900,
             }}
           >
-            Authorize Secure Hold ? Coming Soon
+            Authorize Secure Hold - Coming Soon
           </button>
         </div>
       )}
@@ -1138,3 +1138,4 @@ export default function Dashboard({ onLogout }) {
     </div>
   );
 }
+
