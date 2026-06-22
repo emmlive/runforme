@@ -403,6 +403,105 @@ router.patch("/:runId/start", auth, async (req, res) => {
   }
 });
 
+
+/* ============================
+   CONFIRM DELIVERY PIN
+============================ */
+router.post("/:runId/confirm-delivery", auth, async (req, res) => {
+  try {
+    const runId = parseRunId(req.params.runId);
+    const submittedPin = String(req.body.deliveryPin || req.body.pin || "").trim();
+
+    if (!runId) {
+      return res.status(400).json({ success: false, error: "Invalid runId" });
+    }
+
+    if (req.user.role !== "runner") {
+      return res.status(403).json({
+        success: false,
+        error: "Only the assigned runner can confirm delivery",
+      });
+    }
+
+    if (!submittedPin) {
+      return res.status(400).json({
+        success: false,
+        error: "Delivery PIN is required",
+      });
+    }
+
+    const existing = await prisma.run.findUnique({
+      where: { id: runId },
+    });
+
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        error: "Run not found",
+      });
+    }
+
+    if (existing.assignedRunnerId !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        error: "This run is not assigned to you",
+      });
+    }
+
+    if (!existing.deliveryPin || existing.deliveryPin !== submittedPin) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid delivery PIN",
+      });
+    }
+
+    if (existing.deliveryConfirmedAt) {
+      return res.json({
+        success: true,
+        alreadyConfirmed: true,
+        run: existing,
+      });
+    }
+
+    const updatedRun = await prisma.run.update({
+      where: { id: runId },
+      data: {
+        deliveryConfirmedAt: new Date(),
+        purchaseStatus: "delivered",
+        payoutStatus: "ready_for_payout",
+      },
+    });
+
+    const io = req.app.get("io");
+
+    if (io) {
+      io.to(`run:${runId}`).emit("run.delivery_confirmed", {
+        runId,
+        runnerId: req.user.id,
+      });
+
+      io.to(`runner:${req.user.id}`).emit("run.updated", {
+        run: updatedRun,
+      });
+
+      io.to(`requester:${updatedRun.requesterId}`).emit("run.updated", {
+        run: updatedRun,
+      });
+    }
+
+    return res.json({
+      success: true,
+      run: updatedRun,
+    });
+  } catch (err) {
+    console.error("CONFIRM DELIVERY ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to confirm delivery",
+    });
+  }
+});
+
 async function completeRun(req, res) {
   try {
     const runId = parseRunId(req.params.runId);
