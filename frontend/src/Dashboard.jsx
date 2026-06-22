@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 
@@ -607,6 +607,7 @@ export default function Dashboard({ onLogout }) {
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [approvingManualReview, setApprovingManualReview] = useState(false);
   const [authorizingHold, setAuthorizingHold] = useState(false);
+  const authorizingHoldRef = useRef(null);
 
   const showSuccess = (message) => {
     setNotification({ type: "success", message });
@@ -773,6 +774,10 @@ export default function Dashboard({ onLogout }) {
 
   const authorizeSecureHold = async (runId) => {
     if (!runId || !token) return;
+    if (authorizingHoldRef.current === runId) return;
+
+    authorizingHoldRef.current = runId;
+
 
     try {
       setAuthorizingHold(true);
@@ -799,6 +804,10 @@ export default function Dashboard({ onLogout }) {
     } catch (err) {
       showError(err.message || "Failed to authorize secure hold");
     } finally {
+      if (authorizingHoldRef.current === runId) {
+        authorizingHoldRef.current = null;
+      }
+
       setAuthorizingHold(false);
     }
   };
