@@ -4,6 +4,8 @@ const auth = require("../middleware/auth");
 
 const router = express.Router();
 
+const CREATE_RUN_DUPLICATE_WINDOW_MS = 15_000;
+
 console.log("🚨 ACTIVE JS RUNS ROUTE LOADED");
 
 function parseRunId(value) {
@@ -140,11 +142,13 @@ router.post("/", auth, async (req, res) => {
     }
 
     const { location, item, payout } = req.body;
+    const locationText = String(location || "").trim();
+    const itemText = String(item || "").trim();
     const itemBudgetEstimate = readSafeMoney(req.body.itemBudgetEstimate, 0);
     const platformFee = readSafeMoney(req.body.platformFee, 0);
     const bufferAmount = readSafeMoney(req.body.bufferAmount, 0);
 
-    if (!location || !item) {
+    if (!locationText || !itemText) {
       return res.status(400).json({
         success: false,
         error: "location and item are required",
@@ -180,12 +184,48 @@ router.post("/", auth, async (req, res) => {
     const purchaseStatus =
       itemBudgetEstimate > 0 ? "budget_pending" : "not_required";
 
+    const duplicateSince = new Date(Date.now() - CREATE_RUN_DUPLICATE_WINDOW_MS);
+    const duplicateRun = await prisma.run.findFirst({
+      where: {
+        requesterId: req.user.id,
+        location: locationText,
+        item: itemText,
+        payout: safePayout,
+        itemBudgetEstimate,
+        platformFee,
+        bufferAmount,
+        holdAmount,
+        maxRunnerSpend,
+        status: { in: ["open", "assigned", "arrived", "in_progress"] },
+        createdAt: { gte: duplicateSince },
+      },
+      include: {
+        offers: {
+          select: { id: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (duplicateRun) {
+      const { offers = [], ...run } = duplicateRun;
+
+      return res.status(200).json({
+        success: true,
+        duplicate: true,
+        alreadyCreated: true,
+        run,
+        offersCreated: offers.length,
+        queued: true,
+      });
+    }
+
     const result = await prisma.$transaction(async (tx) => {
       const run = await tx.run.create({
         data: {
           requesterId: req.user.id,
-          location,
-          item,
+          location: locationText,
+          item: itemText,
           payout: safePayout,
           status: "open",
 
