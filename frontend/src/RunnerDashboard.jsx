@@ -60,10 +60,12 @@ export default function RunnerDashboard({ user, onLogout }) {
   const [actionMessage, setActionMessage] = useState(null);
   const [acceptMessage, setAcceptMessage] = useState(null);
   const [acceptingRunId, setAcceptingRunId] = useState(null);
+  const [activeAction, setActiveAction] = useState(null);
 
   const watchIdRef = useRef(null);
   const lastSentRef = useRef(0);
   const acceptingRunIdRef = useRef(null);
+  const activeActionRef = useRef(null);
 
   ////////////////////////////////////////////////////////
   // FETCH RUNS
@@ -279,15 +281,45 @@ export default function RunnerDashboard({ user, onLogout }) {
   // ACTIONS
   ////////////////////////////////////////////////////////
   async function markArrived(id) {
-    const res = await apiRequest(`/api/runs/${id}/arrived`, {
-      method: "POST",
-    });
+    const actionKey = `${id}:arrived`;
 
-    if (res.success) {
-      setRuns((prev) =>
-        prev.map((r) =>
-          r.id === id ? { ...r, status: "arrived" } : r
-        )
+    if (activeActionRef.current === actionKey) return;
+
+    activeActionRef.current = actionKey;
+    setActiveAction(actionKey);
+    setActionMessage(null);
+
+    try {
+      const res = await apiRequest(`/api/runs/${id}/arrived`, {
+        method: "POST",
+      });
+
+      if (res.success) {
+        setActionMessage({ type: "success", text: "Arrival marked." });
+        setRuns((prev) =>
+          prev.map((r) =>
+            r.id === id ? { ...r, ...res.run, status: res.run?.status || "arrived" } : r
+          )
+        );
+        return;
+      }
+
+      setActionMessage({
+        type: "error",
+        text: res.error || "Could not mark this run as arrived.",
+      });
+    } catch (err) {
+      setActionMessage({
+        type: "error",
+        text: err.message || "Could not mark this run as arrived.",
+      });
+    } finally {
+      if (activeActionRef.current === actionKey) {
+        activeActionRef.current = null;
+      }
+
+      setActiveAction((currentAction) =>
+        currentAction === actionKey ? null : currentAction
       );
     }
   }
@@ -307,27 +339,50 @@ export default function RunnerDashboard({ user, onLogout }) {
       return;
     }
 
-    const res = await apiRequest(`/api/runs/${id}/receipt-proof`, {
-      method: "POST",
-      body: JSON.stringify({ receiptAmount, receiptImageUrl }),
-    });
+    const actionKey = `${id}:receipt-proof`;
 
-    if (res.success) {
-      setActionMessage({ type: "success", text: "Receipt proof submitted." });
-      setReceiptProofs((prev) => ({ ...prev, [id]: {} }));
-      setRuns((prev) =>
-        prev.map((r) =>
-          r.id === id ? { ...r, ...res.run } : r
-        )
+    if (activeActionRef.current === actionKey) return;
+
+    activeActionRef.current = actionKey;
+    setActiveAction(actionKey);
+    setActionMessage(null);
+
+    try {
+      const res = await apiRequest(`/api/runs/${id}/receipt-proof`, {
+        method: "POST",
+        body: { receiptAmount, receiptImageUrl },
+      });
+
+      if (res.success) {
+        setActionMessage({ type: "success", text: "Receipt proof submitted." });
+        setReceiptProofs((prev) => ({ ...prev, [id]: {} }));
+        setRuns((prev) =>
+          prev.map((r) =>
+            r.id === id ? { ...r, ...res.run } : r
+          )
+        );
+        fetchRuns();
+        return;
+      }
+
+      setActionMessage({
+        type: "error",
+        text: res.error || "Could not submit receipt proof.",
+      });
+    } catch (err) {
+      setActionMessage({
+        type: "error",
+        text: err.message || "Could not submit receipt proof.",
+      });
+    } finally {
+      if (activeActionRef.current === actionKey) {
+        activeActionRef.current = null;
+      }
+
+      setActiveAction((currentAction) =>
+        currentAction === actionKey ? null : currentAction
       );
-      fetchRuns();
-      return;
     }
-
-    setActionMessage({
-      type: "error",
-      text: res.error || "Could not submit receipt proof.",
-    });
   }
 
   async function confirmDelivery(id) {
@@ -338,39 +393,92 @@ export default function RunnerDashboard({ user, onLogout }) {
       return;
     }
 
-    const res = await apiRequest(`/api/runs/${id}/confirm-delivery`, {
-      method: "POST",
-      body: JSON.stringify({ deliveryPin }),
-    });
+    const actionKey = `${id}:confirm-delivery`;
 
-    if (res.success) {
-      setActionMessage({ type: "success", text: "Delivery confirmed. Payout is now ready." });
-      setDeliveryPins((prev) => ({ ...prev, [id]: "" }));
-      setRuns((prev) =>
-        prev.map((r) =>
-          r.id === id ? { ...r, ...res.run } : r
-        )
+    if (activeActionRef.current === actionKey) return;
+
+    activeActionRef.current = actionKey;
+    setActiveAction(actionKey);
+    setActionMessage(null);
+
+    try {
+      const res = await apiRequest(`/api/runs/${id}/confirm-delivery`, {
+        method: "POST",
+        body: { deliveryPin },
+      });
+
+      if (res.success) {
+        setActionMessage({ type: "success", text: "Delivery confirmed. Payout is now ready." });
+        setDeliveryPins((prev) => ({ ...prev, [id]: "" }));
+        setRuns((prev) =>
+          prev.map((r) =>
+            r.id === id ? { ...r, ...res.run } : r
+          )
+        );
+        fetchRuns();
+        return;
+      }
+
+      setActionMessage({
+        type: "error",
+        text: res.error || "Could not confirm delivery PIN.",
+      });
+    } catch (err) {
+      setActionMessage({
+        type: "error",
+        text: err.message || "Could not confirm delivery PIN.",
+      });
+    } finally {
+      if (activeActionRef.current === actionKey) {
+        activeActionRef.current = null;
+      }
+
+      setActiveAction((currentAction) =>
+        currentAction === actionKey ? null : currentAction
       );
-      fetchRuns();
-      return;
     }
-
-    setActionMessage({
-      type: "error",
-      text: res.error || "Could not confirm delivery PIN.",
-    });
   }
 
   async function markComplete(id) {
-    const res = await apiRequest(`/api/runs/${id}/complete`, {
-      method: "POST",
-    });
+    const actionKey = `${id}:complete`;
 
-    if (res.success) {
-      setRuns((prev) =>
-        prev.map((r) =>
-          r.id === id ? { ...r, status: "completed" } : r
-        )
+    if (activeActionRef.current === actionKey) return;
+
+    activeActionRef.current = actionKey;
+    setActiveAction(actionKey);
+    setActionMessage(null);
+
+    try {
+      const res = await apiRequest(`/api/runs/${id}/complete`, {
+        method: "POST",
+      });
+
+      if (res.success) {
+        setActionMessage({ type: "success", text: "Run completed." });
+        setRuns((prev) =>
+          prev.map((r) =>
+            r.id === id ? { ...r, ...res.run, status: "completed" } : r
+          )
+        );
+        return;
+      }
+
+      setActionMessage({
+        type: "error",
+        text: res.error || "Could not complete this run.",
+      });
+    } catch (err) {
+      setActionMessage({
+        type: "error",
+        text: err.message || "Could not complete this run.",
+      });
+    } finally {
+      if (activeActionRef.current === actionKey) {
+        activeActionRef.current = null;
+      }
+
+      setActiveAction((currentAction) =>
+        currentAction === actionKey ? null : currentAction
       );
     }
   }
@@ -453,8 +561,15 @@ export default function RunnerDashboard({ user, onLogout }) {
           )}
 
           {activeRun.status === "assigned" && (
-            <button onClick={() => markArrived(activeRun.id)}>
-              Arrived
+            <button
+              onClick={() => markArrived(activeRun.id)}
+              disabled={activeAction === `${activeRun.id}:arrived`}
+              style={{
+                opacity: activeAction === `${activeRun.id}:arrived` ? 0.55 : 1,
+                cursor: activeAction === `${activeRun.id}:arrived` ? "not-allowed" : "pointer",
+              }}
+            >
+              {activeAction === `${activeRun.id}:arrived` ? "Marking arrival..." : "Arrived"}
             </button>
           )}
 
@@ -605,8 +720,15 @@ export default function RunnerDashboard({ user, onLogout }) {
                         }}
                       />
 
-                      <button onClick={() => submitReceiptProof(activeRun.id)}>
-                        Submit Receipt Proof
+                      <button
+                        onClick={() => submitReceiptProof(activeRun.id)}
+                        disabled={activeAction === `${activeRun.id}:receipt-proof`}
+                        style={{
+                          opacity: activeAction === `${activeRun.id}:receipt-proof` ? 0.55 : 1,
+                          cursor: activeAction === `${activeRun.id}:receipt-proof` ? "not-allowed" : "pointer",
+                        }}
+                      >
+                        {activeAction === `${activeRun.id}:receipt-proof` ? "Submitting receipt..." : "Submit Receipt Proof"}
                       </button>
                     </>
                   )}
@@ -654,8 +776,15 @@ export default function RunnerDashboard({ user, onLogout }) {
                       }}
                     />
 
-                    <button onClick={() => confirmDelivery(activeRun.id)}>
-                      Confirm Delivery PIN
+                    <button
+                      onClick={() => confirmDelivery(activeRun.id)}
+                      disabled={activeAction === `${activeRun.id}:confirm-delivery`}
+                      style={{
+                        opacity: activeAction === `${activeRun.id}:confirm-delivery` ? 0.55 : 1,
+                        cursor: activeAction === `${activeRun.id}:confirm-delivery` ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      {activeAction === `${activeRun.id}:confirm-delivery` ? "Confirming delivery..." : "Confirm Delivery PIN"}
                     </button>
                   </>
                 )}
@@ -700,14 +829,29 @@ export default function RunnerDashboard({ user, onLogout }) {
 
                     <button
                       onClick={() => markComplete(activeRun.id)}
-                      disabled={completionSafety.disabled}
+                      disabled={
+                        completionSafety.disabled ||
+                        activeAction === `${activeRun.id}:complete`
+                      }
                       style={{
-                        opacity: completionSafety.disabled ? 0.5 : 1,
-                        cursor: completionSafety.disabled ? "not-allowed" : "pointer",
+                        opacity:
+                          completionSafety.disabled ||
+                          activeAction === `${activeRun.id}:complete`
+                            ? 0.5
+                            : 1,
+                        cursor:
+                          completionSafety.disabled ||
+                          activeAction === `${activeRun.id}:complete`
+                            ? "not-allowed"
+                            : "pointer",
                         width: "100%",
                       }}
                     >
-                      {completionSafety.disabled ? completionSafety.title : "Complete Run"}
+                      {completionSafety.disabled
+                        ? completionSafety.title
+                        : activeAction === `${activeRun.id}:complete`
+                          ? "Completing..."
+                          : "Complete Run"}
                     </button>
                   </div>
                 );
