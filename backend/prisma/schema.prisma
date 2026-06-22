@@ -44,9 +44,31 @@ model Run {
   payout            Int
   createdAt         DateTime @default(now())
 
-  /* ESCROW FIELDS */
-  paymentIntentId   String?
-  paymentStatus     String?
+  /* ESCROW / SECURITY FIELDS */
+  paymentIntentId      String?
+  paymentStatus        String?
+  authorizationStatus  String   @default("not_required_dev")
+
+  itemBudgetEstimate   Int      @default(0)
+  runnerPayout         Int      @default(0)
+  platformFee          Int      @default(0)
+  bufferAmount         Int      @default(0)
+  holdAmount           Int      @default(0)
+  maxRunnerSpend       Int      @default(0)
+
+  purchaseStatus       String   @default("not_required")
+  receiptStatus        String   @default("not_uploaded")
+  receiptImageUrl      String?
+  receiptAmount        Int?
+  finalAmount          Int?
+
+  deliveryPin          String?
+  deliveryConfirmedAt  DateTime?
+
+  riskScore            Int      @default(0)
+  riskFlags            String   @default("[]")
+  requiresManualReview Boolean  @default(false)
+  payoutStatus         String   @default("not_started")
 
   /* RUNNER BINDING */
   assignedRunnerId  Int?

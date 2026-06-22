@@ -11,6 +11,15 @@ function parseRunId(value) {
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
+function generateDeliveryPin() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function readSafeMoney(value, fallback = 0) {
+  const amount = Number(value ?? fallback);
+  return Number.isInteger(amount) && amount >= 0 ? amount : null;
+}
+
 /* ============================
    GET RUNS
 ============================ */
@@ -91,6 +100,9 @@ router.post("/", auth, async (req, res) => {
     }
 
     const { location, item, payout } = req.body;
+    const itemBudgetEstimate = readSafeMoney(req.body.itemBudgetEstimate, 0);
+    const platformFee = readSafeMoney(req.body.platformFee, 0);
+    const bufferAmount = readSafeMoney(req.body.bufferAmount, 0);
 
     if (!location || !item) {
       return res.status(400).json({
@@ -108,6 +120,26 @@ router.post("/", auth, async (req, res) => {
       });
     }
 
+    if (
+      itemBudgetEstimate === null ||
+      platformFee === null ||
+      bufferAmount === null ||
+      itemBudgetEstimate > 5000 ||
+      platformFee > 1000 ||
+      bufferAmount > 1000
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid budget, platform fee, or buffer amount",
+      });
+    }
+
+    const holdAmount =
+      itemBudgetEstimate + safePayout + platformFee + bufferAmount;
+    const maxRunnerSpend = itemBudgetEstimate + bufferAmount;
+    const purchaseStatus =
+      itemBudgetEstimate > 0 ? "budget_pending" : "not_required";
+
     const result = await prisma.$transaction(async (tx) => {
       const run = await tx.run.create({
         data: {
@@ -116,6 +148,21 @@ router.post("/", auth, async (req, res) => {
           item,
           payout: safePayout,
           status: "open",
+
+          authorizationStatus: "not_required_dev",
+          itemBudgetEstimate,
+          runnerPayout: safePayout,
+          platformFee,
+          bufferAmount,
+          holdAmount,
+          maxRunnerSpend,
+          purchaseStatus,
+          receiptStatus: "not_uploaded",
+          deliveryPin: generateDeliveryPin(),
+          riskScore: 0,
+          riskFlags: "[]",
+          requiresManualReview: false,
+          payoutStatus: "not_started",
         },
       });
 
