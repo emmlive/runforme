@@ -20,6 +20,13 @@ function readSafeMoney(value, fallback = 0) {
   return Number.isInteger(amount) && amount >= 0 ? amount : null;
 }
 
+function redactRunForRunner(run) {
+  if (!run) return run;
+
+  const { deliveryPin, ...safeRun } = run;
+  return safeRun;
+}
+
 /* ============================
    GET RUNS
 ============================ */
@@ -39,10 +46,12 @@ router.get("/", auth, async (req, res) => {
 
       const offeredRuns = pendingOffers
         .filter((offer) => offer.run && offer.run.status === "open")
-        .map((offer) => ({
-          ...offer.run,
-          offerId: offer.id,
-        }));
+        .map((offer) =>
+          redactRunForRunner({
+            ...offer.run,
+            offerId: offer.id,
+          })
+        );
 
       const assignedRuns = await prisma.run.findMany({
         where: {
@@ -53,7 +62,7 @@ router.get("/", auth, async (req, res) => {
       });
 
       const byId = new Map();
-      [...assignedRuns, ...offeredRuns].forEach((run) => {
+      [...assignedRuns.map(redactRunForRunner), ...offeredRuns].forEach((run) => {
         byId.set(run.id, run);
       });
 
@@ -308,7 +317,7 @@ router.post("/:runId/accept", auth, async (req, res) => {
       });
 
       io.to(`runner:${runnerId}`).emit("run.updated", {
-        run: updatedRun,
+        run: redactRunForRunner(updatedRun),
       });
 
       io.to(`requester:${updatedRun.requesterId}`).emit("run.updated", {
@@ -318,7 +327,7 @@ router.post("/:runId/accept", auth, async (req, res) => {
 
     return res.json({
       success: true,
-      run: updatedRun,
+      run: req.user.role === "runner" ? redactRunForRunner(updatedRun) : updatedRun,
     });
   } catch (err) {
     console.error("❌ ACCEPT ERROR:", err);
@@ -459,7 +468,7 @@ router.post("/:runId/confirm-delivery", auth, async (req, res) => {
       return res.json({
         success: true,
         alreadyConfirmed: true,
-        run: existing,
+        run: req.user.role === "runner" ? redactRunForRunner(existing) : existing,
       });
     }
 
@@ -481,7 +490,7 @@ router.post("/:runId/confirm-delivery", auth, async (req, res) => {
       });
 
       io.to(`runner:${req.user.id}`).emit("run.updated", {
-        run: updatedRun,
+        run: redactRunForRunner(updatedRun),
       });
 
       io.to(`requester:${updatedRun.requesterId}`).emit("run.updated", {
@@ -491,7 +500,7 @@ router.post("/:runId/confirm-delivery", auth, async (req, res) => {
 
     return res.json({
       success: true,
-      run: updatedRun,
+      run: req.user.role === "runner" ? redactRunForRunner(updatedRun) : updatedRun,
     });
   } catch (err) {
     console.error("CONFIRM DELIVERY ERROR:", err);

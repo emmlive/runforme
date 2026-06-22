@@ -7,6 +7,8 @@ export default function RunnerDashboard({ user, onLogout }) {
   const [online, setOnline] = useState(false);
   const [runs, setRuns] = useState([]);
   const [statusMessage, setStatusMessage] = useState("Offline");
+  const [deliveryPins, setDeliveryPins] = useState({});
+  const [actionMessage, setActionMessage] = useState(null);
 
   const watchIdRef = useRef(null);
   const lastSentRef = useRef(0);
@@ -215,6 +217,37 @@ export default function RunnerDashboard({ user, onLogout }) {
     }
   }
 
+  async function confirmDelivery(id) {
+    const deliveryPin = String(deliveryPins[id] || "").trim();
+
+    if (!deliveryPin) {
+      setActionMessage({ type: "error", text: "Enter the requester delivery PIN." });
+      return;
+    }
+
+    const res = await apiRequest(`/api/runs/${id}/confirm-delivery`, {
+      method: "POST",
+      body: JSON.stringify({ deliveryPin }),
+    });
+
+    if (res.success) {
+      setActionMessage({ type: "success", text: "Delivery confirmed. Payout is now ready." });
+      setDeliveryPins((prev) => ({ ...prev, [id]: "" }));
+      setRuns((prev) =>
+        prev.map((r) =>
+          r.id === id ? { ...r, ...res.run } : r
+        )
+      );
+      fetchRuns();
+      return;
+    }
+
+    setActionMessage({
+      type: "error",
+      text: res.error || "Could not confirm delivery PIN.",
+    });
+  }
+
   async function markComplete(id) {
     const res = await apiRequest(`/api/runs/${id}/complete`, {
       method: "POST",
@@ -294,6 +327,18 @@ export default function RunnerDashboard({ user, onLogout }) {
           <h4>Active Run</h4>
           <p>{activeRun.item}</p>
 
+          {actionMessage && (
+            <div style={{
+              padding: 10,
+              borderRadius: 8,
+              marginBottom: 10,
+              background: actionMessage.type === "success" ? "#064e3b" : "#7f1d1d",
+              color: "white"
+            }}>
+              {actionMessage.text}
+            </div>
+          )}
+
           {activeRun.status === "assigned" && (
             <button onClick={() => markArrived(activeRun.id)}>
               Arrived
@@ -301,9 +346,67 @@ export default function RunnerDashboard({ user, onLogout }) {
           )}
 
           {activeRun.status === "arrived" && (
-            <button onClick={() => markComplete(activeRun.id)}>
-              Complete
-            </button>
+            <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+              <div style={{
+                border: "1px solid #333",
+                borderRadius: 10,
+                padding: 12,
+                background: "#181818"
+              }}>
+                <div style={{ fontSize: 12, opacity: 0.7, fontWeight: 700 }}>
+                  DELIVERY SECURITY
+                </div>
+
+                {activeRun.deliveryConfirmedAt ? (
+                  <p style={{ color: "#86efac", marginBottom: 0 }}>
+                    Delivery confirmed. Payout is ready.
+                  </p>
+                ) : (
+                  <>
+                    <p style={{ opacity: 0.75 }}>
+                      Ask the requester for their delivery PIN before completing this run.
+                    </p>
+
+                    <input
+                      value={deliveryPins[activeRun.id] || ""}
+                      onChange={(event) =>
+                        setDeliveryPins((prev) => ({
+                          ...prev,
+                          [activeRun.id]: event.target.value,
+                        }))
+                      }
+                      placeholder="Enter delivery PIN"
+                      inputMode="numeric"
+                      style={{
+                        width: "100%",
+                        boxSizing: "border-box",
+                        padding: "10px 12px",
+                        borderRadius: 8,
+                        border: "1px solid #444",
+                        background: "#0b0b0b",
+                        color: "white",
+                        marginBottom: 10,
+                      }}
+                    />
+
+                    <button onClick={() => confirmDelivery(activeRun.id)}>
+                      Confirm Delivery PIN
+                    </button>
+                  </>
+                )}
+              </div>
+
+              <button
+                onClick={() => markComplete(activeRun.id)}
+                disabled={!activeRun.deliveryConfirmedAt}
+                style={{
+                  opacity: activeRun.deliveryConfirmedAt ? 1 : 0.5,
+                  cursor: activeRun.deliveryConfirmedAt ? "pointer" : "not-allowed",
+                }}
+              >
+                Complete
+              </button>
+            </div>
           )}
         </div>
       )}
