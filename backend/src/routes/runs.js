@@ -512,20 +512,76 @@ router.patch("/:runId/start", auth, async (req, res) => {
       return res.status(400).json({ success: false, error: "Invalid runId" });
     }
 
+    if (req.user.role !== "runner") {
+      return res.status(403).json({
+        success: false,
+        error: "Only the assigned runner can start this run",
+      });
+    }
+
+    const existing = await prisma.run.findUnique({
+      where: { id: runId },
+    });
+
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        error: "Run not found",
+      });
+    }
+
+    if (existing.assignedRunnerId !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        error: "This run is not assigned to you",
+      });
+    }
+
+    if (existing.status === "in_progress") {
+      return res.json({
+        success: true,
+        alreadyStarted: true,
+        run: redactRunForRunner(existing),
+      });
+    }
+
+    if (!["assigned", "arrived"].includes(existing.status)) {
+      return res.status(400).json({
+        success: false,
+        error: "Run must be assigned or arrived before it can be started",
+      });
+    }
+
     const updatedRun = await prisma.run.update({
       where: { id: runId },
       data: { status: "in_progress" },
     });
 
-    return res.json({ success: true, run: updatedRun });
+    const io = req.app.get("io");
+
+    if (io) {
+      io.to(`run:${runId}`).emit("run.updated", { run: updatedRun });
+      io.to(`runner:${req.user.id}`).emit("run.updated", {
+        run: redactRunForRunner(updatedRun),
+      });
+      io.to(`requester:${updatedRun.requesterId}`).emit("run.updated", {
+        run: updatedRun,
+      });
+    }
+
+    return res.json({
+      success: true,
+      run: redactRunForRunner(updatedRun),
+    });
   } catch (err) {
-    console.error("❌ START RUN ERROR:", err);
+    console.error("START RUN ERROR:", err);
     return res.status(400).json({
       success: false,
-      error: "Failed to start run",
+      error: err.message || "Failed to start run",
     });
   }
 });
+
 
 
 
