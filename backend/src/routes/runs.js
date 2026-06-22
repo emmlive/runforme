@@ -284,6 +284,7 @@ router.post("/:runId/accept", auth, async (req, res) => {
     }
 
     let rejectedOffers = [];
+    let alreadyAccepted = false;
 
     const updatedRun = await prisma.$transaction(async (tx) => {
       const existing = await tx.run.findUnique({
@@ -294,6 +295,11 @@ router.post("/:runId/accept", auth, async (req, res) => {
 
       if (!existing) {
         throw new Error("Run not found");
+      }
+
+      if (existing.assignedRunnerId === runnerId) {
+        alreadyAccepted = true;
+        return existing;
       }
 
       if (existing.assignedRunnerId) {
@@ -358,6 +364,14 @@ router.post("/:runId/accept", auth, async (req, res) => {
         },
       });
     });
+
+    if (alreadyAccepted) {
+      return res.json({
+        success: true,
+        alreadyAccepted: true,
+        run: redactRunForRunner(updatedRun),
+      });
+    }
 
     console.log(`✅ Run ${runId} accepted by runner ${runnerId}`);
 
