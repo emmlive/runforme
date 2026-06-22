@@ -46,6 +46,13 @@ function addRiskFlag(existingFlags, flag) {
   return JSON.stringify(flags);
 }
 
+function requiresHoldAuthorization(run) {
+  return (
+    Number(run?.itemBudgetEstimate || 0) > 0 &&
+    run?.authorizationStatus !== "placeholder_authorized"
+  );
+}
+
 /* ============================
    GET RUNS
 ============================ */
@@ -64,7 +71,12 @@ router.get("/", auth, async (req, res) => {
       });
 
       const offeredRuns = pendingOffers
-        .filter((offer) => offer.run && offer.run.status === "open")
+        .filter(
+          (offer) =>
+            offer.run &&
+            offer.run.status === "open" &&
+            !requiresHoldAuthorization(offer.run)
+        )
         .map((offer) =>
           redactRunForRunner({
             ...offer.run,
@@ -220,10 +232,13 @@ router.post("/", auth, async (req, res) => {
 
     const io = req.app.get("io");
 
-    if (io) {
+    if (io && !requiresHoldAuthorization(result.run)) {
       result.offers.forEach((offer) => {
         io.to(`runner:${offer.runnerId}`).emit("run.offer", {
-          run: result.run,
+          run: redactRunForRunner({
+            ...result.run,
+            offerId: offer.id,
+          }),
           offer,
         });
       });
@@ -287,6 +302,10 @@ router.post("/:runId/accept", auth, async (req, res) => {
         throw new Error(`Run not valid for accept: ${existing.status}`);
       }
 
+      if (requiresHoldAuthorization(existing)) {
+        throw new Error("Secure hold authorization is required before this run can be accepted");
+      }
+
       const offer = await tx.offer.findFirst({
         where: {
           runId,
@@ -320,7 +339,7 @@ router.post("/:runId/accept", auth, async (req, res) => {
         data: {
           status: "assigned",
           assignedRunnerId: runnerId,
-          paymentStatus: "pending_payment_method",
+          paymentStatus: existing.paymentStatus || "pending_payment_method",
         },
       });
     });
@@ -511,6 +530,26 @@ router.post("/:runId/authorize-hold", auth, async (req, res) => {
       io.to(`requester:${updatedRun.requesterId}`).emit("run.updated", {
         run: updatedRun,
       });
+
+      // Dispatch pending offers after secure hold authorization.
+      if (!updatedRun.assignedRunnerId && updatedRun.status === "open") {
+        const pendingOffers = await prisma.offer.findMany({
+          where: {
+            runId,
+            status: "pending",
+          },
+        });
+
+        pendingOffers.forEach((offer) => {
+          io.to(`runner:${offer.runnerId}`).emit("run.offer", {
+            run: redactRunForRunner({
+              ...updatedRun,
+              offerId: offer.id,
+            }),
+            offer,
+          });
+        });
+      }
     }
 
     return res.json({
