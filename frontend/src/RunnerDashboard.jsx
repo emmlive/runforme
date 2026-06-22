@@ -59,9 +59,11 @@ export default function RunnerDashboard({ user, onLogout }) {
   const [receiptProofs, setReceiptProofs] = useState({});
   const [actionMessage, setActionMessage] = useState(null);
   const [acceptMessage, setAcceptMessage] = useState(null);
+  const [acceptingRunId, setAcceptingRunId] = useState(null);
 
   const watchIdRef = useRef(null);
   const lastSentRef = useRef(0);
+  const acceptingRunIdRef = useRef(null);
 
   ////////////////////////////////////////////////////////
   // FETCH RUNS
@@ -755,8 +757,14 @@ export default function RunnerDashboard({ user, onLogout }) {
               )}
 
               <button
+                disabled={acceptingRunId === run.id}
                 onClick={async () => {
                   if (!run.id) return;
+
+                  if (acceptingRunIdRef.current === run.id) return;
+
+                  acceptingRunIdRef.current = run.id;
+                  setAcceptingRunId(run.id);
 
                   setAcceptMessage(null);
 
@@ -798,9 +806,19 @@ export default function RunnerDashboard({ user, onLogout }) {
                       type: "error",
                       text: err.message || "Could not accept this run. It may no longer be available or the requester secure hold is not authorized yet.",
                     });
+                  } finally {
+                    if (acceptingRunIdRef.current === run.id) {
+                      acceptingRunIdRef.current = null;
+                    }
+
+                    setAcceptingRunId((currentId) =>
+                      currentId === run.id ? null : currentId
+                    );
                   }
                 }}
                 style={{
+                  opacity: acceptingRunId === run.id ? 0.55 : 1,
+                  cursor: acceptingRunId === run.id ? "not-allowed" : "pointer",
                   background: "#f59e0b",
                   color: "#000",
                   border: "none",
@@ -808,7 +826,7 @@ export default function RunnerDashboard({ user, onLogout }) {
                   borderRadius: 6
                 }}
               >
-                Accept
+                {acceptingRunId === run.id ? "Accepting..." : "Accept"}
               </button>
             </div>
           ))}
