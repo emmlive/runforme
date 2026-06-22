@@ -702,6 +702,17 @@ export default function RunnerDashboard({ user, onLogout }) {
         }}>
           <h4>Available Runs</h4>
 
+          <p style={{
+            marginTop: 4,
+            marginBottom: 12,
+            color: "#cbd5e1",
+            fontSize: 13,
+            lineHeight: 1.5
+          }}>
+            Purchase-budget runs are only shown here after the requester authorizes the secure hold.
+            Current placeholder mode does not make a live card charge.
+          </p>
+
           {availableRuns.length === 0 && (
             <p style={{ opacity: 0.6 }}>Waiting for jobs...</p>
           )}
@@ -714,6 +725,19 @@ export default function RunnerDashboard({ user, onLogout }) {
               borderRadius: 8
             }}>
               <p>{run.item}</p>
+
+              {Number(run.maxRunnerSpend || 0) > 0 && (
+                <p style={{
+                  marginTop: -4,
+                  marginBottom: 10,
+                  color: "#fde68a",
+                  fontSize: 12,
+                  lineHeight: 1.45,
+                  fontWeight: 700
+                }}>
+                  Secure hold authorized by requester before this offer appeared. Placeholder mode only - no live card charge.
+                </p>
+              )}
 
               <button
                 onClick={async () => {
