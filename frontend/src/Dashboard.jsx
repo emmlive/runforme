@@ -67,6 +67,21 @@ function formatDate(value) {
   }
 }
 
+function formatMoney(value) {
+  const amount = Number(value || 0);
+  return `$${amount}`;
+}
+
+function formatSecurityStatus(value) {
+  if (!value) return "Not started";
+
+  return String(value)
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 function useIsMobile(breakpoint = 760) {
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -84,7 +99,7 @@ function useIsMobile(breakpoint = 760) {
   return isMobile;
 }
 
-function RunTimeline({ status }) {
+function RunTimeline({ status, variant = "light" }) {
   const steps = [
     ["open", "Requested"],
     ["assigned", "Assigned"],
@@ -108,7 +123,13 @@ function RunTimeline({ status }) {
             style={{
               height: 8,
               borderRadius: 999,
-              background: active ? "#111827" : "#e5e7eb",
+              background: active
+                ? variant === "dark"
+                  ? "#f8fafc"
+                  : "#111827"
+                : variant === "dark"
+                  ? "rgba(148,163,184,0.38)"
+                  : "#e5e7eb",
               position: "relative",
             }}
             title={label}
@@ -222,6 +243,82 @@ function getNextStep(status) {
   return "Monitoring run status.";
 }
 
+
+function SecurityProofGrid({ run }) {
+  const isMobile = useIsMobile();
+
+  const items = [
+    ["Delivery PIN", run.deliveryPin || "Not generated"],
+    ["Authorization", formatSecurityStatus(run.authorizationStatus)],
+    ["Hold Amount", formatMoney(run.holdAmount)],
+    ["Max Runner Spend", formatMoney(run.maxRunnerSpend)],
+    ["Purchase Status", formatSecurityStatus(run.purchaseStatus)],
+    ["Receipt Status", formatSecurityStatus(run.receiptStatus)],
+    ["Payout Status", formatSecurityStatus(run.payoutStatus)],
+    ["Delivery Confirmed", formatDate(run.deliveryConfirmedAt)],
+    ["Manual Review", run.requiresManualReview ? "Required" : "Not required"],
+  ];
+
+  return (
+    <div
+      style={{
+        marginTop: 18,
+        padding: 16,
+        borderRadius: 16,
+        background: "rgba(255,255,255,0.07)",
+        border: "1px solid rgba(255,255,255,0.12)",
+      }}
+    >
+      <div
+        style={{
+          color: "#bfdbfe",
+          fontSize: 12,
+          fontWeight: 900,
+          letterSpacing: 1.3,
+          marginBottom: 12,
+        }}
+      >
+        SECURITY & PROOF
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
+          gap: 10,
+        }}
+      >
+        {items.map(([label, value]) => (
+          <div
+            key={label}
+            style={{
+              background: "rgba(15,23,42,0.38)",
+              borderRadius: 12,
+              padding: 12,
+            }}
+          >
+            <div style={{ color: "#94a3b8", fontSize: 12, fontWeight: 800 }}>
+              {label}
+            </div>
+            <div
+              style={{
+                marginTop: 5,
+                color: "white",
+                fontSize: label === "Delivery PIN" ? 20 : 14,
+                fontWeight: 900,
+                letterSpacing: label === "Delivery PIN" ? 1.8 : 0,
+              }}
+            >
+              {value}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
 function RunDetailPanel({ run, onClose }) {
   if (!run) return null;
 
@@ -282,7 +379,7 @@ function RunDetailPanel({ run, onClose }) {
       </div>
 
       <div style={{ marginTop: 20 }}>
-        <RunTimeline status={run.status} />
+        <RunTimeline status={run.status} variant="dark" />
       </div>
 
       <div
@@ -317,6 +414,8 @@ function RunDetailPanel({ run, onClose }) {
           </div>
         </div>
       </div>
+
+      <SecurityProofGrid run={run} />
 
       <div
         style={{
