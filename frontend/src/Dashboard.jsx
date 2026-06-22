@@ -328,7 +328,7 @@ function SecurityProofGrid({ run }) {
 }
 
 
-function RunDetailPanel({ run, onClose }) {
+function RunDetailPanel({ run, onClose, onApproveManualReview, approvingManualReview }) {
   if (!run) return null;
 
   const isMobile = useIsMobile();
@@ -426,6 +426,44 @@ function RunDetailPanel({ run, onClose }) {
 
       <SecurityProofGrid run={run} />
 
+      {run.requiresManualReview && (
+        <div
+          style={{
+            marginTop: 18,
+            background: "rgba(251,191,36,0.16)",
+            border: "1px solid rgba(251,191,36,0.38)",
+            borderRadius: 14,
+            padding: 16,
+            color: "#fef3c7",
+          }}
+        >
+          <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: 1.2 }}>
+            MANUAL REVIEW REQUIRED
+          </div>
+
+          <p style={{ marginTop: 8, marginBottom: 12, color: "#fde68a" }}>
+            Manual review is required before this runner can complete the run.
+            Review the receipt amount, final amount, max runner spend, and proof status.
+          </p>
+
+          <button
+            onClick={() => onApproveManualReview?.(run.id)}
+            disabled={approvingManualReview}
+            style={{
+              border: "none",
+              background: approvingManualReview ? "#92400e" : "#fbbf24",
+              color: "#111827",
+              borderRadius: 10,
+              padding: "10px 14px",
+              cursor: approvingManualReview ? "not-allowed" : "pointer",
+              fontWeight: 900,
+            }}
+          >
+            {approvingManualReview ? "Approving..." : "Approve Manual Review"}
+          </button>
+        </div>
+      )}
+
       <div
         style={{
           marginTop: 18,
@@ -460,6 +498,7 @@ export default function Dashboard({ onLogout }) {
   });
   const [creatingRun, setCreatingRun] = useState(false);
   const [selectedRunId, setSelectedRunId] = useState(null);
+  const [approvingManualReview, setApprovingManualReview] = useState(false);
 
   const showSuccess = (message) => {
     setNotification({ type: "success", message });
@@ -570,6 +609,38 @@ export default function Dashboard({ onLogout }) {
 
     return activeRuns[0] || completedRuns[0] || null;
   }, [runs, selectedRunId, activeRuns, completedRuns]);
+
+  const approveManualReview = async (runId) => {
+    if (!runId || !token) return;
+
+    try {
+      setApprovingManualReview(true);
+
+      const response = await fetch(`${API_URL}/api/runs/${runId}/manual-review/approve`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data.success === false) {
+        throw new Error(data.error || "Failed to approve manual review");
+      }
+
+      setRuns((prev) =>
+        prev.map((run) =>
+          run.id === runId ? { ...run, ...data.run } : run
+        )
+      );
+
+      showSuccess("Manual review approved. Runner can complete this run.");
+      await fetchRuns();
+    } catch (err) {
+      showError(err.message || "Failed to approve manual review");
+    } finally {
+      setApprovingManualReview(false);
+    }
+  };
 
   const handleLogout = () => {
     if (onLogout) {
@@ -689,6 +760,8 @@ export default function Dashboard({ onLogout }) {
         <RunDetailPanel
           run={selectedRun}
           onClose={() => setSelectedRunId(null)}
+          onApproveManualReview={approveManualReview}
+          approvingManualReview={approvingManualReview}
         />
 
         <section
