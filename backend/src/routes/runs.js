@@ -460,14 +460,51 @@ router.post("/:runId/arrived", auth, async (req, res) => {
   try {
     const runId = parseRunId(req.params.runId);
 
-    if (req.user.role !== "runner" || !runId) {
-      return res.status(400).json({
+    if (!runId) {
+      return res.status(400).json({ success: false, error: "Invalid runId" });
+    }
+
+    if (req.user.role !== "runner") {
+      return res.status(403).json({
         success: false,
-        error: "Invalid arrived request",
+        error: "Only the assigned runner can mark arrival",
       });
     }
 
-    const run = await prisma.run.updateMany({
+    const existing = await prisma.run.findUnique({
+      where: { id: runId },
+    });
+
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        error: "Run not found",
+      });
+    }
+
+    if (existing.assignedRunnerId !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        error: "This run is not assigned to you",
+      });
+    }
+
+    if (["arrived", "in_progress"].includes(existing.status)) {
+      return res.json({
+        success: true,
+        alreadyArrived: true,
+        run: redactRunForRunner(existing),
+      });
+    }
+
+    if (existing.status !== "assigned") {
+      return res.status(400).json({
+        success: false,
+        error: "Run must be assigned before arrival can be marked",
+      });
+    }
+
+    const updateResult = await prisma.run.updateMany({
       where: {
         id: runId,
         assignedRunnerId: req.user.id,
@@ -476,30 +513,48 @@ router.post("/:runId/arrived", auth, async (req, res) => {
       data: { status: "arrived" },
     });
 
-    if (run.count !== 1) {
+    const updatedRun = await prisma.run.findUnique({ where: { id: runId } });
+
+    if (updateResult.count !== 1) {
+      if (updatedRun && ["arrived", "in_progress"].includes(updatedRun.status)) {
+        return res.json({
+          success: true,
+          alreadyArrived: true,
+          run: redactRunForRunner(updatedRun),
+        });
+      }
+
       return res.status(400).json({
         success: false,
-        error: "Run not ready for arrived",
+        error: "Run must be assigned before arrival can be marked",
       });
     }
 
-    const updatedRun = await prisma.run.findUnique({ where: { id: runId } });
     const io = req.app.get("io");
 
     if (io) {
       io.to(`run:${runId}`).emit("run.updated", { run: updatedRun });
-      io.to(`runner:${req.user.id}`).emit("run.updated", { run: updatedRun });
+      io.to(`runner:${req.user.id}`).emit("run.updated", {
+        run: redactRunForRunner(updatedRun),
+      });
+      io.to(`requester:${updatedRun.requesterId}`).emit("run.updated", {
+        run: updatedRun,
+      });
     }
 
-    return res.json({ success: true, run: updatedRun });
+    return res.json({
+      success: true,
+      run: redactRunForRunner(updatedRun),
+    });
   } catch (err) {
-    console.error("❌ ARRIVED ERROR:", err);
+    console.error("ARRIVED ERROR:", err);
     return res.status(500).json({
       success: false,
-      error: "Failed to mark arrived",
+      error: err.message || "Failed to mark arrived",
     });
   }
 });
+
 
 /* ============================
    START / COMPLETE
