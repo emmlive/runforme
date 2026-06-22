@@ -426,6 +426,81 @@ function RunDetailPanel({ run, onClose, onApproveManualReview, approvingManualRe
 
       <SecurityProofGrid run={run} />
 
+      {Number(run.holdAmount || 0) > 0 && (
+        <div
+          style={{
+            marginTop: 18,
+            background: "rgba(15,23,42,0.72)",
+            border: "1px solid rgba(148,163,184,0.36)",
+            borderRadius: 14,
+            padding: 16,
+            color: "#e5e7eb",
+          }}
+        >
+          <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: 1.2 }}>
+            SECURE PAYMENT HOLD
+          </div>
+
+          <div
+            style={{
+              marginTop: 12,
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
+              gap: 10,
+            }}
+          >
+            <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 12, padding: 12 }}>
+              <div style={{ color: "#94a3b8", fontSize: 12, fontWeight: 800 }}>
+                Estimated Hold
+              </div>
+              <div style={{ marginTop: 5, fontSize: 20, fontWeight: 900 }}>
+                {formatMoney(run.holdAmount)}
+              </div>
+            </div>
+
+            <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 12, padding: 12 }}>
+              <div style={{ color: "#94a3b8", fontSize: 12, fontWeight: 800 }}>
+                Authorization
+              </div>
+              <div style={{ marginTop: 5, fontSize: 16, fontWeight: 900 }}>
+                {formatSecurityStatus(run.authorizationStatus)}
+              </div>
+            </div>
+
+            <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 12, padding: 12 }}>
+              <div style={{ color: "#94a3b8", fontSize: 12, fontWeight: 800 }}>
+                Payment
+              </div>
+              <div style={{ marginTop: 5, fontSize: 16, fontWeight: 900 }}>
+                {formatSecurityStatus(run.paymentStatus || "not_authorized")}
+              </div>
+            </div>
+          </div>
+
+          <p style={{ marginTop: 12, marginBottom: 12, color: "#cbd5e1", lineHeight: 1.5 }}>
+            This prepares RUNFORME for secure pre-authorization. No live charge is made from
+            this placeholder yet. Stripe PaymentIntent wiring will be added in a later security step.
+          </p>
+
+          <button
+            type="button"
+            disabled
+            title="Stripe payment authorization is not wired yet"
+            style={{
+              border: "1px solid rgba(148,163,184,0.45)",
+              background: "rgba(148,163,184,0.18)",
+              color: "#cbd5e1",
+              borderRadius: 10,
+              padding: "10px 14px",
+              cursor: "not-allowed",
+              fontWeight: 900,
+            }}
+          >
+            Authorize Secure Hold ? Coming Soon
+          </button>
+        </div>
+      )}
+
       {run.requiresManualReview && (
         <div
           style={{
