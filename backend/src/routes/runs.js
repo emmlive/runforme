@@ -433,6 +433,102 @@ router.patch("/:runId/start", auth, async (req, res) => {
 
 
 
+
+/* ============================
+   AUTHORIZE SECURE HOLD PLACEHOLDER
+============================ */
+router.post("/:runId/authorize-hold", auth, async (req, res) => {
+  try {
+    const runId = parseRunId(req.params.runId);
+
+    if (!runId) {
+      return res.status(400).json({ success: false, error: "Invalid runId" });
+    }
+
+    const existing = await prisma.run.findUnique({
+      where: { id: runId },
+    });
+
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        error: "Run not found",
+      });
+    }
+
+    const canAuthorize =
+      req.user.role === "admin" ||
+      (req.user.role === "requester" && existing.requesterId === req.user.id);
+
+    if (!canAuthorize) {
+      return res.status(403).json({
+        success: false,
+        error: "Only the requester can authorize the secure hold for this run",
+      });
+    }
+
+    if (Number(existing.holdAmount || 0) <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: "This run does not require a secure hold",
+      });
+    }
+
+    if (existing.authorizationStatus === "placeholder_authorized") {
+      return res.json({
+        success: true,
+        alreadyAuthorized: true,
+        placeholder: true,
+        charged: false,
+        message: "Secure hold placeholder is already authorized. No live charge was made.",
+        run: existing,
+      });
+    }
+
+    const updatedRun = await prisma.run.update({
+      where: { id: runId },
+      data: {
+        authorizationStatus: "placeholder_authorized",
+        paymentStatus: "hold_placeholder",
+        riskFlags: addRiskFlag(existing.riskFlags, "payment_hold_placeholder_authorized"),
+      },
+    });
+
+    const io = req.app.get("io");
+
+    if (io) {
+      io.to(`run:${runId}`).emit("run.hold_placeholder_authorized", {
+        runId,
+        requesterId: req.user.id,
+      });
+
+      if (updatedRun.assignedRunnerId) {
+        io.to(`runner:${updatedRun.assignedRunnerId}`).emit("run.updated", {
+          run: redactRunForRunner(updatedRun),
+        });
+      }
+
+      io.to(`requester:${updatedRun.requesterId}`).emit("run.updated", {
+        run: updatedRun,
+      });
+    }
+
+    return res.json({
+      success: true,
+      placeholder: true,
+      charged: false,
+      message: "Secure hold placeholder authorized. No live charge was made.",
+      run: updatedRun,
+    });
+  } catch (err) {
+    console.error("AUTHORIZE HOLD PLACEHOLDER ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to authorize secure hold placeholder",
+    });
+  }
+});
+
 /* ============================
    RECEIPT / PURCHASE PROOF
 ============================ */
