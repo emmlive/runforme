@@ -109,6 +109,7 @@ export default function RunnerDashboard({ user, onLogout }) {
 
     socket.off("run.offer");
     socket.off("run.updated");
+    socket.off("run.unavailable");
 
     const handleRunOffer = (data) => {
       if (!data?.run || !data?.offer) return;
@@ -144,12 +145,34 @@ export default function RunnerDashboard({ user, onLogout }) {
       );
     };
 
+    const handleRunUnavailable = (data) => {
+      const unavailableRunId = data?.runId;
+      if (!unavailableRunId) return;
+
+      setRuns((prev) => prev.filter((r) => r.id !== unavailableRunId));
+
+      if (acceptingRunIdRef.current === unavailableRunId) {
+        acceptingRunIdRef.current = null;
+      }
+
+      setAcceptingRunId((currentId) =>
+        currentId === unavailableRunId ? null : currentId
+      );
+
+      setAcceptMessage({
+        type: "error",
+        text: data.reason || "This run is no longer available.",
+      });
+    };
+
     socket.on("run.offer", handleRunOffer);
     socket.on("run.updated", handleRunUpdated);
+    socket.on("run.unavailable", handleRunUnavailable);
 
     return () => {
       socket.off("run.offer", handleRunOffer);
       socket.off("run.updated", handleRunUpdated);
+      socket.off("run.unavailable", handleRunUnavailable);
     };
   }, [user?.id]);
 

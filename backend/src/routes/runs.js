@@ -283,6 +283,8 @@ router.post("/:runId/accept", auth, async (req, res) => {
       });
     }
 
+    let rejectedOffers = [];
+
     const updatedRun = await prisma.$transaction(async (tx) => {
       const existing = await tx.run.findUnique({
         where: { id: runId },
@@ -326,10 +328,23 @@ router.post("/:runId/accept", auth, async (req, res) => {
         data: { status: "accepted" },
       });
 
+      rejectedOffers = await tx.offer.findMany({
+        where: {
+          runId,
+          id: { not: offer.id },
+          status: "pending",
+        },
+        select: {
+          id: true,
+          runnerId: true,
+        },
+      });
+
       await tx.offer.updateMany({
         where: {
           runId,
           id: { not: offer.id },
+          status: "pending",
         },
         data: { status: "rejected" },
       });
@@ -356,6 +371,14 @@ router.post("/:runId/accept", auth, async (req, res) => {
 
       io.to(`runner:${runnerId}`).emit("run.updated", {
         run: redactRunForRunner(updatedRun),
+      });
+
+      rejectedOffers.forEach((rejectedOffer) => {
+        io.to(`runner:${rejectedOffer.runnerId}`).emit("run.unavailable", {
+          runId,
+          offerId: rejectedOffer.id,
+          reason: "Run accepted by another runner",
+        });
       });
 
       io.to(`requester:${updatedRun.requesterId}`).emit("run.updated", {
