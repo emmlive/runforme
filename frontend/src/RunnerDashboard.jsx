@@ -388,6 +388,75 @@ export default function RunnerDashboard({ user, onLogout }) {
             <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
               {Number(activeRun.maxRunnerSpend || 0) > 0 && (
                 <div style={{
+                  border: "1px solid #334155",
+                  borderRadius: 10,
+                  padding: 12,
+                  background: "#0f172a"
+                }}>
+                  <div style={{ fontSize: 12, opacity: 0.75, fontWeight: 800, letterSpacing: 1 }}>
+                    SPEND LIMIT
+                  </div>
+
+                  <div style={{
+                    marginTop: 8,
+                    display: "grid",
+                    gap: 8
+                  }}>
+                    <div style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 12
+                    }}>
+                      <span style={{ opacity: 0.75 }}>Max runner spend</span>
+                      <strong>${Number(activeRun.maxRunnerSpend || 0)}</strong>
+                    </div>
+
+                    <div style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 12
+                    }}>
+                      <span style={{ opacity: 0.75 }}>Receipt status</span>
+                      <strong>{String(activeRun.receiptStatus || "not_uploaded").replaceAll("_", " ")}</strong>
+                    </div>
+
+                    <div style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 12
+                    }}>
+                      <span style={{ opacity: 0.75 }}>Payout status</span>
+                      <strong>{String(activeRun.payoutStatus || "not_started").replaceAll("_", " ")}</strong>
+                    </div>
+                  </div>
+
+                  <p style={{
+                    marginTop: 10,
+                    marginBottom: 0,
+                    color: "#cbd5e1",
+                    fontSize: 13,
+                    lineHeight: 1.5
+                  }}>
+                    Submit receipt proof for this purchase. Spending over the max runner spend
+                    will require requester manual review before completion or payout.
+                  </p>
+
+                  {activeRun.requiresManualReview && (
+                    <p style={{
+                      marginTop: 10,
+                      marginBottom: 0,
+                      color: "#fde68a",
+                      fontSize: 13,
+                      fontWeight: 800
+                    }}>
+                      Manual review is required. Wait for requester approval before completing.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {Number(activeRun.maxRunnerSpend || 0) > 0 && (
+                <div style={{
                   border: "1px solid #333",
                   borderRadius: 10,
                   padding: 12,
