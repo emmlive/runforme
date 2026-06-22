@@ -254,6 +254,15 @@ function SecurityProofGrid({ run }) {
     ["Max Runner Spend", formatMoney(run.maxRunnerSpend)],
     ["Purchase Status", formatSecurityStatus(run.purchaseStatus)],
     ["Receipt Status", formatSecurityStatus(run.receiptStatus)],
+    [
+      "Receipt Amount",
+      Number(run.receiptAmount || 0) > 0 ? formatMoney(run.receiptAmount) : "Not submitted",
+    ],
+    [
+      "Final Amount",
+      Number(run.finalAmount || 0) > 0 ? formatMoney(run.finalAmount) : "Not calculated",
+    ],
+    ["Receipt Proof", run.receiptImageUrl ? "Uploaded" : "Not uploaded"],
     ["Payout Status", formatSecurityStatus(run.payoutStatus)],
     ["Delivery Confirmed", formatDate(run.deliveryConfirmedAt)],
     ["Manual Review", run.requiresManualReview ? "Required" : "Not required"],

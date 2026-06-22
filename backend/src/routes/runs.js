@@ -27,6 +27,25 @@ function redactRunForRunner(run) {
   return safeRun;
 }
 
+function parseRiskFlags(value) {
+  try {
+    const parsed = JSON.parse(value || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function addRiskFlag(existingFlags, flag) {
+  const flags = parseRiskFlags(existingFlags);
+
+  if (!flags.includes(flag)) {
+    flags.push(flag);
+  }
+
+  return JSON.stringify(flags);
+}
+
 /* ============================
    GET RUNS
 ============================ */
@@ -413,6 +432,138 @@ router.patch("/:runId/start", auth, async (req, res) => {
 });
 
 
+
+/* ============================
+   RECEIPT / PURCHASE PROOF
+============================ */
+router.post("/:runId/receipt-proof", auth, async (req, res) => {
+  try {
+    const runId = parseRunId(req.params.runId);
+    const receiptAmount = Number(req.body.receiptAmount);
+    const receiptImageUrl = String(
+      req.body.receiptImageUrl || req.body.proofUrl || ""
+    ).trim();
+
+    if (!runId) {
+      return res.status(400).json({ success: false, error: "Invalid runId" });
+    }
+
+    if (req.user.role !== "runner") {
+      return res.status(403).json({
+        success: false,
+        error: "Only the assigned runner can submit receipt proof",
+      });
+    }
+
+    if (!Number.isInteger(receiptAmount) || receiptAmount <= 0 || receiptAmount > 10000) {
+      return res.status(400).json({
+        success: false,
+        error: "Receipt amount must be a whole dollar amount between $1 and $10000",
+      });
+    }
+
+    if (!receiptImageUrl || receiptImageUrl.length > 2048) {
+      return res.status(400).json({
+        success: false,
+        error: "Receipt proof URL is required",
+      });
+    }
+
+    const existing = await prisma.run.findUnique({
+      where: { id: runId },
+    });
+
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        error: "Run not found",
+      });
+    }
+
+    if (existing.assignedRunnerId !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        error: "This run is not assigned to you",
+      });
+    }
+
+    if (!["assigned", "arrived", "in_progress"].includes(existing.status)) {
+      return res.status(400).json({
+        success: false,
+        error: "Receipt proof can only be submitted before completion",
+      });
+    }
+
+    const maxRunnerSpend = Number(existing.maxRunnerSpend || 0);
+    const exceedsMaxSpend = maxRunnerSpend > 0 && receiptAmount > maxRunnerSpend;
+    const finalAmount =
+      receiptAmount +
+      Number(existing.runnerPayout || existing.payout || 0) +
+      Number(existing.platformFee || 0);
+
+    const nextReceiptStatus = exceedsMaxSpend ? "review_required" : "uploaded";
+    const nextPurchaseStatus = exceedsMaxSpend
+      ? "receipt_review_required"
+      : "receipt_uploaded";
+    const nextRequiresManualReview =
+      Boolean(existing.requiresManualReview) || exceedsMaxSpend;
+    const nextRiskFlags = exceedsMaxSpend
+      ? addRiskFlag(existing.riskFlags, "receipt_exceeds_max_runner_spend")
+      : existing.riskFlags || "[]";
+    const nextRiskScore = exceedsMaxSpend
+      ? Math.min(100, Number(existing.riskScore || 0) + 25)
+      : Number(existing.riskScore || 0);
+    const nextPayoutStatus = exceedsMaxSpend
+      ? "manual_review_required"
+      : existing.deliveryConfirmedAt
+        ? "ready_for_payout"
+        : "proof_uploaded";
+
+    const updatedRun = await prisma.run.update({
+      where: { id: runId },
+      data: {
+        receiptStatus: nextReceiptStatus,
+        receiptAmount,
+        receiptImageUrl,
+        finalAmount,
+        purchaseStatus: nextPurchaseStatus,
+        requiresManualReview: nextRequiresManualReview,
+        riskFlags: nextRiskFlags,
+        riskScore: nextRiskScore,
+        payoutStatus: nextPayoutStatus,
+      },
+    });
+
+    const io = req.app.get("io");
+
+    if (io) {
+      io.to(`run:${runId}`).emit("run.receipt_uploaded", {
+        runId,
+        runnerId: req.user.id,
+      });
+
+      io.to(`runner:${req.user.id}`).emit("run.updated", {
+        run: redactRunForRunner(updatedRun),
+      });
+
+      io.to(`requester:${updatedRun.requesterId}`).emit("run.updated", {
+        run: updatedRun,
+      });
+    }
+
+    return res.json({
+      success: true,
+      run: redactRunForRunner(updatedRun),
+    });
+  } catch (err) {
+    console.error("RECEIPT PROOF ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to submit receipt proof",
+    });
+  }
+});
+
 /* ============================
    CONFIRM DELIVERY PIN
 ============================ */
@@ -472,12 +623,23 @@ router.post("/:runId/confirm-delivery", auth, async (req, res) => {
       });
     }
 
+    const receiptIsRequired = Number(existing.maxRunnerSpend || 0) > 0;
+    const receiptIsUploaded = existing.receiptStatus === "uploaded";
+    const reviewRequired =
+      Boolean(existing.requiresManualReview) ||
+      existing.receiptStatus === "review_required";
+    const nextPayoutStatus = reviewRequired
+      ? "manual_review_required"
+      : receiptIsRequired && !receiptIsUploaded
+        ? "awaiting_receipt"
+        : "ready_for_payout";
+
     const updatedRun = await prisma.run.update({
       where: { id: runId },
       data: {
         deliveryConfirmedAt: new Date(),
         purchaseStatus: "delivered",
-        payoutStatus: "ready_for_payout",
+        payoutStatus: nextPayoutStatus,
       },
     });
 
@@ -566,6 +728,17 @@ async function completeRun(req, res) {
       });
     }
 
+    const receiptIsRequired = Number(existing.maxRunnerSpend || 0) > 0;
+    const receiptIsUploaded = existing.receiptStatus === "uploaded";
+    const reviewRequired =
+      Boolean(existing.requiresManualReview) ||
+      existing.receiptStatus === "review_required";
+    const nextPayoutStatus = reviewRequired
+      ? "manual_review_required"
+      : receiptIsRequired && !receiptIsUploaded
+        ? "awaiting_receipt"
+        : "ready_for_payout";
+
     const updatedRun = await prisma.run.update({
       where: { id: runId },
       data: {
@@ -574,10 +747,7 @@ async function completeRun(req, res) {
           existing.purchaseStatus === "delivered"
             ? "completed"
             : existing.purchaseStatus,
-        payoutStatus:
-          existing.payoutStatus === "ready_for_payout"
-            ? "ready_for_payout"
-            : "ready_for_payout",
+        payoutStatus: nextPayoutStatus,
       },
     });
 

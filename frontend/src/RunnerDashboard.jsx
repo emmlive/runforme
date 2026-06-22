@@ -8,6 +8,7 @@ export default function RunnerDashboard({ user, onLogout }) {
   const [runs, setRuns] = useState([]);
   const [statusMessage, setStatusMessage] = useState("Offline");
   const [deliveryPins, setDeliveryPins] = useState({});
+  const [receiptProofs, setReceiptProofs] = useState({});
   const [actionMessage, setActionMessage] = useState(null);
 
   const watchIdRef = useRef(null);
@@ -217,6 +218,44 @@ export default function RunnerDashboard({ user, onLogout }) {
     }
   }
 
+  async function submitReceiptProof(id) {
+    const proof = receiptProofs[id] || {};
+    const receiptAmount = Number(proof.receiptAmount);
+    const receiptImageUrl = String(proof.receiptImageUrl || "").trim();
+
+    if (!Number.isInteger(receiptAmount) || receiptAmount <= 0) {
+      setActionMessage({ type: "error", text: "Enter a valid whole-dollar receipt amount." });
+      return;
+    }
+
+    if (!receiptImageUrl) {
+      setActionMessage({ type: "error", text: "Enter a receipt proof URL." });
+      return;
+    }
+
+    const res = await apiRequest(`/api/runs/${id}/receipt-proof`, {
+      method: "POST",
+      body: JSON.stringify({ receiptAmount, receiptImageUrl }),
+    });
+
+    if (res.success) {
+      setActionMessage({ type: "success", text: "Receipt proof submitted." });
+      setReceiptProofs((prev) => ({ ...prev, [id]: {} }));
+      setRuns((prev) =>
+        prev.map((r) =>
+          r.id === id ? { ...r, ...res.run } : r
+        )
+      );
+      fetchRuns();
+      return;
+    }
+
+    setActionMessage({
+      type: "error",
+      text: res.error || "Could not submit receipt proof.",
+    });
+  }
+
   async function confirmDelivery(id) {
     const deliveryPin = String(deliveryPins[id] || "").trim();
 
@@ -347,6 +386,89 @@ export default function RunnerDashboard({ user, onLogout }) {
 
           {activeRun.status === "arrived" && (
             <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+              {Number(activeRun.maxRunnerSpend || 0) > 0 && (
+                <div style={{
+                  border: "1px solid #333",
+                  borderRadius: 10,
+                  padding: 12,
+                  background: "#181818"
+                }}>
+                  <div style={{ fontSize: 12, opacity: 0.7, fontWeight: 700 }}>
+                    PURCHASE PROOF
+                  </div>
+
+                  {activeRun.receiptStatus === "uploaded" ||
+                  activeRun.receiptStatus === "review_required" ? (
+                    <p style={{
+                      color: activeRun.receiptStatus === "review_required" ? "#fde68a" : "#86efac",
+                      marginBottom: 0
+                    }}>
+                      Receipt proof {activeRun.receiptStatus === "review_required" ? "needs review" : "uploaded"}.
+                    </p>
+                  ) : (
+                    <>
+                      <p style={{ opacity: 0.75 }}>
+                        Submit receipt amount and proof before settlement.
+                      </p>
+
+                      <input
+                        type="number"
+                        min="1"
+                        value={receiptProofs[activeRun.id]?.receiptAmount || ""}
+                        onChange={(event) =>
+                          setReceiptProofs((prev) => ({
+                            ...prev,
+                            [activeRun.id]: {
+                              ...(prev[activeRun.id] || {}),
+                              receiptAmount: event.target.value,
+                            },
+                          }))
+                        }
+                        placeholder="Receipt amount"
+                        inputMode="numeric"
+                        style={{
+                          width: "100%",
+                          boxSizing: "border-box",
+                          padding: "10px 12px",
+                          borderRadius: 8,
+                          border: "1px solid #444",
+                          background: "#0b0b0b",
+                          color: "white",
+                          marginBottom: 10,
+                        }}
+                      />
+
+                      <input
+                        value={receiptProofs[activeRun.id]?.receiptImageUrl || ""}
+                        onChange={(event) =>
+                          setReceiptProofs((prev) => ({
+                            ...prev,
+                            [activeRun.id]: {
+                              ...(prev[activeRun.id] || {}),
+                              receiptImageUrl: event.target.value,
+                            },
+                          }))
+                        }
+                        placeholder="Receipt proof URL"
+                        style={{
+                          width: "100%",
+                          boxSizing: "border-box",
+                          padding: "10px 12px",
+                          borderRadius: 8,
+                          border: "1px solid #444",
+                          background: "#0b0b0b",
+                          color: "white",
+                          marginBottom: 10,
+                        }}
+                      />
+
+                      <button onClick={() => submitReceiptProof(activeRun.id)}>
+                        Submit Receipt Proof
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
               <div style={{
                 border: "1px solid #333",
                 borderRadius: 10,
