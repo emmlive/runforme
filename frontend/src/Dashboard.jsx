@@ -607,6 +607,7 @@ export default function Dashboard({ onLogout }) {
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [approvingManualReview, setApprovingManualReview] = useState(false);
   const [authorizingHold, setAuthorizingHold] = useState(false);
+  const approvingManualReviewRef = useRef(null);
   const authorizingHoldRef = useRef(null);
 
   const showSuccess = (message) => {
@@ -814,6 +815,9 @@ export default function Dashboard({ onLogout }) {
 
   const approveManualReview = async (runId) => {
     if (!runId || !token) return;
+    if (approvingManualReviewRef.current === runId) return;
+
+    approvingManualReviewRef.current = runId;
 
     try {
       setApprovingManualReview(true);
@@ -840,6 +844,10 @@ export default function Dashboard({ onLogout }) {
     } catch (err) {
       showError(err.message || "Failed to approve manual review");
     } finally {
+      if (approvingManualReviewRef.current === runId) {
+        approvingManualReviewRef.current = null;
+      }
+
       setApprovingManualReview(false);
     }
   };
