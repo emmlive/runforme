@@ -495,6 +495,9 @@ export default function Dashboard({ onLogout }) {
     location: "",
     item: "",
     payout: "25",
+    itemBudgetEstimate: "0",
+    platformFee: "3",
+    bufferAmount: "5",
   });
   const [creatingRun, setCreatingRun] = useState(false);
   const [selectedRunId, setSelectedRunId] = useState(null);
@@ -552,15 +555,54 @@ export default function Dashboard({ onLogout }) {
     return () => clearInterval(interval);
   }, [fetchRuns, navigate, token]);
 
+  const createRunSecurityPreview = useMemo(() => {
+    const payout = Number(newRun.payout || 0);
+    const itemBudgetEstimate = Number(newRun.itemBudgetEstimate || 0);
+    const platformFee = Number(newRun.platformFee || 0);
+    const bufferAmount = Number(newRun.bufferAmount || 0);
+
+    const safePayout = Number.isFinite(payout) && payout > 0 ? payout : 0;
+    const safeBudget =
+      Number.isFinite(itemBudgetEstimate) && itemBudgetEstimate > 0 ? itemBudgetEstimate : 0;
+    const safePlatformFee =
+      Number.isFinite(platformFee) && platformFee > 0 ? platformFee : 0;
+    const safeBuffer = Number.isFinite(bufferAmount) && bufferAmount > 0 ? bufferAmount : 0;
+
+    return {
+      holdAmount: safeBudget + safePayout + safePlatformFee + safeBuffer,
+      maxRunnerSpend: safeBudget + safeBuffer,
+    };
+  }, [
+    newRun.payout,
+    newRun.itemBudgetEstimate,
+    newRun.platformFee,
+    newRun.bufferAmount,
+  ]);
+
   const createRun = async (event) => {
     event.preventDefault();
 
     const location = newRun.location.trim();
     const item = newRun.item.trim();
     const payout = Number(newRun.payout);
+    const itemBudgetEstimate = Number(newRun.itemBudgetEstimate || 0);
+    const platformFee = Number(newRun.platformFee || 0);
+    const bufferAmount = Number(newRun.bufferAmount || 0);
 
     if (!location || !item || !Number.isFinite(payout) || payout <= 0) {
       showError("Enter a location, item, and valid payout.");
+      return;
+    }
+
+    const secureAmounts = [itemBudgetEstimate, platformFee, bufferAmount];
+
+    if (
+      secureAmounts.some((amount) => !Number.isInteger(amount) || amount < 0) ||
+      itemBudgetEstimate > 5000 ||
+      platformFee > 1000 ||
+      bufferAmount > 1000
+    ) {
+      showError("Enter valid whole-dollar budget, platform fee, and buffer amounts.");
       return;
     }
 
@@ -573,7 +615,14 @@ export default function Dashboard({ onLogout }) {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ location, item, payout }),
+        body: JSON.stringify({
+          location,
+          item,
+          payout,
+          itemBudgetEstimate,
+          platformFee,
+          bufferAmount,
+        }),
       });
 
       const data = await response.json();
@@ -582,7 +631,14 @@ export default function Dashboard({ onLogout }) {
         throw new Error(data.error || "Failed to create run");
       }
 
-      setNewRun({ location: "", item: "", payout: "25" });
+      setNewRun({
+        location: "",
+        item: "",
+        payout: "25",
+        itemBudgetEstimate: "0",
+        platformFee: "3",
+        bufferAmount: "5",
+      });
       showSuccess("Run created and sent to available runners.");
       await fetchRuns();
     } catch (err) {
@@ -782,7 +838,9 @@ export default function Dashboard({ onLogout }) {
             onSubmit={createRun}
             style={{
               display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : "1.2fr 1.6fr 0.7fr auto",
+              gridTemplateColumns: isMobile
+                ? "1fr"
+                : "1.1fr 1.5fr 0.65fr 0.75fr 0.65fr 0.65fr auto",
               gap: 12,
               alignItems: "end",
             }}
@@ -839,6 +897,64 @@ export default function Dashboard({ onLogout }) {
               />
             </label>
 
+            <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+              Item Budget
+              <input
+                type="number"
+                min="0"
+                value={newRun.itemBudgetEstimate}
+                onChange={(event) =>
+                  setNewRun((prev) => ({
+                    ...prev,
+                    itemBudgetEstimate: event.target.value,
+                  }))
+                }
+                placeholder="0"
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  border: "1px solid #cbd5e1",
+                  fontSize: 14,
+                }}
+              />
+            </label>
+
+            <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+              Platform Fee
+              <input
+                type="number"
+                min="0"
+                value={newRun.platformFee}
+                onChange={(event) =>
+                  setNewRun((prev) => ({ ...prev, platformFee: event.target.value }))
+                }
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  border: "1px solid #cbd5e1",
+                  fontSize: 14,
+                }}
+              />
+            </label>
+
+            <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+              Buffer
+              <input
+                type="number"
+                min="0"
+                value={newRun.bufferAmount}
+                onChange={(event) =>
+                  setNewRun((prev) => ({ ...prev, bufferAmount: event.target.value }))
+                }
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  border: "1px solid #cbd5e1",
+                  fontSize: 14,
+                }}
+              />
+            </label>
+
             <button
               type="submit"
               disabled={creatingRun}
@@ -855,6 +971,34 @@ export default function Dashboard({ onLogout }) {
               {creatingRun ? "Creating..." : "Create Run"}
             </button>
           </form>
+
+          <div
+            style={{
+              marginTop: 14,
+              padding: 14,
+              borderRadius: 14,
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0",
+              color: "#334155",
+              display: "grid",
+              gap: 6,
+            }}
+          >
+            <div style={{ fontWeight: 900, color: "#0f172a" }}>
+              Secure hold preview
+            </div>
+            <div>
+              Estimated hold: <strong>{formatMoney(createRunSecurityPreview.holdAmount)}</strong>
+            </div>
+            <div>
+              Max runner spend:{" "}
+              <strong>{formatMoney(createRunSecurityPreview.maxRunnerSpend)}</strong>
+            </div>
+            <div style={{ fontSize: 12, color: "#64748b" }}>
+              Item budget + payout + platform fee + buffer are used to protect requester funds
+              and trigger receipt review if the runner spends over the allowed amount.
+            </div>
+          </div>
         </section>
 
         <section style={{ marginBottom: 34 }}>
