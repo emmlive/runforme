@@ -58,6 +58,7 @@ export default function RunnerDashboard({ user, onLogout }) {
   const [deliveryPins, setDeliveryPins] = useState({});
   const [receiptProofs, setReceiptProofs] = useState({});
   const [actionMessage, setActionMessage] = useState(null);
+  const [acceptMessage, setAcceptMessage] = useState(null);
 
   const watchIdRef = useRef(null);
   const lastSentRef = useRef(0);
@@ -717,6 +718,20 @@ export default function RunnerDashboard({ user, onLogout }) {
             <p style={{ opacity: 0.6 }}>Waiting for jobs...</p>
           )}
 
+          {acceptMessage && (
+            <div style={{
+              padding: 10,
+              borderRadius: 8,
+              marginBottom: 10,
+              background: acceptMessage.type === "success" ? "#064e3b" : "#7f1d1d",
+              color: "white",
+              fontSize: 13,
+              lineHeight: 1.45
+            }}>
+              {acceptMessage.text}
+            </div>
+          )}
+
           {availableRuns.slice(0, 3).map((run) => (
             <div key={run.id} style={{
               border: "1px solid #333",
@@ -743,23 +758,46 @@ export default function RunnerDashboard({ user, onLogout }) {
                 onClick={async () => {
                   if (!run.id) return;
 
-                  console.log("✅ ACCEPTING RUN:", run.id);
+                  setAcceptMessage(null);
 
-                  const res = await apiRequest(
-                    `/api/runs/${run.id}/accept`,
-                    { method: "POST" }
-                  );
+                  try {
+                    console.log("✅ ACCEPTING RUN:", run.id);
 
-                  console.log("✅ ACCEPT RESULT:", res);
-
-                  if (res.success) {
-                    setRuns((prev) =>
-                      prev.map((r) =>
-                        r.id === run.id
-                          ? { ...r, status: "assigned" }
-                          : r
-                      )
+                    const res = await apiRequest(
+                      `/api/runs/${run.id}/accept`,
+                      { method: "POST" }
                     );
+
+                    console.log("✅ ACCEPT RESULT:", res);
+
+                    if (res.success) {
+                      setAcceptMessage({
+                        type: "success",
+                        text: "Run accepted. Head to the pickup location when ready.",
+                      });
+
+                      setRuns((prev) =>
+                        prev.map((r) =>
+                          r.id === run.id
+                            ? { ...r, status: "assigned" }
+                            : r
+                        )
+                      );
+
+                      return;
+                    }
+
+                    setAcceptMessage({
+                      type: "error",
+                      text: res.error || "Could not accept this run. It may no longer be available or the requester secure hold is not authorized yet.",
+                    });
+                  } catch (err) {
+                    console.error("Accept run failed:", err);
+
+                    setAcceptMessage({
+                      type: "error",
+                      text: err.message || "Could not accept this run. It may no longer be available or the requester secure hold is not authorized yet.",
+                    });
                   }
                 }}
                 style={{
