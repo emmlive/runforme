@@ -328,7 +328,14 @@ function SecurityProofGrid({ run }) {
 }
 
 
-function RunDetailPanel({ run, onClose, onApproveManualReview, approvingManualReview }) {
+function RunDetailPanel({
+  run,
+  onClose,
+  onApproveManualReview,
+  approvingManualReview,
+  onAuthorizeHold,
+  authorizingHold,
+}) {
   if (!run) return null;
 
   const isMobile = useIsMobile();
@@ -484,19 +491,41 @@ function RunDetailPanel({ run, onClose, onApproveManualReview, approvingManualRe
 
           <button
             type="button"
-            disabled
-            title="Stripe payment authorization is not wired yet"
+            onClick={() => onAuthorizeHold?.(run.id)}
+            disabled={
+              authorizingHold ||
+              run.authorizationStatus === "placeholder_authorized"
+            }
+            title="This uses the safe placeholder endpoint. No live charge is made."
             style={{
               border: "1px solid rgba(148,163,184,0.45)",
-              background: "rgba(148,163,184,0.18)",
-              color: "#cbd5e1",
+              background:
+                run.authorizationStatus === "placeholder_authorized"
+                  ? "rgba(34,197,94,0.20)"
+                  : authorizingHold
+                    ? "rgba(148,163,184,0.18)"
+                    : "#22c55e",
+              color:
+                run.authorizationStatus === "placeholder_authorized"
+                  ? "#bbf7d0"
+                  : authorizingHold
+                    ? "#cbd5e1"
+                    : "#052e16",
               borderRadius: 10,
               padding: "10px 14px",
-              cursor: "not-allowed",
+              cursor:
+                authorizingHold ||
+                run.authorizationStatus === "placeholder_authorized"
+                  ? "not-allowed"
+                  : "pointer",
               fontWeight: 900,
             }}
           >
-            Authorize Secure Hold - Coming Soon
+            {run.authorizationStatus === "placeholder_authorized"
+              ? "Secure Hold Placeholder Authorized"
+              : authorizingHold
+                ? "Authorizing..."
+                : "Authorize Secure Hold"}
           </button>
         </div>
       )}
@@ -577,6 +606,7 @@ export default function Dashboard({ onLogout }) {
   const [creatingRun, setCreatingRun] = useState(false);
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [approvingManualReview, setApprovingManualReview] = useState(false);
+  const [authorizingHold, setAuthorizingHold] = useState(false);
 
   const showSuccess = (message) => {
     setNotification({ type: "success", message });
@@ -741,6 +771,38 @@ export default function Dashboard({ onLogout }) {
     return activeRuns[0] || completedRuns[0] || null;
   }, [runs, selectedRunId, activeRuns, completedRuns]);
 
+  const authorizeSecureHold = async (runId) => {
+    if (!runId || !token) return;
+
+    try {
+      setAuthorizingHold(true);
+
+      const response = await fetch(`${API_URL}/api/runs/${runId}/authorize-hold`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data.success === false) {
+        throw new Error(data.error || "Failed to authorize secure hold");
+      }
+
+      setRuns((prev) =>
+        prev.map((run) =>
+          run.id === runId ? { ...run, ...data.run } : run
+        )
+      );
+
+      showSuccess(data.message || "Secure hold placeholder authorized. No live charge was made.");
+      await fetchRuns();
+    } catch (err) {
+      showError(err.message || "Failed to authorize secure hold");
+    } finally {
+      setAuthorizingHold(false);
+    }
+  };
+
   const approveManualReview = async (runId) => {
     if (!runId || !token) return;
 
@@ -893,6 +955,8 @@ export default function Dashboard({ onLogout }) {
           onClose={() => setSelectedRunId(null)}
           onApproveManualReview={approveManualReview}
           approvingManualReview={approvingManualReview}
+          onAuthorizeHold={authorizeSecureHold}
+          authorizingHold={authorizingHold}
         />
 
         <section
