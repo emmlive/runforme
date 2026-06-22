@@ -673,6 +673,102 @@ router.post("/:runId/confirm-delivery", auth, async (req, res) => {
   }
 });
 
+
+/* ============================
+   MANUAL REVIEW APPROVAL
+============================ */
+router.post("/:runId/manual-review/approve", auth, async (req, res) => {
+  try {
+    const runId = parseRunId(req.params.runId);
+
+    if (!runId) {
+      return res.status(400).json({ success: false, error: "Invalid runId" });
+    }
+
+    const existing = await prisma.run.findUnique({
+      where: { id: runId },
+    });
+
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        error: "Run not found",
+      });
+    }
+
+    const canApprove =
+      req.user.role === "admin" ||
+      (req.user.role === "requester" && existing.requesterId === req.user.id);
+
+    if (!canApprove) {
+      return res.status(403).json({
+        success: false,
+        error: "Only the requester can approve manual review for this run",
+      });
+    }
+
+    if (!existing.requiresManualReview && existing.receiptStatus !== "review_required") {
+      return res.json({
+        success: true,
+        alreadyApproved: true,
+        run: existing,
+      });
+    }
+
+    const nextRiskFlags = addRiskFlag(existing.riskFlags, "manual_review_approved");
+    const nextPayoutStatus = existing.deliveryConfirmedAt
+      ? "ready_for_payout"
+      : "proof_uploaded";
+
+    const updatedRun = await prisma.run.update({
+      where: { id: runId },
+      data: {
+        requiresManualReview: false,
+        receiptStatus:
+          existing.receiptStatus === "review_required"
+            ? "uploaded"
+            : existing.receiptStatus,
+        purchaseStatus:
+          existing.purchaseStatus === "receipt_review_required"
+            ? "receipt_uploaded"
+            : existing.purchaseStatus,
+        payoutStatus: nextPayoutStatus,
+        riskFlags: nextRiskFlags,
+      },
+    });
+
+    const io = req.app.get("io");
+
+    if (io) {
+      io.to(`run:${runId}`).emit("run.manual_review_approved", {
+        runId,
+        requesterId: req.user.id,
+      });
+
+      if (updatedRun.assignedRunnerId) {
+        io.to(`runner:${updatedRun.assignedRunnerId}`).emit("run.updated", {
+          run: redactRunForRunner(updatedRun),
+        });
+      }
+
+      io.to(`requester:${updatedRun.requesterId}`).emit("run.updated", {
+        run: updatedRun,
+      });
+    }
+
+    return res.json({
+      success: true,
+      run: updatedRun,
+    });
+  } catch (err) {
+    console.error("MANUAL REVIEW APPROVAL ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to approve manual review",
+    });
+  }
+});
+
 async function completeRun(req, res) {
   try {
     const runId = parseRunId(req.params.runId);
@@ -725,6 +821,17 @@ async function completeRun(req, res) {
       return res.status(400).json({
         success: false,
         error: "Delivery PIN must be confirmed before completion",
+      });
+    }
+
+    if (
+      existing.requiresManualReview ||
+      existing.receiptStatus === "review_required" ||
+      existing.payoutStatus === "manual_review_required"
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "Manual review must be approved before completion",
       });
     }
 
