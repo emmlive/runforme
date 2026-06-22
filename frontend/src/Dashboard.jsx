@@ -604,6 +604,7 @@ export default function Dashboard({ onLogout }) {
     bufferAmount: "5",
   });
   const [creatingRun, setCreatingRun] = useState(false);
+  const creatingRunRef = useRef(false);
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [approvingManualReview, setApprovingManualReview] = useState(false);
   const [authorizingHold, setAuthorizingHold] = useState(false);
@@ -713,6 +714,10 @@ export default function Dashboard({ onLogout }) {
       return;
     }
 
+    if (creatingRunRef.current) return;
+
+    creatingRunRef.current = true;
+
     try {
       setCreatingRun(true);
 
@@ -751,6 +756,8 @@ export default function Dashboard({ onLogout }) {
     } catch (err) {
       showError(err.message || "Failed to create run");
     } finally {
+      creatingRunRef.current = false;
+
       setCreatingRun(false);
     }
   };
