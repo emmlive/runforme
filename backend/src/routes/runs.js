@@ -817,6 +817,19 @@ router.post("/:runId/receipt-proof", auth, async (req, res) => {
       });
     }
 
+    const receiptAlreadySubmitted =
+      ["uploaded", "review_required"].includes(existing.receiptStatus) ||
+      Boolean(existing.receiptImageUrl);
+
+    if (receiptAlreadySubmitted) {
+      return res.json({
+        success: true,
+        alreadySubmitted: true,
+        message: "Receipt proof has already been submitted for this run",
+        run: redactRunForRunner(existing),
+      });
+    }
+
     const maxRunnerSpend = Number(existing.maxRunnerSpend || 0);
     const exceedsMaxSpend = maxRunnerSpend > 0 && receiptAmount > maxRunnerSpend;
     const finalAmount =
