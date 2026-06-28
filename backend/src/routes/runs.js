@@ -1197,8 +1197,18 @@ async function completeRun(req, res) {
         ? "awaiting_receipt"
         : "ready_for_payout";
 
-    const updatedRun = await prisma.run.update({
-      where: { id: runId },
+    const completionWhere = {
+      id: runId,
+      assignedRunnerId: req.user.id,
+      status: { in: ["arrived", "in_progress"] },
+      deliveryConfirmedAt: { not: null },
+      requiresManualReview: false,
+      receiptStatus: receiptIsRequired ? "uploaded" : { not: "review_required" },
+      payoutStatus: { not: "manual_review_required" },
+    };
+
+    const updateResult = await prisma.run.updateMany({
+      where: completionWhere,
       data: {
         status: "completed",
         purchaseStatus:
@@ -1208,6 +1218,23 @@ async function completeRun(req, res) {
         payoutStatus: nextPayoutStatus,
       },
     });
+
+    const updatedRun = await prisma.run.findUnique({ where: { id: runId } });
+
+    if (updateResult.count !== 1) {
+      if (updatedRun && updatedRun.status === "completed") {
+        return res.json({
+          success: true,
+          alreadyCompleted: true,
+          run: redactRunForRunner(updatedRun),
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        error: "Run is not eligible for completion",
+      });
+    }
 
     const io = req.app.get("io");
 
