@@ -1166,8 +1166,21 @@ router.post("/:runId/manual-review/approve", auth, async (req, res) => {
       ? "ready_for_payout"
       : "proof_uploaded";
 
-    const updatedRun = await prisma.run.update({
-      where: { id: runId },
+    const manualReviewUpdate = await prisma.run.updateMany({
+      where: {
+        id: runId,
+        ...(req.user.role === "admin" ? {} : { requesterId: req.user.id }),
+        requiresManualReview: Boolean(existing.requiresManualReview),
+        receiptStatus: existing.receiptStatus,
+        purchaseStatus: existing.purchaseStatus,
+        ...(existing.deliveryConfirmedAt
+          ? { deliveryConfirmedAt: { not: null } }
+          : { deliveryConfirmedAt: null }),
+        OR: [
+          { requiresManualReview: true },
+          { receiptStatus: "review_required" },
+        ],
+      },
       data: {
         requiresManualReview: false,
         receiptStatus:
@@ -1182,6 +1195,27 @@ router.post("/:runId/manual-review/approve", auth, async (req, res) => {
         riskFlags: nextRiskFlags,
       },
     });
+
+    const updatedRun = await prisma.run.findUnique({ where: { id: runId } });
+
+    if (manualReviewUpdate.count !== 1) {
+      if (
+        updatedRun &&
+        !updatedRun.requiresManualReview &&
+        updatedRun.receiptStatus !== "review_required"
+      ) {
+        return res.json({
+          success: true,
+          alreadyApproved: true,
+          run: updatedRun,
+        });
+      }
+
+      return res.status(409).json({
+        success: false,
+        error: "Manual review could not be approved because the run state changed",
+      });
+    }
 
     const io = req.app.get("io");
 
