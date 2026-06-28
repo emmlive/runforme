@@ -903,8 +903,17 @@ router.post("/:runId/receipt-proof", auth, async (req, res) => {
         ? "ready_for_payout"
         : "proof_uploaded";
 
-    const updatedRun = await prisma.run.update({
-      where: { id: runId },
+    const receiptUpdate = await prisma.run.updateMany({
+      where: {
+        id: runId,
+        assignedRunnerId: req.user.id,
+        status: { in: ["assigned", "arrived", "in_progress"] },
+        receiptStatus: { notIn: ["uploaded", "review_required"] },
+        requiresManualReview: Boolean(existing.requiresManualReview),
+        ...(existing.deliveryConfirmedAt
+          ? { deliveryConfirmedAt: { not: null } }
+          : { deliveryConfirmedAt: null }),
+      },
       data: {
         receiptStatus: nextReceiptStatus,
         receiptAmount,
@@ -917,6 +926,29 @@ router.post("/:runId/receipt-proof", auth, async (req, res) => {
         payoutStatus: nextPayoutStatus,
       },
     });
+
+    const updatedRun = await prisma.run.findUnique({ where: { id: runId } });
+
+    if (receiptUpdate.count !== 1) {
+      const alreadySubmitted =
+        updatedRun &&
+        (["uploaded", "review_required"].includes(updatedRun.receiptStatus) ||
+          Boolean(updatedRun.receiptImageUrl));
+
+      if (alreadySubmitted) {
+        return res.json({
+          success: true,
+          alreadySubmitted: true,
+          message: "Receipt proof has already been submitted for this run",
+          run: redactRunForRunner(updatedRun),
+        });
+      }
+
+      return res.status(409).json({
+        success: false,
+        error: "Receipt proof could not be submitted because the run state changed",
+      });
+    }
 
     const io = req.app.get("io");
 
