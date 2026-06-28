@@ -919,13 +919,6 @@ router.post("/:runId/confirm-delivery", auth, async (req, res) => {
       });
     }
 
-    if (!submittedPin) {
-      return res.status(400).json({
-        success: false,
-        error: "Delivery PIN is required",
-      });
-    }
-
     const existing = await prisma.run.findUnique({
       where: { id: runId },
     });
@@ -944,18 +937,32 @@ router.post("/:runId/confirm-delivery", auth, async (req, res) => {
       });
     }
 
-    if (!existing.deliveryPin || existing.deliveryPin !== submittedPin) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid delivery PIN",
-      });
-    }
-
     if (existing.deliveryConfirmedAt) {
       return res.json({
         success: true,
         alreadyConfirmed: true,
-        run: req.user.role === "runner" ? redactRunForRunner(existing) : existing,
+        run: redactRunForRunner(existing),
+      });
+    }
+
+    if (!["arrived", "in_progress"].includes(existing.status)) {
+      return res.status(400).json({
+        success: false,
+        error: "Run must be arrived before delivery can be confirmed",
+      });
+    }
+
+    if (!submittedPin) {
+      return res.status(400).json({
+        success: false,
+        error: "Delivery PIN is required",
+      });
+    }
+
+    if (!existing.deliveryPin || existing.deliveryPin !== submittedPin) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid delivery PIN",
       });
     }
 
