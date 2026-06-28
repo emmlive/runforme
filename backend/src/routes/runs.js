@@ -607,10 +607,35 @@ router.patch("/:runId/start", auth, async (req, res) => {
       });
     }
 
-    const updatedRun = await prisma.run.update({
-      where: { id: runId },
+    const startUpdate = await prisma.run.updateMany({
+      where: {
+        id: runId,
+        assignedRunnerId: req.user.id,
+        status: { in: ["assigned", "arrived"] },
+      },
       data: { status: "in_progress" },
     });
+
+    const updatedRun = await prisma.run.findUnique({ where: { id: runId } });
+
+    if (startUpdate.count !== 1) {
+      if (
+        updatedRun &&
+        updatedRun.assignedRunnerId === req.user.id &&
+        updatedRun.status === "in_progress"
+      ) {
+        return res.json({
+          success: true,
+          alreadyStarted: true,
+          run: redactRunForRunner(updatedRun),
+        });
+      }
+
+      return res.status(409).json({
+        success: false,
+        error: "Run could not be started because the run state changed",
+      });
+    }
 
     const io = req.app.get("io");
 
