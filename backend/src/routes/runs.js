@@ -1180,6 +1180,14 @@ async function completeRun(req, res) {
 
     const receiptIsRequired = Number(existing.maxRunnerSpend || 0) > 0;
     const receiptIsUploaded = existing.receiptStatus === "uploaded";
+
+    if (receiptIsRequired && !receiptIsUploaded) {
+      return res.status(400).json({
+        success: false,
+        error: "Receipt proof must be submitted before completion",
+      });
+    }
+
     const reviewRequired =
       Boolean(existing.requiresManualReview) ||
       existing.receiptStatus === "review_required";
