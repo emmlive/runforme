@@ -7,6 +7,8 @@ import Dashboard from "./Dashboard";
 import RunnerDashboard from "./RunnerDashboard";
 import PaymentPage from "./pages/PaymentPage";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5050";
+
 ////////////////////////////////////////////////////////
 // 🔐 TOKEN DECODER (SAFE)
 ////////////////////////////////////////////////////////
@@ -16,7 +18,6 @@ function decodeToken(token) {
     const payload = token.split(".")[1];
     const decoded = JSON.parse(atob(payload));
 
-    console.log("DECODED TOKEN:", decoded); // 🔍 DEBUG
 
     return decoded;
   } catch (err) {
@@ -78,7 +79,7 @@ export default function App() {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        "http://localhost:5050/api/payments/create-intent",
+        `${API_URL}/api/payments/create-intent`,
         {
           method: "POST",
           headers: {

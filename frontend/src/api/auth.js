@@ -9,7 +9,6 @@ export async function login(payload) {
   // 🔥 STORE TOKEN (CRITICAL FIX)
   if (data.token) {
     localStorage.setItem("token", data.token);
-    console.log("✅ Token stored:", data.token);
   }
 
   // OPTIONAL (useful later)

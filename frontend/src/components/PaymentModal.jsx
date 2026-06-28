@@ -7,6 +7,8 @@ import {
 } from "@stripe/react-stripe-js";
 import { stripePromise } from "../stripe";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5050";
+
 function CheckoutForm({ clientSecret, runId, token, onSuccess }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -61,7 +63,7 @@ function CheckoutForm({ clientSecret, runId, token, onSuccess }) {
       if (pi.status === "requires_capture") {
         console.log("✅ Payment authorized");
 
-        await fetch("http://localhost:5050/api/payments/mark-authorized", {
+        await fetch(`${API_URL}/api/payments/mark-authorized`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
