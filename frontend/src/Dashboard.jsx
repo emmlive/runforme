@@ -336,9 +336,10 @@ function RunDetailPanel({
   onAuthorizeHold,
   authorizingHold,
 }) {
+  const isMobile = useIsMobile();
+
   if (!run) return null;
 
-  const isMobile = useIsMobile();
   const statusTone = statusStyles[run.status] || statusStyles.open;
   const paymentText =
     paymentLabels[run.paymentStatus] ||

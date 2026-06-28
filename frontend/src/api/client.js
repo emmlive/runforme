@@ -17,7 +17,7 @@ export async function apiRequest(endpoint, options = {}) {
 
   try {
     data = await res.json();
-  } catch (err) {
+  } catch {
     console.warn("⚠️ Non-JSON response");
   }
 

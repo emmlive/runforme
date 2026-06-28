@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5050";
@@ -11,7 +11,7 @@ export default function AdminDisputes() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
 
-  const fetchDisputes = async () => {
+  const fetchDisputes = useCallback(async () => {
     try {
       const res = await fetch(`${API}/api/disputes?status=raised`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -26,11 +26,11 @@ export default function AdminDisputes() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchDisputes();
-  }, []);
+  }, [fetchDisputes]);
 
   const resolveDispute = async (runId, action) => {
     try {

@@ -25,7 +25,7 @@ export default function AdminGovernance() {
         });
         const logsData = await logsRes.json();
         if (logsData.success) setLogs(logsData.logs);
-      } catch (err) {
+      } catch {
         alert("Failed to load governance data");
       } finally {
         setLoading(false);

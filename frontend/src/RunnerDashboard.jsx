@@ -51,7 +51,7 @@ function getCompletionSafety(run) {
 }
 
 
-export default function RunnerDashboard({ user, onLogout }) {
+export default function RunnerDashboard({ user }) {
   const [online, setOnline] = useState(false);
   const [runs, setRuns] = useState([]);
   const [statusMessage, setStatusMessage] = useState("Offline");
