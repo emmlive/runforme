@@ -977,14 +977,37 @@ router.post("/:runId/confirm-delivery", auth, async (req, res) => {
         ? "awaiting_receipt"
         : "ready_for_payout";
 
-    const updatedRun = await prisma.run.update({
-      where: { id: runId },
+    const deliveryUpdate = await prisma.run.updateMany({
+      where: {
+        id: runId,
+        assignedRunnerId: req.user.id,
+        status: { in: ["arrived", "in_progress"] },
+        deliveryPin: submittedPin,
+        deliveryConfirmedAt: null,
+      },
       data: {
         deliveryConfirmedAt: new Date(),
         purchaseStatus: "delivered",
         payoutStatus: nextPayoutStatus,
       },
     });
+
+    const updatedRun = await prisma.run.findUnique({ where: { id: runId } });
+
+    if (deliveryUpdate.count !== 1) {
+      if (updatedRun?.deliveryConfirmedAt) {
+        return res.json({
+          success: true,
+          alreadyConfirmed: true,
+          run: redactRunForRunner(updatedRun),
+        });
+      }
+
+      return res.status(409).json({
+        success: false,
+        error: "Delivery could not be confirmed because the run state changed",
+      });
+    }
 
     const io = req.app.get("io");
 
