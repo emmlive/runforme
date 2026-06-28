@@ -369,6 +369,32 @@ router.post("/:runId/accept", auth, async (req, res) => {
         throw new Error("No valid pending offer found for this runner");
       }
 
+      const acceptUpdate = await tx.run.updateMany({
+        where: {
+          id: runId,
+          status: "open",
+          assignedRunnerId: null,
+        },
+        data: {
+          status: "assigned",
+          assignedRunnerId: runnerId,
+          paymentStatus: existing.paymentStatus || "pending_payment_method",
+        },
+      });
+
+      if (acceptUpdate.count !== 1) {
+        const latestRun = await tx.run.findUnique({
+          where: { id: runId },
+        });
+
+        if (latestRun?.assignedRunnerId === runnerId) {
+          alreadyAccepted = true;
+          return latestRun;
+        }
+
+        throw new Error("Run already assigned");
+      }
+
       await tx.offer.update({
         where: { id: offer.id },
         data: { status: "accepted" },
@@ -395,13 +421,8 @@ router.post("/:runId/accept", auth, async (req, res) => {
         data: { status: "rejected" },
       });
 
-      return tx.run.update({
+      return tx.run.findUnique({
         where: { id: runId },
-        data: {
-          status: "assigned",
-          assignedRunnerId: runnerId,
-          paymentStatus: existing.paymentStatus || "pending_payment_method",
-        },
       });
     });
 
