@@ -717,14 +717,37 @@ router.post("/:runId/authorize-hold", auth, async (req, res) => {
       });
     }
 
-    const updatedRun = await prisma.run.update({
-      where: { id: runId },
+    const authorizationUpdate = await prisma.run.updateMany({
+      where: {
+        id: runId,
+        authorizationStatus: { not: "placeholder_authorized" },
+      },
       data: {
         authorizationStatus: "placeholder_authorized",
         paymentStatus: "hold_placeholder",
         riskFlags: addRiskFlag(existing.riskFlags, "payment_hold_placeholder_authorized"),
       },
     });
+
+    const updatedRun = await prisma.run.findUnique({ where: { id: runId } });
+
+    if (authorizationUpdate.count !== 1) {
+      if (updatedRun?.authorizationStatus === "placeholder_authorized") {
+        return res.json({
+          success: true,
+          alreadyAuthorized: true,
+          placeholder: true,
+          charged: false,
+          message: "Secure hold placeholder is already authorized. No live charge was made.",
+          run: updatedRun,
+        });
+      }
+
+      return res.status(409).json({
+        success: false,
+        error: "Secure hold could not be authorized because the run state changed",
+      });
+    }
 
     const io = req.app.get("io");
 
