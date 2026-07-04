@@ -6,6 +6,7 @@ require("dotenv").config();
 const REQUIRED_ENV_VARS = [
   "DATABASE_URL",
   "JWT_SECRET",
+  "FRONTEND_URL",
 ];
 
 if (process.env.NODE_ENV === "production") {
