@@ -1,180 +1,196 @@
-import { useEffect, useRef, useState } from "react";
-import {
-  GoogleMap,
-  Marker,
-  DirectionsRenderer,
-  useJsApiLoader,
-} from "@react-google-maps/api";
-import { socket } from "../lib/socket";
+const googleMapsKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+const googleMapsExplicitlyEnabled =
+  import.meta.env.VITE_ENABLE_GOOGLE_MAPS === "true";
 
-const containerStyle = {
-  width: "100%",
-  height: "100%",
-};
+function pickFirst(...values) {
+  return values.find((value) => value !== undefined && value !== null && value !== "");
+}
 
-const defaultCenter = {
-  lat: 41.8781,
-  lng: -87.6298,
-};
+function getRunLike(props) {
+  return props.run || props.activeRun || props.selectedRun || {};
+}
 
-function LocalMapPlaceholder({ run }) {
+function getLocationLabel(props) {
+  const run = getRunLike(props);
+
+  return pickFirst(
+    props.location,
+    props.address,
+    props.destination,
+    props.pickupLocation,
+    props.dropoffLocation,
+    run.location,
+    run.address,
+    run.destination,
+    "Location pending"
+  );
+}
+
+function getCoordinateLabel(props) {
+  const run = getRunLike(props);
+
+  const lat = pickFirst(
+    props.lat,
+    props.latitude,
+    props.runnerLat,
+    props.pickupLat,
+    props.coords?.lat,
+    props.position?.lat,
+    props.runnerLocation?.lat,
+    run.lat,
+    run.latitude,
+    run.runnerLat
+  );
+
+  const lng = pickFirst(
+    props.lng,
+    props.longitude,
+    props.runnerLng,
+    props.pickupLng,
+    props.coords?.lng,
+    props.position?.lng,
+    props.runnerLocation?.lng,
+    run.lng,
+    run.longitude,
+    run.runnerLng
+  );
+
+  if (lat === undefined || lng === undefined || lat === null || lng === null) {
+    return "Coordinates unavailable";
+  }
+
+  return `${lat}, ${lng}`;
+}
+
+export default function LiveMap(props = {}) {
+  const locationLabel = getLocationLabel(props);
+  const coordinateLabel = getCoordinateLabel(props);
+
+  const mapStatus =
+    googleMapsExplicitlyEnabled && googleMapsKey
+      ? "Map provider configured"
+      : "Map preview";
+
   return (
-    <div
+    <section
+      aria-label="Run location map fallback"
       style={{
+        minHeight: "320px",
         width: "100%",
-        height: "100%",
-        minHeight: 360,
-        background: "linear-gradient(135deg, #111827, #1f2937)",
-        color: "white",
+        background:
+          "linear-gradient(135deg, #eef3ff 0%, #f8fafc 45%, #e5e7eb 100%)",
+        color: "#0f172a",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: 20,
-        textAlign: "center",
-        borderBottom: "1px solid #222",
+        padding: "24px",
+        boxSizing: "border-box",
+        borderBottom: "1px solid rgba(15, 23, 42, 0.08)",
       }}
     >
-      <div>
-        <div style={{ fontSize: 13, letterSpacing: 2, marginBottom: 12, opacity: 0.8 }}>MAP PREVIEW</div>
-        <strong>Local Map Preview</strong>
-        <p style={{ opacity: 0.75, marginTop: 8, marginBottom: 0 }}>
-          Google Maps is disabled for local development.
-        </p>
-        {run?.location && (
-          <p style={{ opacity: 0.9, marginTop: 12 }}>
-            Current run: {run.location}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function GoogleLiveMap({ run, googleMapsApiKey }) {
-  const [runnerLocation, setRunnerLocation] = useState(null);
-  const [directions, setDirections] = useState(null);
-  const [eta, setEta] = useState(null);
-
-  const mapRef = useRef(null);
-
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey,
-  });
-
-  useEffect(() => {
-    if (!run?.id) return;
-
-    socket.emit("join.run", run.id);
-    console.log("Joined run room:", run.id);
-  }, [run?.id]);
-
-  useEffect(() => {
-    if (!isLoaded) return;
-
-    const calculateRoute = (origin, destination) => {
-      if (!window.google) return;
-
-      const directionsService = new window.google.maps.DirectionsService();
-
-      directionsService.route(
-        {
-          origin,
-          destination,
-          travelMode: window.google.maps.TravelMode.DRIVING,
-        },
-        (result, status) => {
-          if (status === "OK") {
-            setDirections(result);
-
-            const leg = result.routes?.[0]?.legs?.[0];
-            setEta(leg?.duration?.text || null);
-          } else {
-            console.warn("Route error:", status);
-          }
-        }
-      );
-    };
-
-    const handler = (data) => {
-      if (!data?.lat || !data?.lng) return;
-
-      const coords = { lat: data.lat, lng: data.lng };
-      setRunnerLocation(coords);
-
-      if (mapRef.current) {
-        mapRef.current.panTo(coords);
-      }
-
-      if (run?.lat && run?.lng) {
-        calculateRoute(coords, {
-          lat: run.lat,
-          lng: run.lng,
-        });
-      }
-    };
-
-    socket.on("runner.location", handler);
-
-    return () => socket.off("runner.location", handler);
-  }, [isLoaded, run]);
-
-  if (loadError) {
-    return <LocalMapPlaceholder run={run} />;
-  }
-
-  if (!isLoaded) {
-    return (
-      <div style={{ padding: 20, color: "white", background: "#111" }}>
-        Loading map...
-      </div>
-    );
-  }
-
-  const center = runnerLocation || defaultCenter;
-
-  return (
-    <div style={{ width: "100%", height: "100%", position: "relative" }}>
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={center}
-        zoom={14}
-        onLoad={(map) => {
-          mapRef.current = map;
+      <div
+        style={{
+          width: "min(640px, 100%)",
+          background: "rgba(255, 255, 255, 0.9)",
+          border: "1px solid rgba(15, 23, 42, 0.12)",
+          borderRadius: "22px",
+          boxShadow: "0 18px 55px rgba(15, 23, 42, 0.12)",
+          padding: "22px",
         }}
       >
-        {runnerLocation && <Marker position={runnerLocation} />}
-        {directions && <DirectionsRenderer directions={directions} />}
-      </GoogleMap>
-
-      {eta && (
         <div
           style={{
-            position: "absolute",
-            bottom: 12,
-            left: 12,
-            background: "white",
-            padding: "8px 12px",
-            borderRadius: 8,
-            fontWeight: 700,
+            display: "inline-flex",
+            alignItems: "center",
+            borderRadius: "999px",
+            padding: "7px 12px",
+            background: "#e0f2fe",
+            color: "#075985",
+            fontSize: "12px",
+            fontWeight: 800,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+            marginBottom: "14px",
           }}
         >
-          ETA: {eta}
+          {mapStatus}
         </div>
-      )}
-    </div>
+
+        <h2
+          style={{
+            margin: "0 0 8px",
+            fontSize: "24px",
+            lineHeight: 1.15,
+            letterSpacing: "-0.03em",
+          }}
+        >
+          {locationLabel}
+        </h2>
+
+        <p
+          style={{
+            margin: "0 0 16px",
+            color: "#475569",
+            fontSize: "14px",
+            lineHeight: 1.55,
+          }}
+        >
+          Live Google Maps is paused until the production browser key is verified
+          for this domain. The run workflow remains available.
+        </p>
+
+        <div
+          style={{
+            display: "grid",
+            gap: "10px",
+            gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+          }}
+        >
+          <div
+            style={{
+              border: "1px solid rgba(15, 23, 42, 0.1)",
+              borderRadius: "16px",
+              padding: "14px",
+              background: "#f8fafc",
+            }}
+          >
+            <div
+              style={{
+                color: "#64748b",
+                fontSize: "12px",
+                fontWeight: 800,
+                marginBottom: "6px",
+                textTransform: "uppercase",
+              }}
+            >
+              Status
+            </div>
+            <div style={{ fontWeight: 800 }}>Map fallback active</div>
+          </div>
+
+          <div
+            style={{
+              border: "1px solid rgba(15, 23, 42, 0.1)",
+              borderRadius: "16px",
+              padding: "14px",
+              background: "#f8fafc",
+            }}
+          >
+            <div
+              style={{
+                color: "#64748b",
+                fontSize: "12px",
+                fontWeight: 800,
+                marginBottom: "6px",
+                textTransform: "uppercase",
+              }}
+            >
+              Coordinates
+            </div>
+            <div style={{ fontWeight: 800 }}>{coordinateLabel}</div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
-}
-
-export default function LiveMap({ run }) {
-  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  const hasRealGoogleMapsKey =
-    Boolean(googleMapsApiKey) &&
-    !googleMapsApiKey.toLowerCase().includes("dummy") &&
-    !googleMapsApiKey.toLowerCase().includes("placeholder");
-
-  if (!hasRealGoogleMapsKey) {
-    return <LocalMapPlaceholder run={run} />;
-  }
-
-  return <GoogleLiveMap run={run} googleMapsApiKey={googleMapsApiKey} />;
 }
