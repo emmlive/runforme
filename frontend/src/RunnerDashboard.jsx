@@ -794,7 +794,7 @@ export default function RunnerDashboard({ user }) {
               {(() => {
                 const completionSafety = getCompletionSafety(activeRun);
 
-                
+
   // RUN-UI-1D-CHECKPOINT-4: derived display-only data for runner command center preview.
   const runnerCommandAvailableRuns = Array.isArray(availableRuns) ? availableRuns : [];
   const runnerCommandCompletedRuns = [];
