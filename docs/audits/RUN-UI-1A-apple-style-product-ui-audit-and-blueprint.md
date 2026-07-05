@@ -1,13 +1,13 @@
 ﻿# RUN UI-1A — Apple-Style Product UI Audit and RUNFORME Design Blueprint
 
-Date: 2026-07-04 20:46:52 -05:00
+Date: 2026-07-04 20:50:10 -05:00
 
 ## Release Baseline
 
 - Repository: emmlive/runforme
 - Branch: main
-- Baseline commit: $latestCommit
-- Baseline subject: $latestSubject
+- Baseline commit: bf9cf5a
+- Baseline subject: Record RUNFORME UI design blueprint
 - Production backend: https://runforme-backend.onrender.com
 - Production frontend: https://runforme-frontend.onrender.com
 
@@ -21,14 +21,14 @@ RUNFORME now needs a dedicated product design system and screen-by-screen premiu
 
 | File | Lines | Inline Style Count | Button Count | Form/Input Count | Alert Count |
 |---|---:|---:|---:|---:|---:|
-| $(@{File=frontend/src/App.jsx; Lines=165; InlineStyleCount=1; ButtonCount=0; FormInputCount=0; AlertCount=1}.File) | 165 | 1 | 0 | 0 | 1 |
-| $(@{File=frontend/src/Login.jsx; Lines=96; InlineStyleCount=1; ButtonCount=1; FormInputCount=3; AlertCount=2}.File) | 96 | 1 | 1 | 3 | 2 |
-| $(@{File=frontend/src/Dashboard.jsx; Lines=1231; InlineStyleCount=109; ButtonCount=6; FormInputCount=6; AlertCount=0}.File) | 1231 | 109 | 6 | 6 | 0 |
-| $(@{File=frontend/src/RunnerDashboard.jsx; Lines=1005; InlineStyleCount=45; ButtonCount=6; FormInputCount=3; AlertCount=0}.File) | 1005 | 45 | 6 | 3 | 0 |
-| $(@{File=frontend/src/AdminDisputes.jsx; Lines=115; InlineStyleCount=5; ButtonCount=3; FormInputCount=0; AlertCount=4}.File) | 115 | 5 | 3 | 0 | 4 |
-| $(@{File=frontend/src/AdminGovernance.jsx; Lines=170; InlineStyleCount=14; ButtonCount=5; FormInputCount=0; AlertCount=3}.File) | 170 | 14 | 5 | 0 | 3 |
-| $(@{File=frontend/src/components/LiveMap.jsx; Lines=197; InlineStyleCount=12; ButtonCount=0; FormInputCount=0; AlertCount=0}.File) | 197 | 12 | 0 | 0 | 0 |
-| $(@{File=frontend/src/components/PaymentModal.jsx; Lines=157; InlineStyleCount=4; ButtonCount=1; FormInputCount=0; AlertCount=9}.File) | 157 | 4 | 1 | 0 | 9 |
+| frontend/src/App.jsx | 165 | 1 | 0 | 0 | 1 |
+| frontend/src/Login.jsx | 96 | 1 | 1 | 3 | 2 |
+| frontend/src/Dashboard.jsx | 1231 | 109 | 6 | 6 | 0 |
+| frontend/src/RunnerDashboard.jsx | 1005 | 45 | 6 | 3 | 0 |
+| frontend/src/AdminDisputes.jsx | 115 | 5 | 3 | 0 | 4 |
+| frontend/src/AdminGovernance.jsx | 170 | 14 | 5 | 0 | 3 |
+| frontend/src/components/LiveMap.jsx | 197 | 12 | 0 | 0 | 0 |
+| frontend/src/components/PaymentModal.jsx | 157 | 4 | 1 | 0 | 9 |
 
 ## Current Product Strengths
 
@@ -43,8 +43,6 @@ RUNFORME now needs a dedicated product design system and screen-by-screen premiu
 ## Current UI Gaps
 
 ### 1. Visual Identity
-
-RUNFORME needs a distinct product identity beyond generic cards and buttons.
 
 Current issue:
 - The UI works but does not yet feel premium, native, or iconic.
@@ -123,38 +121,17 @@ Target:
 
 ## RUNFORME Design Principles
 
-1. **Mission-first**
-   Every run should feel like a live mission with a clear next step.
-
-2. **Trust-forward**
-   Payment, receipt, delivery, and completion safety are not hidden mechanics. They are core product value.
-
-3. **Apple-style restraint**
-   Reduce clutter. Use clean spacing, soft depth, simple hierarchy, and calm motion.
-
-4. **One primary action**
-   Especially for runners, show one obvious next step instead of many equal-weight buttons.
-
-5. **Status is visual**
-   Use progress timelines, badges, checkpoints, and cards instead of dense text.
-
-6. **Fast confidence**
-   Users should understand what is happening in two seconds.
-
-7. **Premium but practical**
-   The design should feel high-end, but still work for real errands, deliveries, pickups, and service runs.
+1. Mission-first — every run should feel like a live mission with a clear next step.
+2. Trust-forward — payment, receipt, delivery, and completion safety are core product value.
+3. Apple-style restraint — reduce clutter with clean spacing, soft depth, calm motion, and clear hierarchy.
+4. One primary action — especially for runners, show one obvious next step instead of many equal-weight buttons.
+5. Status is visual — use timelines, badges, checkpoints, and cards instead of dense text.
+6. Fast confidence — users should understand what is happening in two seconds.
+7. Premium but practical — high-end design must still support real errands, deliveries, pickups, and service runs.
 
 ## Apple-Style Baseline
 
 ### Typography
-
-- Use a simple system-font stack.
-- Large page titles.
-- Clear section titles.
-- Compact metadata.
-- Avoid dense paragraphs in action screens.
-
-Recommended scale:
 
 - Display: 32–40px
 - Page title: 26–32px
@@ -164,8 +141,6 @@ Recommended scale:
 - Button: 15–16px semibold
 
 ### Spacing
-
-Recommended spacing scale:
 
 - 4px micro
 - 8px small
@@ -187,14 +162,14 @@ Recommended spacing scale:
 ### Depth
 
 - Soft shadow only where hierarchy matters.
-- Prefer subtle border + translucent background.
+- Prefer subtle border plus translucent background.
 - Avoid heavy box shadows.
 
 ### Motion
 
 - Smooth state transitions.
-- Button pressed state.
-- Card hover/active state.
+- Button pressed states.
+- Card hover/active states.
 - Toast entrance/exit.
 - Drawer slide/fade.
 - Status checkpoint progress.
@@ -214,8 +189,6 @@ Recommended spacing scale:
 
 ### Suggested Color Roles
 
-Do not over-color the UI. Use color to communicate state.
-
 - Base: white / off-white / slate
 - Primary: deep blue or near-black premium action
 - Success: green
@@ -225,8 +198,6 @@ Do not over-color the UI. Use color to communicate state.
 - Neutral metadata: slate
 
 ### Icon Language
-
-Use simple line icons later:
 
 - Shield: secure hold / safety
 - Receipt: proof
@@ -240,8 +211,6 @@ Use simple line icons later:
 ## Screen Architecture Target
 
 ### Requester Command Center
-
-Sections:
 
 1. Header
    - Greeting / role
@@ -269,8 +238,6 @@ Sections:
 
 ### Runner Mission Control
 
-Sections:
-
 1. Status Switch
    - Online/offline
    - Trust/safety note
@@ -278,21 +245,21 @@ Sections:
 2. Available Missions
    - Mission cards
    - Payout
-   - max spend
-   - secure hold state
-   - accept CTA
+   - Max spend
+   - Secure hold state
+   - Accept CTA
 
 3. Active Mission
    - One next action at a time
    - Status timeline
-   - receipt proof
-   - delivery confirmation
-   - completion
+   - Receipt proof
+   - Delivery confirmation
+   - Completion
 
 4. Earnings/Safety Summary
    - Payout ready
-   - spend limit
-   - review required status
+   - Spend limit
+   - Review required status
 
 ## Component Roadmap
 
@@ -300,21 +267,20 @@ Sections:
 
 Create:
 
-- rontend/src/styles/tokens.css
-- rontend/src/components/ui/Button.jsx
-- rontend/src/components/ui/Card.jsx
-- rontend/src/components/ui/StatusPill.jsx
-- rontend/src/components/ui/TrustBadge.jsx
-- rontend/src/components/ui/EmptyState.jsx
-- rontend/src/components/ui/SectionHeader.jsx
-- rontend/src/components/ui/ActionBar.jsx
+- frontend/src/styles/tokens.css
+- frontend/src/components/ui/Button.jsx
+- frontend/src/components/ui/Card.jsx
+- frontend/src/components/ui/StatusPill.jsx
+- frontend/src/components/ui/TrustBadge.jsx
+- frontend/src/components/ui/EmptyState.jsx
+- frontend/src/components/ui/SectionHeader.jsx
+- frontend/src/components/ui/ActionBar.jsx
 
 No business logic changes.
 
 ### RUN UI-1C — Requester Dashboard Redesign
 
 Target:
-
 - Redesign requester dashboard around Command Center.
 - Preserve API calls and socket behavior.
 - Preserve secure hold, create run, active/completed run behavior.
@@ -322,28 +288,24 @@ Target:
 ### RUN UI-1D — Runner Dashboard Redesign
 
 Target:
-
 - Redesign runner dashboard around Mission Control.
 - Preserve runner online, location update, accept, arrived, receipt, delivery PIN, complete behavior.
 
 ### RUN UI-1E — Run Detail / Mission Card
 
 Target:
-
 - Extract and polish Run Detail into reusable Mission Card.
 - Stronger trust/safety timeline.
 
 ### RUN UI-1F — Create Run Flow
 
 Target:
-
 - Convert simple form into guided create-run experience.
 - Add beginner-friendly copy and safer budget explanation.
 
 ### RUN UI-1G — Motion and Interaction Polish
 
 Target:
-
 - Loading skeletons.
 - Toasts.
 - Button pending states.
@@ -363,10 +325,8 @@ Target:
 
 Every UI patch must pass:
 
-- 
-pm run lint
-- 
-pm run build
+- npm run lint
+- npm run build
 - backend syntax checks for key files
 - no direct frontend hardcoded production-blocking localhost calls
 - no sensitive token/debug logs
@@ -382,8 +342,6 @@ pm run build
 
 ## Recommended Next Step
 
-Proceed to:
-
-RUN UI-1B — Build shared Apple-style design tokens and primitive components
+Proceed to RUN UI-1B — Build shared Apple-style design tokens and primitive components.
 
 This should be a small scoped component foundation patch with no dashboard redesign yet.
