@@ -1,0 +1,104 @@
+﻿            </div>
+          )}
+
+          {availableRuns.slice(0, 3).map((run) => (
+            <div key={run.id} style={{
+              border: "1px solid #333",
+              padding: 12,
+              marginBottom: 10,
+              borderRadius: 8
+            }}>
+              <p>{run.item}</p>
+
+              {Number(run.maxRunnerSpend || 0) > 0 && (
+                <p style={{
+                  marginTop: -4,
+                  marginBottom: 10,
+                  color: "#fde68a",
+                  fontSize: 12,
+                  lineHeight: 1.45,
+                  fontWeight: 700
+                }}>
+                  Secure hold authorized by requester before this offer appeared. Placeholder mode only - no live card charge.
+                </p>
+              )}
+
+              <button
+                disabled={acceptingRunId === run.id}
+                onClick={async () => {
+                  if (!run.id) return;
+
+                  if (acceptingRunIdRef.current === run.id) return;
+
+                  acceptingRunIdRef.current = run.id;
+                  setAcceptingRunId(run.id);
+
+                  setAcceptMessage(null);
+
+                  try {
+                    console.log("âœ… ACCEPTING RUN:", run.id);
+
+                    const res = await apiRequest(
+                      `/api/runs/${run.id}/accept`,
+                      { method: "POST" }
+                    );
+
+                    console.log("âœ… ACCEPT RESULT:", res);
+
+                    if (res.success) {
+                      setAcceptMessage({
+                        type: "success",
+                        text: "Run accepted. Head to the pickup location when ready.",
+                      });
+
+                      setRuns((prev) =>
+                        prev.map((r) =>
+                          r.id === run.id
+                            ? { ...r, status: "assigned" }
+                            : r
+                        )
+                      );
+
+                      return;
+                    }
+
+                    setAcceptMessage({
+                      type: "error",
+                      text: res.error || "Could not accept this run. It may no longer be available or the requester secure hold is not authorized yet.",
+                    });
+                  } catch (err) {
+                    console.error("Accept run failed:", err);
+
+                    setAcceptMessage({
+                      type: "error",
+                      text: err.message || "Could not accept this run. It may no longer be available or the requester secure hold is not authorized yet.",
+                    });
+                  } finally {
+                    if (acceptingRunIdRef.current === run.id) {
+                      acceptingRunIdRef.current = null;
+                    }
+
+                    setAcceptingRunId((currentId) =>
+                      currentId === run.id ? null : currentId
+                    );
+                  }
+                }}
+                style={{
+                  opacity: acceptingRunId === run.id ? 0.55 : 1,
+                  cursor: acceptingRunId === run.id ? "not-allowed" : "pointer",
+                  background: "#f59e0b",
+                  color: "#000",
+                  border: "none",
+                  padding: "8px 12px",
+                  borderRadius: 6
+                }}
+              >
+                {acceptingRunId === run.id ? "Accepting..." : "Accept"}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

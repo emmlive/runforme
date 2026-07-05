@@ -1,0 +1,180 @@
+﻿import { useEffect, useRef, useState } from "react";
+import { apiRequest } from "./api/client";
+import { socket } from "./lib/socket"; // âœ… shared socket (FIX)
+import LiveMap from "./components/LiveMap";
+
+function getCompletionSafety(run) {
+  if (!run) {
+    return {
+      disabled: true,
+      title: "No active run",
+      detail: "Select an active run before completing.",
+    };
+  }
+
+  const receiptRequired = Number(run.maxRunnerSpend || 0) > 0;
+  const receiptUploaded = run.receiptStatus === "uploaded";
+  const manualReviewRequired =
+    Boolean(run.requiresManualReview) ||
+    run.receiptStatus === "review_required" ||
+    run.payoutStatus === "manual_review_required";
+
+  if (manualReviewRequired) {
+    return {
+      disabled: true,
+      title: "Waiting for requester manual review",
+      detail: "This run has a receipt or spend issue that must be approved before completion.",
+    };
+  }
+
+  if (receiptRequired && !receiptUploaded) {
+    return {
+      disabled: true,
+      title: "Waiting for receipt proof",
+      detail: "Submit receipt amount and proof before completing this purchase run.",
+    };
+  }
+
+  if (!run.deliveryConfirmedAt) {
+    return {
+      disabled: true,
+      title: "Waiting for delivery PIN confirmation",
+      detail: "Ask the requester for their delivery PIN, then confirm delivery.",
+    };
+  }
+
+  return {
+    disabled: false,
+    title: "Ready to complete",
+    detail: "Receipt proof and delivery confirmation are complete.",
+  };
+}
+
+
+export default function RunnerDashboard({ user }) {
+  const [online, setOnline] = useState(false);
+  const [runs, setRuns] = useState([]);
+  const [statusMessage, setStatusMessage] = useState("Offline");
+  const [deliveryPins, setDeliveryPins] = useState({});
+  const [receiptProofs, setReceiptProofs] = useState({});
+  const [actionMessage, setActionMessage] = useState(null);
+  const [acceptMessage, setAcceptMessage] = useState(null);
+  const [acceptingRunId, setAcceptingRunId] = useState(null);
+  const [activeAction, setActiveAction] = useState(null);
+
+  const watchIdRef = useRef(null);
+  const lastSentRef = useRef(0);
+  const acceptingRunIdRef = useRef(null);
+  const activeActionRef = useRef(null);
+
+  ////////////////////////////////////////////////////////
+  // FETCH RUNS
+  ////////////////////////////////////////////////////////
+  async function fetchRuns() {
+    try {
+      const res = await apiRequest("/api/runs");
+
+      if (res.success) {
+        setRuns(() => {
+          const map = new Map();
+
+          res.runs.forEach((r) => {
+            if (
+              r.status === "open" ||
+              r.status === "assigned" ||
+              r.status === "arrived" ||
+              r.status === "in_progress"
+            ) {
+              map.set(r.id, r);
+            }
+          });
+
+          return Array.from(map.values());
+        });
+      }
+    } catch (err) {
+      console.error("Fetch runs error:", err);
+    }
+  }
+
+  ////////////////////////////////////////////////////////
+  // SOCKET EVENTS
+  ////////////////////////////////////////////////////////
+  useEffect(() => {
+    if (!user?.id) return;
+
+    socket.emit("join.runner", user.id);
+
+    setRuns([]); // ðŸ”¥ CLEAN RESET
+
+    fetchRuns(); // Load existing offers on page load/refresh
+
+    socket.off("run.offer");
+    socket.off("run.updated");
+    socket.off("run.unavailable");
+
+    const handleRunOffer = (data) => {
+      if (!data?.run || !data?.offer) return;
+
+      const incomingRun = {
+        ...data.run,
+        offerId: data.offer.id,
+      };
+
+      setRuns((prev) => {
+        const exists = prev.find((r) => r.id === incomingRun.id);
+
+        if (exists) {
+          return prev.map((r) =>
+            r.id === incomingRun.id ? incomingRun : r
+          );
+        }
+
+        return [incomingRun, ...prev];
+      });
+    };
+
+    const handleRunUpdated = (data) => {
+      const updatedRun = data.run;
+      if (!updatedRun?.id) return;
+
+      setRuns((prev) =>
+        prev.map((r) =>
+          r.id === updatedRun.id
+            ? { ...r, ...updatedRun, offerId: r.offerId }
+            : r
+        )
+      );
+    };
+
+    const handleRunUnavailable = (data) => {
+      const unavailableRunId = data?.runId;
+      if (!unavailableRunId) return;
+
+      setRuns((prev) => prev.filter((r) => r.id !== unavailableRunId));
+
+      if (acceptingRunIdRef.current === unavailableRunId) {
+        acceptingRunIdRef.current = null;
+      }
+
+      setAcceptingRunId((currentId) =>
+        currentId === unavailableRunId ? null : currentId
+      );
+
+      setAcceptMessage({
+        type: "error",
+        text: data.reason || "This run is no longer available.",
+      });
+    };
+
+    socket.on("run.offer", handleRunOffer);
+    socket.on("run.updated", handleRunUpdated);
+    socket.on("run.unavailable", handleRunUnavailable);
+
+    return () => {
+      socket.off("run.offer", handleRunOffer);
+      socket.off("run.updated", handleRunUpdated);
+      socket.off("run.unavailable", handleRunUnavailable);
+    };
+  }, [user?.id]);
+

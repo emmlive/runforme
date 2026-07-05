@@ -1,0 +1,180 @@
+﻿  ////////////////////////////////////////////////////////
+  // CLEANUP STALE RUNS
+  ////////////////////////////////////////////////////////
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRuns((prev) =>
+        prev.filter(
+          (r) =>
+            r.status !== "completed" &&
+            r.status !== "cancelled"
+        )
+      );
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  ////////////////////////////////////////////////////////
+  // GPS
+  ////////////////////////////////////////////////////////
+  function startGpsStreaming() {
+    if (!navigator.geolocation) return;
+
+    if (watchIdRef.current !== null) return;
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      async (pos) => {
+        const now = Date.now();
+        if (now - lastSentRef.current < 3000) return;
+
+        lastSentRef.current = now;
+
+        await apiRequest("/api/runners/location", {
+          method: "POST",
+          body: {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          },
+        });
+      }
+    );
+  }
+
+  function stopGpsStreaming() {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+  }
+
+  ////////////////////////////////////////////////////////
+  // ONLINE TOGGLE
+  ////////////////////////////////////////////////////////
+  async function toggleOnline() {
+    const nextOnline = !online;
+
+    try {
+      const res = await apiRequest("/api/runners/status", {
+        method: "POST",
+        body: { online: nextOnline },
+      });
+
+      if (!res.success) {
+        throw new Error(res.error || "Failed to update runner status");
+      }
+
+      setOnline(nextOnline);
+
+      if (nextOnline) {
+        setStatusMessage(
+          navigator.geolocation ? "Online" : "Online - GPS unavailable"
+        );
+      } else {
+        setStatusMessage("Offline");
+        stopGpsStreaming();
+      }
+    } catch (err) {
+      console.error("Runner status update failed:", err);
+      setStatusMessage("Status failed");
+    }
+  }
+
+  ////////////////////////////////////////////////////////
+  // AUTO GPS CONTROL
+  ////////////////////////////////////////////////////////
+  useEffect(() => {
+    if (!online) return;
+
+    const activeRun = runs.find(
+      (r) =>
+        r.status === "assigned" ||
+        r.status === "arrived" ||
+        r.status === "in_progress"
+    );
+
+    if (activeRun) startGpsStreaming();
+    else stopGpsStreaming();
+  }, [runs, online]);
+
+  ////////////////////////////////////////////////////////
+  // ACTIONS
+  ////////////////////////////////////////////////////////
+  async function markArrived(id) {
+    const actionKey = `${id}:arrived`;
+
+    if (activeActionRef.current === actionKey) return;
+
+    activeActionRef.current = actionKey;
+    setActiveAction(actionKey);
+    setActionMessage(null);
+
+    try {
+      const res = await apiRequest(`/api/runs/${id}/arrived`, {
+        method: "POST",
+      });
+
+      if (res.success) {
+        setActionMessage({ type: "success", text: "Arrival marked." });
+        setRuns((prev) =>
+          prev.map((r) =>
+            r.id === id ? { ...r, ...res.run, status: res.run?.status || "arrived" } : r
+          )
+        );
+        return;
+      }
+
+      setActionMessage({
+        type: "error",
+        text: res.error || "Could not mark this run as arrived.",
+      });
+    } catch (err) {
+      setActionMessage({
+        type: "error",
+        text: err.message || "Could not mark this run as arrived.",
+      });
+    } finally {
+      if (activeActionRef.current === actionKey) {
+        activeActionRef.current = null;
+      }
+
+      setActiveAction((currentAction) =>
+        currentAction === actionKey ? null : currentAction
+      );
+    }
+  }
+
+  async function submitReceiptProof(id) {
+    const proof = receiptProofs[id] || {};
+    const receiptAmount = Number(proof.receiptAmount);
+    const receiptImageUrl = String(proof.receiptImageUrl || "").trim();
+
+    if (!Number.isInteger(receiptAmount) || receiptAmount <= 0) {
+      setActionMessage({ type: "error", text: "Enter a valid whole-dollar receipt amount." });
+      return;
+    }
+
+    if (!receiptImageUrl) {
+      setActionMessage({ type: "error", text: "Enter a receipt proof URL." });
+      return;
+    }
+
+    const actionKey = `${id}:receipt-proof`;
+
+    if (activeActionRef.current === actionKey) return;
+
+    activeActionRef.current = actionKey;
+    setActiveAction(actionKey);
+    setActionMessage(null);
+
+    try {
+      const res = await apiRequest(`/api/runs/${id}/receipt-proof`, {
+        method: "POST",
+        body: { receiptAmount, receiptImageUrl },
+      });
+
+      if (res.success) {
+        setActionMessage({ type: "success", text: "Receipt proof submitted." });
+        setReceiptProofs((prev) => ({ ...prev, [id]: {} }));
+        setRuns((prev) =>
+          prev.map((r) =>
