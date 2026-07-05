@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 
+import { RequesterMissionSummary, RequesterTrustTimeline } from "./components/requester";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5050";
 
 const statusLabels = {
@@ -880,6 +881,12 @@ export default function Dashboard({ onLogout }) {
         minHeight: "100vh",
       }}
     >
+      {/* RUN-UI-1C-CHECKPOINT-3: requester command center preview; presentation-only wiring. */}
+      <section className="requester-command-shell" aria-label="Requester command center">
+        <RequesterMissionSummary />
+        <RequesterTrustTimeline />
+      </section>
+
       <div style={{ maxWidth: 900, margin: "0 auto", width: "100%" }}>
         <div
           style={{
