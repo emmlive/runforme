@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { apiRequest } from "./api/client";
 import { socket } from "./lib/socket"; // ✅ shared socket (FIX)
 import LiveMap from "./components/LiveMap";
+import { RunnerCommandCenter } from "./components/runner";
 
 function getCompletionSafety(run) {
   if (!run) {
@@ -800,6 +801,12 @@ export default function RunnerDashboard({ user }) {
                     padding: 12,
                     background: "#111827"
                   }}>
+      {/* RUN-UI-1D-CHECKPOINT-3: display-only runner command center preview. */}
+      <RunnerCommandCenter
+        title="Runner command center preview"
+        note="A display-only preview of the future runner workflow surface. Existing accept, start, arrived, receipt, delivery, and completion behavior remains in RunnerDashboard."
+      />
+
                     <div style={{
                       fontSize: 12,
                       opacity: 0.75,
