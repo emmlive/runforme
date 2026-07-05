@@ -1,0 +1,88 @@
+﻿:root {
+  color-scheme: light;
+
+  --rf-font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Segoe UI", sans-serif;
+
+  --rf-color-ink: #0b1220;
+  --rf-color-ink-soft: #334155;
+  --rf-color-muted: #64748b;
+  --rf-color-subtle: #94a3b8;
+
+  --rf-color-canvas: #f8fafc;
+  --rf-color-surface: #ffffff;
+  --rf-color-surface-soft: rgba(255, 255, 255, 0.86);
+  --rf-color-border: rgba(15, 23, 42, 0.1);
+
+  --rf-color-primary: #0f172a;
+  --rf-color-primary-hover: #1e293b;
+  --rf-color-primary-soft: #e0f2fe;
+
+  --rf-color-trust: #0ea5e9;
+  --rf-color-trust-soft: #e0f2fe;
+  --rf-color-success: #16a34a;
+  --rf-color-success-soft: #dcfce7;
+  --rf-color-warning: #d97706;
+  --rf-color-warning-soft: #fef3c7;
+  --rf-color-danger: #dc2626;
+  --rf-color-danger-soft: #fee2e2;
+  --rf-color-neutral-soft: #f1f5f9;
+
+  --rf-space-1: 4px;
+  --rf-space-2: 8px;
+  --rf-space-3: 12px;
+  --rf-space-4: 16px;
+  --rf-space-5: 20px;
+  --rf-space-6: 24px;
+  --rf-space-8: 32px;
+  --rf-space-10: 40px;
+  --rf-space-12: 48px;
+
+  --rf-radius-sm: 10px;
+  --rf-radius-md: 14px;
+  --rf-radius-lg: 18px;
+  --rf-radius-xl: 24px;
+  --rf-radius-2xl: 32px;
+  --rf-radius-pill: 999px;
+
+  --rf-shadow-card: 0 18px 55px rgba(15, 23, 42, 0.1);
+  --rf-shadow-soft: 0 10px 32px rgba(15, 23, 42, 0.08);
+  --rf-shadow-pressed: 0 8px 18px rgba(15, 23, 42, 0.12);
+
+  --rf-motion-fast: 140ms ease;
+  --rf-motion-standard: 220ms ease;
+  --rf-motion-slow: 320ms ease;
+
+  --rf-text-display: clamp(32px, 4vw, 44px);
+  --rf-text-title: clamp(26px, 3vw, 34px);
+  --rf-text-section: 20px;
+  --rf-text-body: 16px;
+  --rf-text-small: 13px;
+  --rf-text-micro: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--rf-font-sans);
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --rf-motion-fast: 1ms linear;
+    --rf-motion-standard: 1ms linear;
+    --rf-motion-slow: 1ms linear;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+}
