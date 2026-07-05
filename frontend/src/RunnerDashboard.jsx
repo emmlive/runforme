@@ -825,14 +825,17 @@ return (
                     background: "#111827"
                   }}>
       {/* RUN-UI-1D-CHECKPOINT-3: display-only runner command center preview. */}
-      <RunnerCommandCenter
-        title="Runner command center preview"
-        note="Live display data now powers this preview while existing runner actions remain untouched."
-        statusLabel={runnerCommandStatusLabel}
-        metrics={runnerCommandMetrics}
-        focusedRun={runnerCommandFocusedRun}
-        checklistItems={runnerCommandChecklistItems}
-      />
+      {/* RUN-UI-1D-CHECKPOINT-5: layout-only placement shell for runner command center preview. */}
+      <div className="runner-command-center-preview-slot">
+        <RunnerCommandCenter
+          title="Runner command center preview"
+          note="Live display data now powers this preview while existing runner actions remain untouched."
+          statusLabel={runnerCommandStatusLabel}
+          metrics={runnerCommandMetrics}
+          focusedRun={runnerCommandFocusedRun}
+          checklistItems={runnerCommandChecklistItems}
+        />
+      </div>
 
                     <div style={{
                       fontSize: 12,

@@ -1,4 +1,4 @@
-﻿.runner-command-center {
+.runner-command-center {
   background:
     radial-gradient(circle at 12% 10%, rgba(37, 99, 235, 0.12), transparent 34%),
     radial-gradient(circle at 88% 4%, rgba(14, 165, 233, 0.1), transparent 30%),
@@ -239,5 +239,20 @@
   .runner-status-summary__metrics,
   .runner-run-card__footer {
     grid-template-columns: 1fr;
+  }
+}
+
+/* RUN-UI-1D-CHECKPOINT-5: layout-only placement shell for the RunnerDashboard preview. */
+.runner-command-center-preview-slot {
+  margin: 18px 0 24px;
+}
+
+.runner-command-center-preview-slot .runner-command-center {
+  max-width: 1180px;
+}
+
+@media (max-width: 720px) {
+  .runner-command-center-preview-slot {
+    margin: 14px 0 20px;
   }
 }
