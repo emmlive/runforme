@@ -422,3 +422,116 @@
     width: fit-content;
   }
 }
+
+/* RUN-UI-1C-CHECKPOINT-9: Visual polish after requester extraction. */
+.requester-command-shell--dashboard {
+  isolation: isolate;
+  position: relative;
+}
+
+.requester-command-shell--dashboard::before {
+  background:
+    radial-gradient(circle at 16% 12%, rgba(59, 130, 246, 0.13), transparent 34%),
+    radial-gradient(circle at 84% 6%, rgba(14, 165, 233, 0.12), transparent 32%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.7));
+  border-radius: 32px;
+  bottom: -10px;
+  content: "";
+  filter: blur(0);
+  left: -10px;
+  opacity: 0.9;
+  position: absolute;
+  right: -10px;
+  top: -10px;
+  z-index: -1;
+}
+
+.requester-command-shell__content {
+  align-items: stretch;
+}
+
+.requester-command-shell__kicker {
+  text-wrap: balance;
+}
+
+.requester-command-shell__note {
+  max-width: 58ch;
+}
+
+.requester-mission-summary,
+.requester-trust-timeline,
+.requester-run-list {
+  backdrop-filter: blur(18px);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.requester-mission-summary:hover,
+.requester-trust-timeline:hover,
+.requester-run-list:hover {
+  border-color: rgba(37, 99, 235, 0.18);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.1);
+  transform: translateY(-1px);
+}
+
+.requester-run-lists {
+  align-items: stretch;
+}
+
+.requester-run-list {
+  min-height: 100%;
+}
+
+.requester-run-list__item {
+  min-width: 0;
+}
+
+.requester-run-list__item-title,
+.requester-run-list__item-detail {
+  min-width: 0;
+}
+
+.requester-run-list__item-detail {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.requester-run-list__status {
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .requester-mission-summary,
+  .requester-trust-timeline,
+  .requester-run-list {
+    transition: none;
+  }
+
+  .requester-mission-summary:hover,
+  .requester-trust-timeline:hover,
+  .requester-run-list:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .requester-command-shell--dashboard::before {
+    border-radius: 26px;
+    left: -6px;
+    right: -6px;
+  }
+}
+
+@media (max-width: 560px) {
+  .requester-command-shell--dashboard::before {
+    bottom: -6px;
+    top: -6px;
+  }
+
+  .requester-run-list__item-detail {
+    -webkit-line-clamp: 3;
+  }
+}
