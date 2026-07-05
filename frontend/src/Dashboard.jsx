@@ -872,7 +872,60 @@ export default function Dashboard({ onLogout }) {
     navigate("/");
   };
 
-  return (
+    // RUN-UI-1C-CHECKPOINT-4: display-only requester Command Center data.
+  const requesterCommandActiveRuns = Array.isArray(activeRuns) ? activeRuns : [];
+  const requesterCommandHistoryRuns = Array.isArray(completedRuns) ? completedRuns : [];
+  const requesterCommandActiveRun = requesterCommandActiveRuns[0] || null;
+  const requesterCommandHoldReady = Boolean(
+    requesterCommandActiveRun?.authorizationStatus || requesterCommandActiveRun?.holdStatus
+  );
+  const requesterCommandRunnerReady = Boolean(
+    requesterCommandActiveRun?.runnerId ||
+      requesterCommandActiveRun?.runner ||
+      requesterCommandActiveRun?.acceptedAt
+  );
+  const requesterCommandProofReady = Boolean(
+    requesterCommandActiveRun?.deliveryPin ||
+      requesterCommandActiveRun?.deliveryConfirmation ||
+      requesterCommandActiveRun?.receiptUrl ||
+      requesterCommandActiveRun?.receiptImageUrl
+  );
+  const requesterCommandSteps = [
+    {
+      id: "created",
+      title: "Run request created",
+      copy: requesterCommandActiveRun
+        ? "Live requester run data is now feeding this command surface."
+        : "Create a run to activate this requester command surface.",
+      state: requesterCommandActiveRun ? "done" : "pending",
+    },
+    {
+      id: "hold",
+      title: "Secure hold placeholder",
+      copy: requesterCommandHoldReady
+        ? "Hold readiness is visible from the active requester run."
+        : "Hold readiness will appear here when available on the run.",
+      state: requesterCommandHoldReady ? "done" : requesterCommandActiveRun ? "active" : "pending",
+    },
+    {
+      id: "runner",
+      title: "Runner acceptance",
+      copy: requesterCommandRunnerReady
+        ? "Runner acceptance details are reflected from the active run."
+        : "Runner acceptance will appear here after the run is picked up.",
+      state: requesterCommandRunnerReady ? "done" : requesterCommandActiveRun ? "active" : "pending",
+    },
+    {
+      id: "proof",
+      title: "Delivery proof and review",
+      copy: requesterCommandProofReady
+        ? "Delivery proof signals are reflected from the active run."
+        : "Proof and review checkpoints will appear here as the run advances.",
+      state: requesterCommandProofReady ? "done" : requesterCommandRunnerReady ? "active" : "pending",
+    },
+  ];
+
+return (
     <div
       style={{
         padding: isMobile ? 16 : 32,
@@ -883,8 +936,12 @@ export default function Dashboard({ onLogout }) {
     >
       {/* RUN-UI-1C-CHECKPOINT-3: requester command center preview; presentation-only wiring. */}
       <section className="requester-command-shell" aria-label="Requester command center">
-        <RequesterMissionSummary />
-        <RequesterTrustTimeline />
+        <RequesterMissionSummary
+          activeRun={requesterCommandActiveRun}
+          activeRuns={requesterCommandActiveRuns}
+          historyRuns={requesterCommandHistoryRuns}
+        />
+        <RequesterTrustTimeline steps={requesterCommandSteps} />
       </section>
 
       <div style={{ maxWidth: 900, margin: "0 auto", width: "100%" }}>
