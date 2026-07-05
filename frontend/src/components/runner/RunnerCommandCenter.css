@@ -1,0 +1,243 @@
+﻿.runner-command-center {
+  background:
+    radial-gradient(circle at 12% 10%, rgba(37, 99, 235, 0.12), transparent 34%),
+    radial-gradient(circle at 88% 4%, rgba(14, 165, 233, 0.1), transparent 30%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.78));
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 32px;
+  box-shadow: 0 28px 90px rgba(15, 23, 42, 0.1);
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.runner-command-center__intro {
+  display: grid;
+  gap: 8px;
+}
+
+.runner-command-center__kicker {
+  color: #2563eb;
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.runner-command-center__title {
+  color: #0f172a;
+  font-size: clamp(1.45rem, 2.5vw, 2.2rem);
+  font-weight: 900;
+  letter-spacing: -0.055em;
+  line-height: 1.02;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.runner-command-center__note {
+  color: #64748b;
+  font-size: 0.96rem;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 62ch;
+}
+
+.runner-command-center__grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.8fr);
+}
+
+.runner-status-summary,
+.runner-trust-checklist,
+.runner-run-card {
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 24px;
+  box-shadow: 0 18px 60px rgba(15, 23, 42, 0.07);
+  padding: 18px;
+}
+
+.runner-status-summary {
+  display: grid;
+  gap: 14px;
+}
+
+.runner-status-summary__header {
+  align-items: start;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.runner-status-summary__title,
+.runner-trust-checklist__title,
+.runner-run-card__title {
+  color: #0f172a;
+  font-size: 0.98rem;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+.runner-status-summary__subtitle,
+.runner-trust-checklist__note,
+.runner-run-card__meta,
+.runner-run-card__detail {
+  color: #64748b;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  margin: 4px 0 0;
+}
+
+.runner-status-summary__pill,
+.runner-run-card__status {
+  background: rgba(37, 99, 235, 0.1);
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.08);
+  color: #1d4ed8;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 850;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
+.runner-status-summary__metrics {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.runner-status-summary__metric {
+  background: rgba(248, 250, 252, 0.82);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px;
+  padding: 13px;
+}
+
+.runner-status-summary__metric-label {
+  color: #64748b;
+  font-size: 0.74rem;
+  font-weight: 750;
+  margin: 0;
+}
+
+.runner-status-summary__metric-value {
+  color: #0f172a;
+  font-size: 1.28rem;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  margin: 6px 0 0;
+}
+
+.runner-run-card {
+  display: grid;
+  gap: 12px;
+}
+
+.runner-run-card__header {
+  align-items: start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.runner-run-card__detail {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.runner-run-card__footer {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.runner-run-card__footer-item {
+  background: rgba(248, 250, 252, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 16px;
+  padding: 11px;
+}
+
+.runner-run-card__footer-label {
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.runner-run-card__footer-value {
+  color: #0f172a;
+  font-size: 0.86rem;
+  font-weight: 850;
+  margin: 5px 0 0;
+}
+
+.runner-trust-checklist {
+  display: grid;
+  gap: 12px;
+}
+
+.runner-trust-checklist__items {
+  display: grid;
+  gap: 9px;
+}
+
+.runner-trust-checklist__item {
+  align-items: start;
+  display: grid;
+  gap: 9px;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.runner-trust-checklist__dot {
+  background: rgba(37, 99, 235, 0.12);
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.16);
+  height: 10px;
+  margin-top: 6px;
+  width: 10px;
+}
+
+.runner-trust-checklist__label {
+  color: #0f172a;
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.45;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .runner-command-center__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .runner-command-center {
+    border-radius: 24px;
+    padding: 16px;
+  }
+
+  .runner-status-summary,
+  .runner-trust-checklist,
+  .runner-run-card {
+    border-radius: 20px;
+    padding: 15px;
+  }
+
+  .runner-status-summary__header,
+  .runner-run-card__header {
+    display: grid;
+  }
+
+  .runner-status-summary__metrics,
+  .runner-run-card__footer {
+    grid-template-columns: 1fr;
+  }
+}
