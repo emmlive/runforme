@@ -1,5 +1,6 @@
 ﻿import "./RequesterCommandCenter.css";
 import RequesterMissionSummary from "./RequesterMissionSummary";
+import RequesterRunOverviewIntro from "./RequesterRunOverviewIntro";
 import RequesterTrustTimeline from "./RequesterTrustTimeline";
 
 export default function RequesterRunOverview({
@@ -13,12 +14,8 @@ export default function RequesterRunOverview({
       className="requester-command-shell requester-command-shell--dashboard"
       aria-label="Requester command center"
     >
-      <div className="requester-command-shell__intro">
-        <p className="requester-command-shell__kicker">Live requester overview</p>
-        <p className="requester-command-shell__note">
-          Real run data, trust checkpoints, and current movement stay grouped before the detailed panels below.
-        </p>
-      </div>
+      {/* RUN-UI-1C-CHECKPOINT-7: extracted overview intro presentation. */}
+      <RequesterRunOverviewIntro />
 
       <div className="requester-command-shell__content">
         <RequesterMissionSummary activeRun={activeRun} activeRuns={activeRuns} historyRuns={historyRuns} />
