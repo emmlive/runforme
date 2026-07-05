@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 
-import { RequesterMissionSummary, RequesterTrustTimeline } from "./components/requester";
+import { RequesterRunOverview } from "./components/requester";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5050";
 
 const statusLabels = {
@@ -934,27 +934,13 @@ return (
         minHeight: "100vh",
       }}
     >
-      {/* RUN-UI-1C-CHECKPOINT-5: layout-only requester command center placement. */}
-      <section
-        className="requester-command-shell requester-command-shell--dashboard"
-        aria-label="Requester command center"
-      >
-        <div className="requester-command-shell__intro">
-          <p className="requester-command-shell__kicker">Live requester overview</p>
-          <p className="requester-command-shell__note">
-            Real run data, trust checkpoints, and current movement stay grouped before the detailed panels below.
-          </p>
-        </div>
-
-        <div className="requester-command-shell__content">
-          <RequesterMissionSummary
-            activeRun={requesterCommandActiveRun}
-            activeRuns={requesterCommandActiveRuns}
-            historyRuns={requesterCommandHistoryRuns}
-          />
-          <RequesterTrustTimeline steps={requesterCommandSteps} />
-        </div>
-      </section>
+      {/* RUN-UI-1C-CHECKPOINT-6: extracted requester run overview presentation. */}
+      <RequesterRunOverview
+        activeRun={requesterCommandActiveRun}
+        activeRuns={requesterCommandActiveRuns}
+        historyRuns={requesterCommandHistoryRuns}
+        steps={requesterCommandSteps}
+      />
 
       <div style={{ maxWidth: 900, margin: "0 auto", width: "100%" }}>
         <div
