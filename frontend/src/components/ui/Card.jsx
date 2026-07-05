@@ -12,7 +12,7 @@ export default function Card({
   elevated = false,
   interactive = false,
   className = "",
-  as: Component = "div",
+  as = "div",
   ...props
 }) {
   const classes = [
@@ -25,9 +25,22 @@ export default function Card({
     .filter(Boolean)
     .join(" ");
 
-  return (
-    <Component className={classes} {...props}>
-      {children}
-    </Component>
-  );
+  const cardProps = {
+    className: classes,
+    ...props,
+  };
+
+  if (as === "section") {
+    return <section {...cardProps}>{children}</section>;
+  }
+
+  if (as === "article") {
+    return <article {...cardProps}>{children}</article>;
+  }
+
+  if (as === "button") {
+    return <button type={props.type || "button"} {...cardProps}>{children}</button>;
+  }
+
+  return <div {...cardProps}>{children}</div>;
 }

@@ -85,13 +85,16 @@ Also updated:
 
 ## Validation
 
-- frontend npm run lint: PASS
-- frontend npm run build: PASS
-- backend syntax checks: PASS
-- scoped production blocker scan: PASS
+Checkpoint 1 created the UI primitives and pushed commit `9857a59`, but lint initially failed on `frontend/src/components/ui/Card.jsx` because the dynamic `Component` variable triggered `no-unused-vars`. Checkpoint 2 fixed the primitive and re-ran validation cleanly.
+
+- frontend npm run lint: PASS after Checkpoint 2
+- frontend npm run build: PASS after Checkpoint 2
+- backend syntax checks: PASS after Checkpoint 2
+- scoped production blocker scan: PASS after Checkpoint 2
 - no direct production-blocking localhost API/socket calls added
 - no token/debug console logging added
 
 ## Recommended Next Step
 
 Proceed to RUN UI-1C — Requester Dashboard Command Center redesign using the new primitives while preserving current requester flow behavior.
+
