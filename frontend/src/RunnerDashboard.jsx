@@ -794,7 +794,30 @@ export default function RunnerDashboard({ user }) {
               {(() => {
                 const completionSafety = getCompletionSafety(activeRun);
 
-                return (
+                
+  // RUN-UI-1D-CHECKPOINT-4: derived display-only data for runner command center preview.
+  const runnerCommandAvailableRuns = Array.isArray(availableRuns) ? availableRuns : [];
+  const runnerCommandCompletedRuns = [];
+  const runnerCommandFocusedRun = activeRun || runnerCommandAvailableRuns[0] || null;
+  const runnerCommandStatusLabel = online ? "Online" : "Offline";
+  const runnerCommandMetrics = [
+    { label: "Available", value: String(runnerCommandAvailableRuns.length) },
+    { label: "Focused", value: runnerCommandFocusedRun ? "1" : "0" },
+    { label: "Completed", value: String(runnerCommandCompletedRuns.length) },
+  ];
+  const runnerCommandChecklistItems = [
+    runnerCommandFocusedRun
+      ? "Review the focused run details before the next step."
+      : "Review available requests from the runner queue.",
+    runnerCommandAvailableRuns.length > 0
+      ? "Keep the queue organized before selecting the next request."
+      : "Stay ready for the next matched request.",
+    runnerCommandCompletedRuns.length > 0
+      ? "Completed work is reflected in the runner history count."
+      : "Completed work will appear after finished requests.",
+  ];
+
+return (
                   <div style={{
                     border: "1px solid #333",
                     borderRadius: 10,
@@ -804,7 +827,11 @@ export default function RunnerDashboard({ user }) {
       {/* RUN-UI-1D-CHECKPOINT-3: display-only runner command center preview. */}
       <RunnerCommandCenter
         title="Runner command center preview"
-        note="A display-only preview of the future runner workflow surface. Existing accept, start, arrived, receipt, delivery, and completion behavior remains in RunnerDashboard."
+        note="Live display data now powers this preview while existing runner actions remain untouched."
+        statusLabel={runnerCommandStatusLabel}
+        metrics={runnerCommandMetrics}
+        focusedRun={runnerCommandFocusedRun}
+        checklistItems={runnerCommandChecklistItems}
       />
 
                     <div style={{
