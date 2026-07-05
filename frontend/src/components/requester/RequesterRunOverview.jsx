@@ -1,6 +1,7 @@
 ﻿import "./RequesterCommandCenter.css";
 import RequesterMissionSummary from "./RequesterMissionSummary";
 import RequesterRunOverviewIntro from "./RequesterRunOverviewIntro";
+import RequesterRunLists from "./RequesterRunLists";
 import RequesterTrustTimeline from "./RequesterTrustTimeline";
 
 export default function RequesterRunOverview({
@@ -20,6 +21,10 @@ export default function RequesterRunOverview({
       <div className="requester-command-shell__content">
         <RequesterMissionSummary activeRun={activeRun} activeRuns={activeRuns} historyRuns={historyRuns} />
         <RequesterTrustTimeline steps={steps} />
+
+        {/* RUN-UI-1C-CHECKPOINT-8: extracted active/history run list presentation. */}
+
+        <RequesterRunLists activeRuns={activeRuns} historyRuns={historyRuns} />
       </div>
     </section>
   );

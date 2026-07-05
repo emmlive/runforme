@@ -304,3 +304,121 @@
     font-size: 0.86rem;
   }
 }
+
+/* RUN-UI-1C-CHECKPOINT-8: Active/history run list presentation. */
+.requester-run-lists {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.requester-run-list {
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 24px;
+  box-shadow: 0 18px 60px rgba(15, 23, 42, 0.07);
+  padding: 18px;
+}
+
+.requester-run-list__header {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.requester-run-list__title {
+  color: #0f172a;
+  font-size: 0.98rem;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+.requester-run-list__count {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.08);
+  border-radius: 999px;
+  color: #0f172a;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 850;
+  justify-content: center;
+  min-width: 28px;
+  padding: 6px 9px;
+}
+
+.requester-run-list__items {
+  display: grid;
+  gap: 10px;
+}
+
+.requester-run-list__item {
+  align-items: start;
+  background: rgba(248, 250, 252, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 13px;
+}
+
+.requester-run-list__item-title {
+  color: #0f172a;
+  font-size: 0.9rem;
+  font-weight: 820;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.requester-run-list__item-detail {
+  color: #64748b;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 4px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.requester-run-list__status {
+  background: rgba(37, 99, 235, 0.1);
+  border-radius: 999px;
+  color: #1d4ed8;
+  font-size: 0.72rem;
+  font-weight: 850;
+  max-width: 140px;
+  overflow: hidden;
+  padding: 6px 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.requester-run-list__empty {
+  color: #64748b;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+@media (max-width: 860px) {
+  .requester-run-lists {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .requester-run-list {
+    border-radius: 20px;
+    padding: 15px;
+  }
+
+  .requester-run-list__item {
+    grid-template-columns: 1fr;
+  }
+
+  .requester-run-list__status {
+    width: fit-content;
+  }
+}
