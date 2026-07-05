@@ -1,0 +1,201 @@
+﻿  684:   }, [
+  685:     newRun.payout,
+  686:     newRun.itemBudgetEstimate,
+  687:     newRun.platformFee,
+  688:     newRun.bufferAmount,
+  689:   ]);
+  690: 
+  691:   const createRun = async (event) => {
+  692:     event.preventDefault();
+  693: 
+  694:     const location = newRun.location.trim();
+  695:     const item = newRun.item.trim();
+  696:     const payout = Number(newRun.payout);
+  697:     const itemBudgetEstimate = Number(newRun.itemBudgetEstimate || 0);
+  698:     const platformFee = Number(newRun.platformFee || 0);
+  699:     const bufferAmount = Number(newRun.bufferAmount || 0);
+  700: 
+  701:     if (!location || !item || !Number.isFinite(payout) || payout <= 0) {
+  702:       showError("Enter a location, item, and valid payout.");
+  703:       return;
+  704:     }
+  705: 
+  706:     const secureAmounts = [itemBudgetEstimate, platformFee, bufferAmount];
+  707: 
+  708:     if (
+  709:       secureAmounts.some((amount) => !Number.isInteger(amount) || amount < 0) ||
+  710:       itemBudgetEstimate > 5000 ||
+  711:       platformFee > 1000 ||
+  712:       bufferAmount > 1000
+  713:     ) {
+  714:       showError("Enter valid whole-dollar budget, platform fee, and buffer amounts.");
+  715:       return;
+  716:     }
+  717: 
+  718:     if (creatingRunRef.current) return;
+  719: 
+  720:     creatingRunRef.current = true;
+  721: 
+  722:     try {
+  723:       setCreatingRun(true);
+  724: 
+  725:       const response = await fetch(`${API_URL}/api/runs`, {
+  726:         method: "POST",
+  727:         headers: {
+  728:           Authorization: `Bearer ${token}`,
+  729:           "Content-Type": "application/json",
+  730:         },
+  731:         body: JSON.stringify({
+  732:           location,
+  733:           item,
+  734:           payout,
+  735:           itemBudgetEstimate,
+  736:           platformFee,
+  737:           bufferAmount,
+  738:         }),
+  739:       });
+  740: 
+  741:       const data = await response.json();
+  742: 
+  743:       if (!response.ok || data.success === false) {
+  744:         throw new Error(data.error || "Failed to create run");
+  745:       }
+  746: 
+  747:       setNewRun({
+  748:         location: "",
+  749:         item: "",
+  750:         payout: "25",
+  751:         itemBudgetEstimate: "0",
+  752:         platformFee: "3",
+  753:         bufferAmount: "5",
+  754:       });
+  755:       showSuccess("Run created and sent to available runners.");
+  756:       await fetchRuns();
+  757:     } catch (err) {
+  758:       showError(err.message || "Failed to create run");
+  759:     } finally {
+  760:       creatingRunRef.current = false;
+  761: 
+  762:       setCreatingRun(false);
+  763:     }
+  764:   };
+  765: 
+  766:   const activeRuns = useMemo(
+  767:     () => runs.filter((run) => run.status !== "completed"),
+  768:     [runs]
+  769:   );
+  770: 
+  771:   const completedRuns = useMemo(
+  772:     () => runs.filter((run) => run.status === "completed"),
+  773:     [runs]
+  774:   );
+  775: 
+  776:   const selectedRun = useMemo(() => {
+  777:     if (selectedRunId) {
+  778:       return runs.find((run) => run.id === selectedRunId) || null;
+  779:     }
+  780: 
+  781:     return activeRuns[0] || completedRuns[0] || null;
+  782:   }, [runs, selectedRunId, activeRuns, completedRuns]);
+  783: 
+  784:   const authorizeSecureHold = async (runId) => {
+  785:     if (!runId || !token) return;
+  786:     if (authorizingHoldRef.current === runId) return;
+  787: 
+  788:     authorizingHoldRef.current = runId;
+  789: 
+  790: 
+  791:     try {
+  792:       setAuthorizingHold(true);
+  793: 
+  794:       const response = await fetch(`${API_URL}/api/runs/${runId}/authorize-hold`, {
+  795:         method: "POST",
+  796:         headers: { Authorization: `Bearer ${token}` },
+  797:       });
+  798: 
+  799:       const data = await response.json();
+  800: 
+  801:       if (!response.ok || data.success === false) {
+  802:         throw new Error(data.error || "Failed to authorize secure hold");
+  803:       }
+  804: 
+  805:       setRuns((prev) =>
+  806:         prev.map((run) =>
+  807:           run.id === runId ? { ...run, ...data.run } : run
+  808:         )
+  809:       );
+  810: 
+  811:       showSuccess(data.message || "Secure hold placeholder authorized. No live charge was made.");
+  812:       await fetchRuns();
+  813:     } catch (err) {
+  814:       showError(err.message || "Failed to authorize secure hold");
+  815:     } finally {
+  816:       if (authorizingHoldRef.current === runId) {
+  817:         authorizingHoldRef.current = null;
+  818:       }
+  819: 
+  820:       setAuthorizingHold(false);
+  821:     }
+  822:   };
+  823: 
+  824:   const approveManualReview = async (runId) => {
+  825:     if (!runId || !token) return;
+  826:     if (approvingManualReviewRef.current === runId) return;
+  827: 
+  828:     approvingManualReviewRef.current = runId;
+  829: 
+  830:     try {
+  831:       setApprovingManualReview(true);
+  832: 
+  833:       const response = await fetch(`${API_URL}/api/runs/${runId}/manual-review/approve`, {
+  834:         method: "POST",
+  835:         headers: { Authorization: `Bearer ${token}` },
+  836:       });
+  837: 
+  838:       const data = await response.json();
+  839: 
+  840:       if (!response.ok || data.success === false) {
+  841:         throw new Error(data.error || "Failed to approve manual review");
+  842:       }
+  843: 
+  844:       setRuns((prev) =>
+  845:         prev.map((run) =>
+  846:           run.id === runId ? { ...run, ...data.run } : run
+  847:         )
+  848:       );
+  849: 
+  850:       showSuccess("Manual review approved. Runner can complete this run.");
+  851:       await fetchRuns();
+  852:     } catch (err) {
+  853:       showError(err.message || "Failed to approve manual review");
+  854:     } finally {
+  855:       if (approvingManualReviewRef.current === runId) {
+  856:         approvingManualReviewRef.current = null;
+  857:       }
+  858: 
+  859:       setApprovingManualReview(false);
+  860:     }
+  861:   };
+  862: 
+  863:   const handleLogout = () => {
+  864:     if (onLogout) {
+  865:       onLogout();
+  866:       return;
+  867:     }
+  868: 
+  869:     localStorage.removeItem("token");
+  870:     localStorage.removeItem("role");
+  871:     navigate("/");
+  872:   };
+  873: 
+  874:   return (
+  875:     <div
+  876:       style={{
+  877:         padding: isMobile ? 16 : 32,
+  878:         fontFamily: "Inter, system-ui, sans-serif",
+  879:         background: "#f8fafc",
+  880:         minHeight: "100vh",
+  881:       }}
+  882:     >
+  883:       <div style={{ maxWidth: 900, margin: "0 auto", width: "100%" }}>
+  884:         <div

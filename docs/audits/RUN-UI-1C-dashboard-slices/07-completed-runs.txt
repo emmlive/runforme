@@ -1,0 +1,91 @@
+﻿ 1140:             style={{
+ 1141:               marginTop: 14,
+ 1142:               padding: 14,
+ 1143:               borderRadius: 14,
+ 1144:               background: "#f8fafc",
+ 1145:               border: "1px solid #e2e8f0",
+ 1146:               color: "#334155",
+ 1147:               display: "grid",
+ 1148:               gap: 6,
+ 1149:             }}
+ 1150:           >
+ 1151:             <div style={{ fontWeight: 900, color: "#0f172a" }}>
+ 1152:               Secure hold preview
+ 1153:             </div>
+ 1154:             <div>
+ 1155:               Estimated hold: <strong>{formatMoney(createRunSecurityPreview.holdAmount)}</strong>
+ 1156:             </div>
+ 1157:             <div>
+ 1158:               Max runner spend:{" "}
+ 1159:               <strong>{formatMoney(createRunSecurityPreview.maxRunnerSpend)}</strong>
+ 1160:             </div>
+ 1161:             <div style={{ fontSize: 12, color: "#64748b" }}>
+ 1162:               Item budget + payout + platform fee + buffer are used to protect requester funds
+ 1163:               and trigger receipt review if the runner spends over the allowed amount.
+ 1164:             </div>
+ 1165:           </div>
+ 1166:         </section>
+ 1167: 
+ 1168:         <section style={{ marginBottom: 34 }}>
+ 1169:           <h2 style={{ fontSize: 22, marginBottom: 14, color: "#0f172a" }}>
+ 1170:             Active Runs
+ 1171:           </h2>
+ 1172: 
+ 1173:           {loading ? (
+ 1174:             <p>Loading...</p>
+ 1175:           ) : activeRuns.length === 0 ? (
+ 1176:             <div
+ 1177:               style={{
+ 1178:                 background: "white",
+ 1179:                 borderRadius: 18,
+ 1180:                 padding: 24,
+ 1181:                 color: "#64748b",
+ 1182:               }}
+ 1183:             >
+ 1184:               No active runs.
+ 1185:             </div>
+ 1186:           ) : (
+ 1187:             activeRuns.map((run) => (
+ 1188:               <RunCard
+ 1189:                 key={run.id}
+ 1190:                 run={run}
+ 1191:                 selected={selectedRun?.id === run.id}
+ 1192:                 onSelect={() => setSelectedRunId(run.id)}
+ 1193:               />
+ 1194:             ))
+ 1195:           )}
+ 1196:         </section>
+ 1197: 
+ 1198:         <section>
+ 1199:           <h2 style={{ fontSize: 22, marginBottom: 14, color: "#0f172a" }}>
+ 1200:             Completed Runs
+ 1201:           </h2>
+ 1202: 
+ 1203:           {completedRuns.length === 0 ? (
+ 1204:             <div
+ 1205:               style={{
+ 1206:                 background: "white",
+ 1207:                 borderRadius: 18,
+ 1208:                 padding: 24,
+ 1209:                 color: "#64748b",
+ 1210:               }}
+ 1211:             >
+ 1212:               No completed runs yet.
+ 1213:             </div>
+ 1214:           ) : (
+ 1215:             completedRuns.map((run) => (
+ 1216:               <RunCard
+ 1217:                 key={run.id}
+ 1218:                 run={run}
+ 1219:                 completed
+ 1220:                 selected={selectedRun?.id === run.id}
+ 1221:                 onSelect={() => setSelectedRunId(run.id)}
+ 1222:               />
+ 1223:             ))
+ 1224:           )}
+ 1225:         </section>
+ 1226:       </div>
+ 1227:     </div>
+ 1228:   );
+ 1229: }
+ 1230: 

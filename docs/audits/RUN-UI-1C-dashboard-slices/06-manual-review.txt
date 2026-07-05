@@ -1,0 +1,201 @@
+﻿  208:         <div style={{ padding: 12, background: "#f8fafc", borderRadius: 12 }}>
+  209:           <div style={{ fontSize: 12, color: "#64748b", fontWeight: 700 }}>Payout</div>
+  210:           <div style={{ marginTop: 4, fontWeight: 800 }}>${run.payout}</div>
+  211:         </div>
+  212: 
+  213:         <div style={{ padding: 12, background: "#f8fafc", borderRadius: 12 }}>
+  214:           <div style={{ fontSize: 12, color: "#64748b", fontWeight: 700 }}>
+  215:             Assigned Runner
+  216:           </div>
+  217:           <div style={{ marginTop: 4, fontWeight: 800 }}>
+  218:             {run.assignedRunnerId ? `Runner #${run.assignedRunnerId}` : "Not assigned yet"}
+  219:           </div>
+  220:         </div>
+  221: 
+  222:         <div style={{ padding: 12, background: "#f8fafc", borderRadius: 12 }}>
+  223:           <div style={{ fontSize: 12, color: "#64748b", fontWeight: 700 }}>Payment</div>
+  224:           <div style={{ marginTop: 4, fontWeight: 800 }}>{paymentText}</div>
+  225:         </div>
+  226: 
+  227:         <div style={{ padding: 12, background: "#f8fafc", borderRadius: 12 }}>
+  228:           <div style={{ fontSize: 12, color: "#64748b", fontWeight: 700 }}>Created</div>
+  229:           <div style={{ marginTop: 4, fontWeight: 800 }}>{formatDate(run.createdAt)}</div>
+  230:         </div>
+  231:       </div>
+  232:     </div>
+  233:   );
+  234: }
+  235: 
+  236: 
+  237: function getNextStep(status) {
+  238:   if (status === "open") return "Waiting for a runner to accept this run.";
+  239:   if (status === "assigned") return "Runner assigned. Next step: runner arrival.";
+  240:   if (status === "arrived") return "Runner has arrived. Next step: completion.";
+  241:   if (status === "in_progress") return "Run is in progress.";
+  242:   if (status === "completed") return "Run completed. Review payment and history.";
+  243:   return "Monitoring run status.";
+  244: }
+  245: 
+  246: 
+  247: function SecurityProofGrid({ run }) {
+  248:   const isMobile = useIsMobile();
+  249: 
+  250:   const items = [
+  251:     ["Delivery PIN", run.deliveryPin || "Not generated"],
+  252:     ["Authorization", formatSecurityStatus(run.authorizationStatus)],
+  253:     ["Hold Amount", formatMoney(run.holdAmount)],
+  254:     ["Max Runner Spend", formatMoney(run.maxRunnerSpend)],
+  255:     ["Purchase Status", formatSecurityStatus(run.purchaseStatus)],
+  256:     ["Receipt Status", formatSecurityStatus(run.receiptStatus)],
+  257:     [
+  258:       "Receipt Amount",
+  259:       Number(run.receiptAmount || 0) > 0 ? formatMoney(run.receiptAmount) : "Not submitted",
+  260:     ],
+  261:     [
+  262:       "Final Amount",
+  263:       Number(run.finalAmount || 0) > 0 ? formatMoney(run.finalAmount) : "Not calculated",
+  264:     ],
+  265:     ["Receipt Proof", run.receiptImageUrl ? "Uploaded" : "Not uploaded"],
+  266:     ["Payout Status", formatSecurityStatus(run.payoutStatus)],
+  267:     ["Delivery Confirmed", formatDate(run.deliveryConfirmedAt)],
+  268:     ["Manual Review", run.requiresManualReview ? "Required" : "Not required"],
+  269:   ];
+  270: 
+  271:   return (
+  272:     <div
+  273:       style={{
+  274:         marginTop: 18,
+  275:         padding: 16,
+  276:         borderRadius: 16,
+  277:         background: "rgba(255,255,255,0.07)",
+  278:         border: "1px solid rgba(255,255,255,0.12)",
+  279:       }}
+  280:     >
+  281:       <div
+  282:         style={{
+  283:           color: "#bfdbfe",
+  284:           fontSize: 12,
+  285:           fontWeight: 900,
+  286:           letterSpacing: 1.3,
+  287:           marginBottom: 12,
+  288:         }}
+  289:       >
+  290:         SECURITY & PROOF
+  291:       </div>
+  292: 
+  293:       <div
+  294:         style={{
+  295:           display: "grid",
+  296:           gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
+  297:           gap: 10,
+  298:         }}
+  299:       >
+  300:         {items.map(([label, value]) => (
+  301:           <div
+  302:             key={label}
+  303:             style={{
+  304:               background: "rgba(15,23,42,0.38)",
+  305:               borderRadius: 12,
+  306:               padding: 12,
+  307:             }}
+  308:           >
+  309:             <div style={{ color: "#94a3b8", fontSize: 12, fontWeight: 800 }}>
+  310:               {label}
+  311:             </div>
+  312:             <div
+  313:               style={{
+  314:                 marginTop: 5,
+  315:                 color: "white",
+  316:                 fontSize: label === "Delivery PIN" ? 20 : 14,
+  317:                 fontWeight: 900,
+  318:                 letterSpacing: label === "Delivery PIN" ? 1.8 : 0,
+  319:               }}
+  320:             >
+  321:               {value}
+  322:             </div>
+  323:           </div>
+  324:         ))}
+  325:       </div>
+  326:     </div>
+  327:   );
+  328: }
+  329: 
+  330: 
+  331: function RunDetailPanel({
+  332:   run,
+  333:   onClose,
+  334:   onApproveManualReview,
+  335:   approvingManualReview,
+  336:   onAuthorizeHold,
+  337:   authorizingHold,
+  338: }) {
+  339:   const isMobile = useIsMobile();
+  340: 
+  341:   if (!run) return null;
+  342: 
+  343:   const statusTone = statusStyles[run.status] || statusStyles.open;
+  344:   const paymentText =
+  345:     paymentLabels[run.paymentStatus] ||
+  346:     (run.paymentStatus ? run.paymentStatus : "Payment not started");
+  347: 
+  348:   return (
+  349:     <section
+  350:       style={{
+  351:         background: "#0f172a",
+  352:         color: "white",
+  353:         borderRadius: 22,
+  354:         padding: 24,
+  355:         marginBottom: 28,
+  356:         boxShadow: "0 14px 34px rgba(15,23,42,0.18)",
+  357:       }}
+  358:     >
+  359:       <div
+  360:         style={{
+  361:           display: "flex",
+  362:           justifyContent: "space-between",
+  363:           gap: 16,
+  364:           alignItems: "flex-start",
+  365:         }}
+  366:       >
+  367:         <div>
+  368:           <div style={{ fontSize: 12, opacity: 0.7, fontWeight: 800, letterSpacing: 1.5 }}>
+  369:             RUN DETAIL
+  370:           </div>
+  371:           <h2 style={{ margin: "8px 0 4px", fontSize: 26 }}>
+  372:             {run.location || "Unknown location"}
+  373:           </h2>
+  374:           <p style={{ margin: 0, color: "#cbd5e1" }}>
+  375:             {run.item || "Run request"}
+  376:           </p>
+  377:         </div>
+  378: 
+  379:         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+  380:           <Badge tone={statusTone}>{statusLabels[run.status] || run.status}</Badge>
+  381:           <button
+  382:             onClick={onClose}
+  383:             style={{
+  384:               border: "1px solid rgba(255,255,255,0.2)",
+  385:               background: "rgba(255,255,255,0.08)",
+  386:               color: "white",
+  387:               borderRadius: 10,
+  388:               padding: "8px 10px",
+  389:               cursor: "pointer",
+  390:               fontWeight: 800,
+  391:             }}
+  392:           >
+  393:             Close
+  394:           </button>
+  395:         </div>
+  396:       </div>
+  397: 
+  398:       <div style={{ marginTop: 20 }}>
+  399:         <RunTimeline status={run.status} variant="dark" />
+  400:       </div>
+  401: 
+  402:       <div
+  403:         style={{
+  404:           display: "grid",
+  405:           gridTemplateColumns: isMobile ? "1fr" : "repeat(4, minmax(0, 1fr))",
+  406:           gap: 12,
+  407:           marginTop: 22,
+  408:         }}

@@ -1,0 +1,221 @@
+﻿  897:               Requester command center {role ? `- ${role}` : ""}
+  898:             </p>
+  899:           </div>
+  900: 
+  901:           <div style={{ display: "flex", gap: 10 }}>
+  902:             <button
+  903:               onClick={fetchRuns}
+  904:               style={{
+  905:                 padding: "10px 14px",
+  906:                 borderRadius: 10,
+  907:                 border: "1px solid #cbd5e1",
+  908:                 background: "white",
+  909:                 cursor: "pointer",
+  910:                 fontWeight: 700,
+  911:               }}
+  912:             >
+  913:               Refresh
+  914:             </button>
+  915: 
+  916:             <button
+  917:               onClick={handleLogout}
+  918:               style={{
+  919:                 padding: "10px 14px",
+  920:                 borderRadius: 10,
+  921:                 background: "#111827",
+  922:                 color: "white",
+  923:                 border: "none",
+  924:                 cursor: "pointer",
+  925:                 fontWeight: 700,
+  926:               }}
+  927:             >
+  928:               Logout
+  929:             </button>
+  930:           </div>
+  931:         </div>
+  932: 
+  933:         {notification && (
+  934:           <div
+  935:             style={{
+  936:               background: notification.type === "success" ? "#dcfce7" : "#fee2e2",
+  937:               color: notification.type === "success" ? "#166534" : "#991b1b",
+  938:               padding: 14,
+  939:               borderRadius: 12,
+  940:               marginBottom: 20,
+  941:               fontWeight: 700,
+  942:             }}
+  943:           >
+  944:             {notification.message}
+  945:           </div>
+  946:         )}
+  947: 
+  948:         <div
+  949:           style={{
+  950:             display: "grid",
+  951:             gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
+  952:             gap: 14,
+  953:             marginBottom: 28,
+  954:           }}
+  955:         >
+  956:           <div style={{ background: "white", borderRadius: 16, padding: 18 }}>
+  957:             <div style={{ color: "#64748b", fontWeight: 700 }}>Active Runs</div>
+  958:             <div style={{ fontSize: 30, fontWeight: 900, marginTop: 6 }}>
+  959:               {activeRuns.length}
+  960:             </div>
+  961:           </div>
+  962: 
+  963:           <div style={{ background: "white", borderRadius: 16, padding: 18 }}>
+  964:             <div style={{ color: "#64748b", fontWeight: 700 }}>Completed</div>
+  965:             <div style={{ fontSize: 30, fontWeight: 900, marginTop: 6 }}>
+  966:               {completedRuns.length}
+  967:             </div>
+  968:           </div>
+  969: 
+  970:           <div style={{ background: "white", borderRadius: 16, padding: 18 }}>
+  971:             <div style={{ color: "#64748b", fontWeight: 700 }}>Total Payout</div>
+  972:             <div style={{ fontSize: 30, fontWeight: 900, marginTop: 6 }}>
+  973:               ${runs.reduce((sum, run) => sum + Number(run.payout || 0), 0)}
+  974:             </div>
+  975:           </div>
+  976:         </div>
+  977: 
+  978:         <RunDetailPanel
+  979:           run={selectedRun}
+  980:           onClose={() => setSelectedRunId(null)}
+  981:           onApproveManualReview={approveManualReview}
+  982:           approvingManualReview={approvingManualReview}
+  983:           onAuthorizeHold={authorizeSecureHold}
+  984:           authorizingHold={authorizingHold}
+  985:         />
+  986: 
+  987:         <section
+  988:           style={{
+  989:             background: "white",
+  990:             borderRadius: 18,
+  991:             padding: 22,
+  992:             marginBottom: 34,
+  993:             border: "1px solid #e5e7eb",
+  994:             boxShadow: "0 4px 14px rgba(15,23,42,0.04)",
+  995:           }}
+  996:         >
+  997:           <h2 style={{ fontSize: 22, marginTop: 0, marginBottom: 14, color: "#0f172a" }}>
+  998:             Create Run
+  999:           </h2>
+ 1000: 
+ 1001:           <form
+ 1002:             onSubmit={createRun}
+ 1003:             style={{
+ 1004:               display: "grid",
+ 1005:               gridTemplateColumns: isMobile
+ 1006:                 ? "1fr"
+ 1007:                 : "1.1fr 1.5fr 0.65fr 0.75fr 0.65fr 0.65fr auto",
+ 1008:               gap: 12,
+ 1009:               alignItems: "end",
+ 1010:             }}
+ 1011:           >
+ 1012:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+ 1013:               Location
+ 1014:               <input
+ 1015:                 value={newRun.location}
+ 1016:                 onChange={(event) =>
+ 1017:                   setNewRun((prev) => ({ ...prev, location: event.target.value }))
+ 1018:                 }
+ 1019:                 placeholder="Chicago Loop"
+ 1020:                 style={{
+ 1021:                   padding: "12px 14px",
+ 1022:                   borderRadius: 12,
+ 1023:                   border: "1px solid #cbd5e1",
+ 1024:                   fontSize: 14,
+ 1025:                 }}
+ 1026:               />
+ 1027:             </label>
+ 1028: 
+ 1029:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+ 1030:               Item / Task
+ 1031:               <input
+ 1032:                 value={newRun.item}
+ 1033:                 onChange={(event) =>
+ 1034:                   setNewRun((prev) => ({ ...prev, item: event.target.value }))
+ 1035:                 }
+ 1036:                 placeholder="Pickup documents"
+ 1037:                 style={{
+ 1038:                   padding: "12px 14px",
+ 1039:                   borderRadius: 12,
+ 1040:                   border: "1px solid #cbd5e1",
+ 1041:                   fontSize: 14,
+ 1042:                 }}
+ 1043:               />
+ 1044:             </label>
+ 1045: 
+ 1046:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+ 1047:               Payout
+ 1048:               <input
+ 1049:                 type="number"
+ 1050:                 min="1"
+ 1051:                 value={newRun.payout}
+ 1052:                 onChange={(event) =>
+ 1053:                   setNewRun((prev) => ({ ...prev, payout: event.target.value }))
+ 1054:                 }
+ 1055:                 style={{
+ 1056:                   padding: "12px 14px",
+ 1057:                   borderRadius: 12,
+ 1058:                   border: "1px solid #cbd5e1",
+ 1059:                   fontSize: 14,
+ 1060:                 }}
+ 1061:               />
+ 1062:             </label>
+ 1063: 
+ 1064:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+ 1065:               Item Budget
+ 1066:               <input
+ 1067:                 type="number"
+ 1068:                 min="0"
+ 1069:                 value={newRun.itemBudgetEstimate}
+ 1070:                 onChange={(event) =>
+ 1071:                   setNewRun((prev) => ({
+ 1072:                     ...prev,
+ 1073:                     itemBudgetEstimate: event.target.value,
+ 1074:                   }))
+ 1075:                 }
+ 1076:                 placeholder="0"
+ 1077:                 style={{
+ 1078:                   padding: "12px 14px",
+ 1079:                   borderRadius: 12,
+ 1080:                   border: "1px solid #cbd5e1",
+ 1081:                   fontSize: 14,
+ 1082:                 }}
+ 1083:               />
+ 1084:             </label>
+ 1085: 
+ 1086:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+ 1087:               Platform Fee
+ 1088:               <input
+ 1089:                 type="number"
+ 1090:                 min="0"
+ 1091:                 value={newRun.platformFee}
+ 1092:                 onChange={(event) =>
+ 1093:                   setNewRun((prev) => ({ ...prev, platformFee: event.target.value }))
+ 1094:                 }
+ 1095:                 style={{
+ 1096:                   padding: "12px 14px",
+ 1097:                   borderRadius: 12,
+ 1098:                   border: "1px solid #cbd5e1",
+ 1099:                   fontSize: 14,
+ 1100:                 }}
+ 1101:               />
+ 1102:             </label>
+ 1103: 
+ 1104:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+ 1105:               Buffer
+ 1106:               <input
+ 1107:                 type="number"
+ 1108:                 min="0"
+ 1109:                 value={newRun.bufferAmount}
+ 1110:                 onChange={(event) =>
+ 1111:                   setNewRun((prev) => ({ ...prev, bufferAmount: event.target.value }))
+ 1112:                 }
+ 1113:                 style={{
+ 1114:                   padding: "12px 14px",
+ 1115:                   borderRadius: 12,
+ 1116:                   border: "1px solid #cbd5e1",
+ 1117:                   fontSize: 14,

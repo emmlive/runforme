@@ -1,0 +1,161 @@
+﻿  510:                 run.authorizationStatus === "placeholder_authorized"
+  511:                   ? "#bbf7d0"
+  512:                   : authorizingHold
+  513:                     ? "#cbd5e1"
+  514:                     : "#052e16",
+  515:               borderRadius: 10,
+  516:               padding: "10px 14px",
+  517:               cursor:
+  518:                 authorizingHold ||
+  519:                 run.authorizationStatus === "placeholder_authorized"
+  520:                   ? "not-allowed"
+  521:                   : "pointer",
+  522:               fontWeight: 900,
+  523:             }}
+  524:           >
+  525:             {run.authorizationStatus === "placeholder_authorized"
+  526:               ? "Secure Hold Placeholder Authorized"
+  527:               : authorizingHold
+  528:                 ? "Authorizing..."
+  529:                 : "Authorize Secure Hold"}
+  530:           </button>
+  531:         </div>
+  532:       )}
+  533: 
+  534:       {run.requiresManualReview && (
+  535:         <div
+  536:           style={{
+  537:             marginTop: 18,
+  538:             background: "rgba(251,191,36,0.16)",
+  539:             border: "1px solid rgba(251,191,36,0.38)",
+  540:             borderRadius: 14,
+  541:             padding: 16,
+  542:             color: "#fef3c7",
+  543:           }}
+  544:         >
+  545:           <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: 1.2 }}>
+  546:             MANUAL REVIEW REQUIRED
+  547:           </div>
+  548: 
+  549:           <p style={{ marginTop: 8, marginBottom: 12, color: "#fde68a" }}>
+  550:             Manual review is required before this runner can complete the run.
+  551:             Review the receipt amount, final amount, max runner spend, and proof status.
+  552:           </p>
+  553: 
+  554:           <button
+  555:             onClick={() => onApproveManualReview?.(run.id)}
+  556:             disabled={approvingManualReview}
+  557:             style={{
+  558:               border: "none",
+  559:               background: approvingManualReview ? "#92400e" : "#fbbf24",
+  560:               color: "#111827",
+  561:               borderRadius: 10,
+  562:               padding: "10px 14px",
+  563:               cursor: approvingManualReview ? "not-allowed" : "pointer",
+  564:               fontWeight: 900,
+  565:             }}
+  566:           >
+  567:             {approvingManualReview ? "Approving..." : "Approve Manual Review"}
+  568:           </button>
+  569:         </div>
+  570:       )}
+  571: 
+  572:       <div
+  573:         style={{
+  574:           marginTop: 18,
+  575:           background: "rgba(59,130,246,0.16)",
+  576:           border: "1px solid rgba(147,197,253,0.28)",
+  577:           borderRadius: 14,
+  578:           padding: 14,
+  579:           color: "#dbeafe",
+  580:           fontWeight: 700,
+  581:         }}
+  582:       >
+  583:         {getNextStep(run.status)}
+  584:       </div>
+  585:     </section>
+  586:   );
+  587: }
+  588: 
+  589: 
+  590: export default function Dashboard({ onLogout }) {
+  591:   const navigate = useNavigate();
+  592:   const token = localStorage.getItem("token");
+  593:   const isMobile = useIsMobile();
+  594: 
+  595:   const [role, setRole] = useState(null);
+  596:   const [runs, setRuns] = useState([]);
+  597:   const [loading, setLoading] = useState(true);
+  598:   const [notification, setNotification] = useState(null);
+  599:   const [newRun, setNewRun] = useState({
+  600:     location: "",
+  601:     item: "",
+  602:     payout: "25",
+  603:     itemBudgetEstimate: "0",
+  604:     platformFee: "3",
+  605:     bufferAmount: "5",
+  606:   });
+  607:   const [creatingRun, setCreatingRun] = useState(false);
+  608:   const creatingRunRef = useRef(false);
+  609:   const [selectedRunId, setSelectedRunId] = useState(null);
+  610:   const [approvingManualReview, setApprovingManualReview] = useState(false);
+  611:   const [authorizingHold, setAuthorizingHold] = useState(false);
+  612:   const approvingManualReviewRef = useRef(null);
+  613:   const authorizingHoldRef = useRef(null);
+  614: 
+  615:   const showSuccess = (message) => {
+  616:     setNotification({ type: "success", message });
+  617:     setTimeout(() => setNotification(null), 3000);
+  618:   };
+  619: 
+  620:   const showError = (message) => {
+  621:     setNotification({ type: "error", message });
+  622:     setTimeout(() => setNotification(null), 4000);
+  623:   };
+  624: 
+  625:   const fetchRuns = useCallback(async () => {
+  626:     if (!token) return;
+  627: 
+  628:     try {
+  629:       const response = await fetch(`${API_URL}/api/runs`, {
+  630:         headers: { Authorization: `Bearer ${token}` },
+  631:       });
+  632: 
+  633:       const data = await response.json();
+  634: 
+  635:       if (!response.ok || data.success === false) {
+  636:         throw new Error(data.error || "Failed to load runs");
+  637:       }
+  638: 
+  639:       setRuns(data.runs || []);
+  640:     } catch (err) {
+  641:       showError(err.message || "Failed to load runs");
+  642:     } finally {
+  643:       setLoading(false);
+  644:     }
+  645:   }, [token]);
+  646: 
+  647:   useEffect(() => {
+  648:     if (!token) {
+  649:       navigate("/");
+  650:       return;
+  651:     }
+  652: 
+  653:     try {
+  654:       const decoded = jwtDecode(token);
+  655:       setRole(decoded.role);
+  656:       fetchRuns();
+  657:     } catch {
+  658:       localStorage.removeItem("token");
+  659:       navigate("/");
+  660:       return;
+  661:     }
+  662: 
+  663:     const interval = setInterval(fetchRuns, 8000);
+  664:     return () => clearInterval(interval);
+  665:   }, [fetchRuns, navigate, token]);
+  666: 
+  667:   const createRunSecurityPreview = useMemo(() => {
+  668:     const payout = Number(newRun.payout || 0);
+  669:     const itemBudgetEstimate = Number(newRun.itemBudgetEstimate || 0);
+  670:     const platformFee = Number(newRun.platformFee || 0);
