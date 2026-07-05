@@ -934,14 +934,26 @@ return (
         minHeight: "100vh",
       }}
     >
-      {/* RUN-UI-1C-CHECKPOINT-3: requester command center preview; presentation-only wiring. */}
-      <section className="requester-command-shell" aria-label="Requester command center">
-        <RequesterMissionSummary
-          activeRun={requesterCommandActiveRun}
-          activeRuns={requesterCommandActiveRuns}
-          historyRuns={requesterCommandHistoryRuns}
-        />
-        <RequesterTrustTimeline steps={requesterCommandSteps} />
+      {/* RUN-UI-1C-CHECKPOINT-5: layout-only requester command center placement. */}
+      <section
+        className="requester-command-shell requester-command-shell--dashboard"
+        aria-label="Requester command center"
+      >
+        <div className="requester-command-shell__intro">
+          <p className="requester-command-shell__kicker">Live requester overview</p>
+          <p className="requester-command-shell__note">
+            Real run data, trust checkpoints, and current movement stay grouped before the detailed panels below.
+          </p>
+        </div>
+
+        <div className="requester-command-shell__content">
+          <RequesterMissionSummary
+            activeRun={requesterCommandActiveRun}
+            activeRuns={requesterCommandActiveRuns}
+            historyRuns={requesterCommandHistoryRuns}
+          />
+          <RequesterTrustTimeline steps={requesterCommandSteps} />
+        </div>
       </section>
 
       <div style={{ maxWidth: 900, margin: "0 auto", width: "100%" }}>

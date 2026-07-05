@@ -247,3 +247,60 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* RUN-UI-1C-CHECKPOINT-5: Dashboard placement and responsive spacing. */
+.requester-command-shell--dashboard {
+  margin: clamp(18px, 4vw, 36px) 0 clamp(22px, 5vw, 44px);
+  max-width: 1180px;
+  width: 100%;
+}
+
+.requester-command-shell__intro {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 0.82fr) minmax(260px, 0.58fr);
+  padding: 0 2px;
+}
+
+.requester-command-shell__kicker {
+  color: #0f172a;
+  font-size: clamp(1rem, 2vw, 1.28rem);
+  font-weight: 850;
+  letter-spacing: -0.04em;
+  margin: 0;
+}
+
+.requester-command-shell__note {
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.requester-command-shell__content {
+  display: grid;
+  gap: clamp(14px, 2.5vw, 20px);
+}
+
+@media (max-width: 860px) {
+  .requester-command-shell--dashboard {
+    margin: 18px 0 28px;
+  }
+
+  .requester-command-shell__intro {
+    align-items: start;
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .requester-command-shell--dashboard {
+    gap: 14px;
+    margin: 14px 0 24px;
+  }
+
+  .requester-command-shell__note {
+    font-size: 0.86rem;
+  }
+}
