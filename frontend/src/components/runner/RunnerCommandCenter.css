@@ -435,3 +435,96 @@
       background-color 180ms ease;
   }
 }
+
+/* RUN-UI-1E-CHECKPOINT-3: Runner status and metrics micro-polish. */
+.runner-command-center__action-status-panel .runner-status-summary,
+.runner-command-center__action-status-panel [class*='status-summary'] {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(37, 99, 235, 0.1);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(239, 246, 255, 0.58)),
+    radial-gradient(circle at 92% 0%, rgba(37, 99, 235, 0.13), transparent 15rem);
+  box-shadow:
+    0 14px 34px rgba(37, 99, 235, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+}
+
+.runner-command-center__action-status-panel .runner-status-summary::before,
+.runner-command-center__action-status-panel [class*='status-summary']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.58), transparent 42%);
+}
+
+.runner-command-center__action-status-panel .runner-status-summary > *,
+.runner-command-center__action-status-panel [class*='status-summary'] > * {
+  position: relative;
+  z-index: 1;
+}
+
+.runner-command-center__action-status-panel [class*='metric'],
+.runner-command-center__action-status-panel [class*='stat'] {
+  border: 1px solid rgba(15, 23, 42, 0.065);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.66);
+  box-shadow:
+    0 10px 26px rgba(15, 23, 42, 0.06),
+    0 1px 0 rgba(255, 255, 255, 0.86) inset;
+}
+
+.runner-command-center__action-status-panel [class*='metric'] strong,
+.runner-command-center__action-status-panel [class*='stat'] strong,
+.runner-command-center__action-status-panel [class*='metric'] b,
+.runner-command-center__action-status-panel [class*='stat'] b {
+  letter-spacing: -0.035em;
+}
+
+.runner-command-center__action-status-panel [class*='metric'] span,
+.runner-command-center__action-status-panel [class*='stat'] span,
+.runner-command-center__action-status-panel [class*='metric'] small,
+.runner-command-center__action-status-panel [class*='stat'] small {
+  color: rgba(71, 85, 105, 0.88);
+}
+
+.runner-command-center__action-status-panel [class*='status'],
+.runner-command-center__action-status-panel [class*='availability'] {
+  text-wrap: balance;
+}
+
+.runner-command-center__action-status-panel [class*='pill'],
+.runner-command-center__action-status-panel [class*='badge'] {
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  background: rgba(239, 246, 255, 0.74);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.08);
+}
+
+@media (max-width: 720px) {
+  .runner-command-center__action-status-panel .runner-status-summary,
+  .runner-command-center__action-status-panel [class*='status-summary'] {
+    border-radius: 19px;
+    box-shadow: 0 10px 26px rgba(37, 99, 235, 0.07);
+  }
+
+  .runner-command-center__action-status-panel [class*='metric'],
+  .runner-command-center__action-status-panel [class*='stat'] {
+    border-radius: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .runner-command-center__action-status-panel .runner-status-summary,
+  .runner-command-center__action-status-panel [class*='status-summary'],
+  .runner-command-center__action-status-panel [class*='metric'],
+  .runner-command-center__action-status-panel [class*='stat'],
+  .runner-command-center__action-status-panel [class*='pill'],
+  .runner-command-center__action-status-panel [class*='badge'] {
+    transition:
+      border-color 180ms ease,
+      box-shadow 180ms ease,
+      background-color 180ms ease;
+  }
+}
