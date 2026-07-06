@@ -1,9 +1,9 @@
 ﻿import "./RunnerCommandCenter.css";
 import RunnerStatusSummary from "./RunnerStatusSummary";
-import RunnerTrustChecklist from "./RunnerTrustChecklist";
 import { RunnerOverviewHeader } from "./RunnerOverviewHeader";
 import { RunnerActionStatusPanel } from "./RunnerActionStatusPanel";
 import { RunnerFocusedRunSection } from "./RunnerFocusedRunSection";
+import { RunnerTrustChecklistSection } from "./RunnerTrustChecklistSection";
 
 export default function RunnerCommandCenter({
   title = "Runner command center",
@@ -35,7 +35,8 @@ export default function RunnerCommandCenter({
         </div>
       </div>
 
-      <RunnerTrustChecklist items={checklistItems} />
+      {/* RUN-UI-1D-CHECKPOINT-10: trust/checklist section extracted from RunnerCommandCenter. */}
+      <RunnerTrustChecklistSection checklistItems={checklistItems} />
     </section>
   );
 }
