@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { apiRequest } from "./api/client";
 import { socket } from "./lib/socket"; // ✅ shared socket (FIX)
 import LiveMap from "./components/LiveMap";
-import { RunnerCommandCenter } from "./components/runner";
+import { RunnerCommandCenter, deriveRunnerCommandData } from "./components/runner";
 
 function getCompletionSafety(run) {
   if (!run) {
@@ -795,27 +795,21 @@ export default function RunnerDashboard({ user }) {
                 const completionSafety = getCompletionSafety(activeRun);
 
 
-  // RUN-UI-1D-CHECKPOINT-4: derived display-only data for runner command center preview.
-  const runnerCommandAvailableRuns = Array.isArray(availableRuns) ? availableRuns : [];
-  const runnerCommandCompletedRuns = [];
-  const runnerCommandFocusedRun = activeRun || runnerCommandAvailableRuns[0] || null;
-  const runnerCommandStatusLabel = online ? "Online" : "Offline";
-  const runnerCommandMetrics = [
-    { label: "Available", value: String(runnerCommandAvailableRuns.length) },
-    { label: "Focused", value: runnerCommandFocusedRun ? "1" : "0" },
-    { label: "Completed", value: String(runnerCommandCompletedRuns.length) },
-  ];
-  const runnerCommandChecklistItems = [
-    runnerCommandFocusedRun
-      ? "Review the focused run details before the next step."
-      : "Review available requests from the runner queue.",
-    runnerCommandAvailableRuns.length > 0
-      ? "Keep the queue organized before selecting the next request."
-      : "Stay ready for the next matched request.",
-    runnerCommandCompletedRuns.length > 0
-      ? "Completed work is reflected in the runner history count."
-      : "Completed work will appear after finished requests.",
-  ];
+  // RUN-UI-1D-CHECKPOINT-4: display-only data for runner command center preview.
+  // RUN-UI-1D-CHECKPOINT-6: live-data derivation moved into a pure runner helper.
+  const {
+    availableRuns: runnerCommandAvailableRuns,
+    completedRuns: runnerCommandCompletedRuns,
+    focusedRun: runnerCommandFocusedRun,
+    statusLabel: runnerCommandStatusLabel,
+    metrics: runnerCommandMetrics,
+    checklistItems: runnerCommandChecklistItems,
+  } = deriveRunnerCommandData({
+    availableRuns: Array.isArray(availableRuns) ? availableRuns : [],
+    completedRuns: [],
+    focusedRun: activeRun,
+    statusLabel: online ? "Online" : "Offline",
+  });
 
 return (
                   <div style={{
