@@ -797,9 +797,8 @@ export default function RunnerDashboard({ user }) {
 
   // RUN-UI-1D-CHECKPOINT-4: display-only data for runner command center preview.
   // RUN-UI-1D-CHECKPOINT-6: live-data derivation moved into a pure runner helper.
+  // RUN-UI-1D-CHECKPOINT-6A: unused available/completed aliases removed after lint validation.
   const {
-    availableRuns: runnerCommandAvailableRuns,
-    completedRuns: runnerCommandCompletedRuns,
     focusedRun: runnerCommandFocusedRun,
     statusLabel: runnerCommandStatusLabel,
     metrics: runnerCommandMetrics,
