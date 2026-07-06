@@ -256,3 +256,87 @@
     margin: 14px 0 20px;
   }
 }
+
+/* RUN-UI-1E-CHECKPOINT-1: Apple-style runner command center visual polish foundation. */
+.runner-command-center-preview-slot {
+  margin-top: clamp(1rem, 2vw, 1.75rem);
+}
+
+.runner-command-center {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 32px;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 32rem),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.88));
+  box-shadow:
+    0 28px 80px rgba(15, 23, 42, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.84) inset;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.runner-command-center::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.64), transparent 38%),
+    radial-gradient(circle at 88% 12%, rgba(14, 165, 233, 0.14), transparent 18rem);
+}
+
+.runner-command-center > * {
+  position: relative;
+  z-index: 1;
+}
+
+.runner-command-center__action-status-panel,
+.runner-command-center__focused-run-section,
+.runner-command-center__trust-checklist-section {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 18px 42px rgba(15, 23, 42, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+}
+
+.runner-command-center__focused-run-section,
+.runner-command-center__trust-checklist-section {
+  padding: clamp(0.85rem, 1.6vw, 1.15rem);
+}
+
+.runner-command-center__action-status-panel {
+  display: grid;
+  gap: clamp(0.85rem, 1.4vw, 1.1rem);
+  padding: clamp(0.95rem, 1.7vw, 1.25rem);
+}
+
+@media (max-width: 720px) {
+  .runner-command-center {
+    border-radius: 26px;
+    box-shadow: 0 18px 48px rgba(15, 23, 42, 0.11);
+  }
+
+  .runner-command-center__action-status-panel,
+  .runner-command-center__focused-run-section,
+  .runner-command-center__trust-checklist-section {
+    border-radius: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .runner-command-center,
+  .runner-command-center__action-status-panel,
+  .runner-command-center__focused-run-section,
+  .runner-command-center__trust-checklist-section {
+    transition:
+      border-color 180ms ease,
+      box-shadow 180ms ease,
+      transform 180ms ease;
+  }
+}
