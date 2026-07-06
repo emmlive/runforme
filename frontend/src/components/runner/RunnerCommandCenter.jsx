@@ -3,6 +3,7 @@ import RunnerRunCard from "./RunnerRunCard";
 import RunnerStatusSummary from "./RunnerStatusSummary";
 import RunnerTrustChecklist from "./RunnerTrustChecklist";
 import { RunnerOverviewHeader } from "./RunnerOverviewHeader";
+import { RunnerActionStatusPanel } from "./RunnerActionStatusPanel";
 
 export default function RunnerCommandCenter({
   title = "Runner command center",
@@ -22,7 +23,11 @@ export default function RunnerCommandCenter({
 
       <div className="runner-command-center__grid">
         <div>
-          <RunnerStatusSummary statusLabel={statusLabel} metrics={metrics} />
+          {/* RUN-UI-1D-CHECKPOINT-8: action/status panel presentation extracted from RunnerCommandCenter. */}
+          <RunnerActionStatusPanel
+            statusLabel={statusLabel}
+            metrics={metrics}
+          />
         </div>
         <div>
           <RunnerRunCard run={focusedRun} />
