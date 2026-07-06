@@ -340,3 +340,98 @@
       transform 180ms ease;
   }
 }
+
+/* RUN-UI-1E-CHECKPOINT-2: Runner run card and trust checklist micro-polish. */
+.runner-command-center__focused-run-section .runner-run-card,
+.runner-command-center__focused-run-section [class*='run-card'] {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.075);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.78)),
+    radial-gradient(circle at 12% 0%, rgba(59, 130, 246, 0.12), transparent 18rem);
+  box-shadow:
+    0 14px 34px rgba(15, 23, 42, 0.075),
+    0 1px 0 rgba(255, 255, 255, 0.92) inset;
+}
+
+.runner-command-center__focused-run-section .runner-run-card::before,
+.runner-command-center__focused-run-section [class*='run-card']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.54), transparent 44%);
+}
+
+.runner-command-center__focused-run-section .runner-run-card > *,
+.runner-command-center__focused-run-section [class*='run-card'] > * {
+  position: relative;
+  z-index: 1;
+}
+
+.runner-command-center__focused-run-section .runner-run-card h3,
+.runner-command-center__focused-run-section [class*='run-card'] h3,
+.runner-command-center__focused-run-section .runner-run-card strong,
+.runner-command-center__focused-run-section [class*='run-card'] strong {
+  letter-spacing: -0.025em;
+}
+
+.runner-command-center__focused-run-section .runner-run-card p,
+.runner-command-center__focused-run-section [class*='run-card'] p,
+.runner-command-center__trust-checklist-section p {
+  color: rgba(71, 85, 105, 0.92);
+}
+
+.runner-command-center__trust-checklist-section .runner-trust-checklist,
+.runner-command-center__trust-checklist-section [class*='trust-checklist'] {
+  display: grid;
+  gap: 0.72rem;
+}
+
+.runner-command-center__trust-checklist-section .runner-trust-checklist li,
+.runner-command-center__trust-checklist-section [class*='trust-checklist'] li,
+.runner-command-center__trust-checklist-section [class*='trust-checklist__item'] {
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.055);
+}
+
+.runner-command-center__trust-checklist-section .runner-trust-checklist li::marker,
+.runner-command-center__trust-checklist-section [class*='trust-checklist'] li::marker {
+  color: rgba(37, 99, 235, 0.82);
+}
+
+.runner-command-center__trust-checklist-section .runner-trust-checklist [aria-hidden='true'],
+.runner-command-center__trust-checklist-section [class*='trust-checklist'] [aria-hidden='true'] {
+  filter: drop-shadow(0 5px 10px rgba(37, 99, 235, 0.12));
+}
+
+@media (max-width: 720px) {
+  .runner-command-center__focused-run-section .runner-run-card,
+  .runner-command-center__focused-run-section [class*='run-card'] {
+    border-radius: 19px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+  }
+
+  .runner-command-center__trust-checklist-section .runner-trust-checklist li,
+  .runner-command-center__trust-checklist-section [class*='trust-checklist'] li,
+  .runner-command-center__trust-checklist-section [class*='trust-checklist__item'] {
+    border-radius: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .runner-command-center__focused-run-section .runner-run-card,
+  .runner-command-center__focused-run-section [class*='run-card'],
+  .runner-command-center__trust-checklist-section .runner-trust-checklist li,
+  .runner-command-center__trust-checklist-section [class*='trust-checklist'] li,
+  .runner-command-center__trust-checklist-section [class*='trust-checklist__item'] {
+    transition:
+      border-color 180ms ease,
+      box-shadow 180ms ease,
+      background-color 180ms ease;
+  }
+}
