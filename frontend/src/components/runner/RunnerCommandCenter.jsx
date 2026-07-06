@@ -1,9 +1,9 @@
 ﻿import "./RunnerCommandCenter.css";
-import RunnerRunCard from "./RunnerRunCard";
 import RunnerStatusSummary from "./RunnerStatusSummary";
 import RunnerTrustChecklist from "./RunnerTrustChecklist";
 import { RunnerOverviewHeader } from "./RunnerOverviewHeader";
 import { RunnerActionStatusPanel } from "./RunnerActionStatusPanel";
+import { RunnerFocusedRunSection } from "./RunnerFocusedRunSection";
 
 export default function RunnerCommandCenter({
   title = "Runner command center",
@@ -30,7 +30,8 @@ export default function RunnerCommandCenter({
           />
         </div>
         <div>
-          <RunnerRunCard run={focusedRun} />
+          {/* RUN-UI-1D-CHECKPOINT-9: focused run card section extracted from RunnerCommandCenter. */}
+          <RunnerFocusedRunSection focusedRun={focusedRun} />
         </div>
       </div>
 
