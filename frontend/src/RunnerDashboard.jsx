@@ -894,6 +894,34 @@ return (
       {/* =========================
         AVAILABLE RUNS (BOTTOM SHEET)
     ========================= */}
+      {/* RUN-UI-1F-CHECKPOINT-2: keep the polished runner command center visible on the base runner dashboard when no active run is selected. */}
+      {!activeRun && (() => {
+        const {
+          focusedRun: runnerCommandFocusedRun,
+          statusLabel: runnerCommandStatusLabel,
+          metrics: runnerCommandMetrics,
+          checklistItems: runnerCommandChecklistItems,
+        } = deriveRunnerCommandData({
+          availableRuns: Array.isArray(availableRuns) ? availableRuns : [],
+          completedRuns: [],
+          focusedRun: null,
+          statusLabel: online ? "Online" : "Offline",
+        });
+
+        return (
+          <div className="runner-command-center-preview-slot">
+            <RunnerCommandCenter
+              title="Runner command center preview"
+              note="Live display data now powers this preview while existing runner actions remain untouched."
+              statusLabel={runnerCommandStatusLabel}
+              metrics={runnerCommandMetrics}
+              focusedRun={runnerCommandFocusedRun}
+              checklistItems={runnerCommandChecklistItems}
+            />
+          </div>
+        );
+      })()}
+
       {!activeRun && (
         <div style={{
           padding: 16,
