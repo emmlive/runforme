@@ -528,3 +528,140 @@
       background-color 180ms ease;
   }
 }
+
+/* RUN-UI-1E-CHECKPOINT-4: Runner command center responsive/mobile polish. */
+.runner-command-center {
+  width: min(100%, 1120px);
+  margin-inline: auto;
+}
+
+.runner-command-center,
+.runner-command-center__action-status-panel,
+.runner-command-center__focused-run-section,
+.runner-command-center__trust-checklist-section {
+  min-width: 0;
+}
+
+.runner-command-center__action-status-panel > *,
+.runner-command-center__focused-run-section > *,
+.runner-command-center__trust-checklist-section > * {
+  min-width: 0;
+}
+
+.runner-command-center__focused-run-section .runner-run-card,
+.runner-command-center__focused-run-section [class*='run-card'],
+.runner-command-center__action-status-panel .runner-status-summary,
+.runner-command-center__action-status-panel [class*='status-summary'] {
+  max-width: 100%;
+}
+
+.runner-command-center__focused-run-section .runner-run-card *,
+.runner-command-center__focused-run-section [class*='run-card'] *,
+.runner-command-center__trust-checklist-section *,
+.runner-command-center__action-status-panel * {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 960px) {
+  .runner-command-center-preview-slot {
+    margin-top: clamp(0.8rem, 2vw, 1.25rem);
+  }
+
+  .runner-command-center {
+    border-radius: 28px;
+    box-shadow: 0 22px 58px rgba(15, 23, 42, 0.11);
+  }
+
+  .runner-command-center__action-status-panel,
+  .runner-command-center__focused-run-section,
+  .runner-command-center__trust-checklist-section {
+    padding: clamp(0.85rem, 2.2vw, 1rem);
+  }
+}
+
+@media (max-width: 720px) {
+  .runner-command-center-preview-slot {
+    margin-inline: -0.15rem;
+  }
+
+  .runner-command-center {
+    border-radius: 24px;
+    background:
+      radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 24rem),
+      linear-gradient(145deg, rgba(255, 255, 255, 0.97), rgba(248, 250, 252, 0.92));
+  }
+
+  .runner-command-center__action-status-panel {
+    gap: 0.78rem;
+  }
+
+  .runner-command-center__focused-run-section,
+  .runner-command-center__trust-checklist-section {
+    padding: 0.82rem;
+  }
+
+  .runner-command-center__action-status-panel [class*='metric'],
+  .runner-command-center__action-status-panel [class*='stat'],
+  .runner-command-center__trust-checklist-section .runner-trust-checklist li,
+  .runner-command-center__trust-checklist-section [class*='trust-checklist'] li,
+  .runner-command-center__trust-checklist-section [class*='trust-checklist__item'] {
+    box-shadow: 0 7px 18px rgba(15, 23, 42, 0.052);
+  }
+}
+
+@media (max-width: 520px) {
+  .runner-command-center-preview-slot {
+    margin-inline: -0.35rem;
+  }
+
+  .runner-command-center {
+    border-radius: 22px;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.1);
+  }
+
+  .runner-command-center__action-status-panel,
+  .runner-command-center__focused-run-section,
+  .runner-command-center__trust-checklist-section {
+    border-radius: 18px;
+  }
+
+  .runner-command-center__action-status-panel .runner-status-summary,
+  .runner-command-center__action-status-panel [class*='status-summary'],
+  .runner-command-center__focused-run-section .runner-run-card,
+  .runner-command-center__focused-run-section [class*='run-card'] {
+    border-radius: 17px;
+  }
+
+  .runner-command-center__action-status-panel [class*='metric'],
+  .runner-command-center__action-status-panel [class*='stat'],
+  .runner-command-center__trust-checklist-section .runner-trust-checklist li,
+  .runner-command-center__trust-checklist-section [class*='trust-checklist'] li,
+  .runner-command-center__trust-checklist-section [class*='trust-checklist__item'] {
+    border-radius: 15px;
+  }
+}
+
+@media (max-width: 390px) {
+  .runner-command-center-preview-slot {
+    margin-inline: -0.5rem;
+  }
+
+  .runner-command-center {
+    border-radius: 20px;
+  }
+
+  .runner-command-center__action-status-panel,
+  .runner-command-center__focused-run-section,
+  .runner-command-center__trust-checklist-section {
+    padding: 0.72rem;
+  }
+}
+
+@supports not (overflow-wrap: anywhere) {
+  .runner-command-center__focused-run-section .runner-run-card *,
+  .runner-command-center__focused-run-section [class*='run-card'] *,
+  .runner-command-center__trust-checklist-section *,
+  .runner-command-center__action-status-panel * {
+    word-break: break-word;
+  }
+}
