@@ -2,6 +2,7 @@
 import RunnerRunCard from "./RunnerRunCard";
 import RunnerStatusSummary from "./RunnerStatusSummary";
 import RunnerTrustChecklist from "./RunnerTrustChecklist";
+import { RunnerOverviewHeader } from "./RunnerOverviewHeader";
 
 export default function RunnerCommandCenter({
   title = "Runner command center",
@@ -13,11 +14,11 @@ export default function RunnerCommandCenter({
 }) {
   return (
     <section className="runner-command-center" aria-label={title}>
-      <div className="runner-command-center__intro">
-        <p className="runner-command-center__kicker">RUNFORME Runner</p>
-        <h2 className="runner-command-center__title">{title}</h2>
-        <p className="runner-command-center__note">{note}</p>
-      </div>
+            {/* RUN-UI-1D-CHECKPOINT-7: overview title/note presentation extracted from RunnerCommandCenter. */}
+      <RunnerOverviewHeader
+        title={title}
+        note={note}
+      />
 
       <div className="runner-command-center__grid">
         <div>
