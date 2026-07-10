@@ -1,0 +1,89 @@
+/* RUN-UI-1G-CHECKPOINT-4 — requester/dashboard remaining visual gap polish */
+.run-requester-surface {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.24) !important;
+  border-radius: 28px !important;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(37, 99, 235, 0.12), transparent 32%),
+    radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.14), transparent 30%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.92)) !important;
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.14) !important;
+}
+
+.run-requester-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.72), transparent 46%),
+    radial-gradient(circle at 50% 100%, rgba(15, 23, 42, 0.07), transparent 38%);
+  pointer-events: none;
+}
+
+.run-requester-heading {
+  color: #0f172a !important;
+  letter-spacing: -0.04em !important;
+  text-wrap: balance;
+}
+
+.run-requester-heading--detail,
+.run-requester-heading--security,
+.run-requester-heading--hold {
+  display: inline-flex !important;
+  align-items: center !important;
+  width: fit-content !important;
+  border: 1px solid rgba(37, 99, 235, 0.18) !important;
+  border-radius: 999px !important;
+  padding: 7px 12px !important;
+  background: rgba(239, 246, 255, 0.82) !important;
+  color: #1d4ed8 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+.run-requester-surface input,
+.run-requester-surface textarea,
+.run-requester-surface select {
+  border: 1px solid rgba(148, 163, 184, 0.26) !important;
+  border-radius: 18px !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+  color: #0f172a !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 10px 24px rgba(15, 23, 42, 0.06) !important;
+}
+
+.run-requester-surface textarea {
+  min-height: 112px;
+}
+
+.run-requester-surface button {
+  border-radius: 999px !important;
+  box-shadow: 0 16px 34px rgba(37, 99, 235, 0.16) !important;
+}
+
+.run-requester-surface--active,
+.run-requester-surface--completed {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.13), transparent 30%),
+    linear-gradient(135deg, rgba(248, 250, 252, 0.98), rgba(226, 232, 240, 0.9)) !important;
+}
+
+.run-requester-surface--detail,
+.run-requester-surface--security,
+.run-requester-surface--hold {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.12), transparent 34%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(239, 246, 255, 0.9)) !important;
+}
+
+@media (max-width: 760px) {
+  .run-requester-surface {
+    border-radius: 24px !important;
+  }
+
+  .run-requester-heading {
+    letter-spacing: -0.03em !important;
+  }
+}

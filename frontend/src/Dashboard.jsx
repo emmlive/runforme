@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 
 import { RequesterRunOverview } from "./components/requester";
+import "./components/requester/RequesterDashboardPolish.css";
+// RUN-UI-1G-CHECKPOINT-4: requester dashboard visual polish only.
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5050";
 
 const statusLabels = {
@@ -279,7 +281,7 @@ function SecurityProofGrid({ run }) {
         border: "1px solid rgba(255,255,255,0.12)",
       }}
     >
-      <div
+      <div className="run-requester-heading run-requester-heading--security run-requester-surface run-requester-surface--security"
         style={{
           color: "#bfdbfe",
           fontSize: 12,
@@ -366,7 +368,7 @@ function RunDetailPanel({
         }}
       >
         <div>
-          <div style={{ fontSize: 12, opacity: 0.7, fontWeight: 800, letterSpacing: 1.5 }}>
+          <div className="run-requester-heading run-requester-heading--detail run-requester-surface run-requester-surface--detail" style={{ fontSize: 12, opacity: 0.7, fontWeight: 800, letterSpacing: 1.5 }}>
             RUN DETAIL
           </div>
           <h2 style={{ margin: "8px 0 4px", fontSize: 26 }}>
@@ -446,7 +448,7 @@ function RunDetailPanel({
             color: "#e5e7eb",
           }}
         >
-          <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: 1.2 }}>
+          <div className="run-requester-heading run-requester-heading--hold run-requester-surface run-requester-surface--hold" style={{ fontSize: 12, fontWeight: 900, letterSpacing: 1.2 }}>
             SECURE PAYMENT HOLD
           </div>
 
@@ -1016,7 +1018,7 @@ return (
           }}
         >
           <div style={{ background: "white", borderRadius: 16, padding: 18 }}>
-            <div style={{ color: "#64748b", fontWeight: 700 }}>Active Runs</div>
+            <div className="run-requester-heading run-requester-surface run-requester-surface--active" style={{ color: "#64748b", fontWeight: 700 }}>Active Runs</div>
             <div style={{ fontSize: 30, fontWeight: 900, marginTop: 6 }}>
               {activeRuns.length}
             </div>
@@ -1046,7 +1048,7 @@ return (
           authorizingHold={authorizingHold}
         />
 
-        <section
+        <section className="run-requester-surface run-requester-surface--create"
           style={{
             background: "white",
             borderRadius: 18,
@@ -1056,7 +1058,7 @@ return (
             boxShadow: "0 4px 14px rgba(15,23,42,0.04)",
           }}
         >
-          <h2 style={{ fontSize: 22, marginTop: 0, marginBottom: 14, color: "#0f172a" }}>
+          <h2 className="run-requester-heading" style={{ fontSize: 22, marginTop: 0, marginBottom: 14, color: "#0f172a" }}>
             Create Run
           </h2>
 
@@ -1257,8 +1259,8 @@ return (
           )}
         </section>
 
-        <section>
-          <h2 style={{ fontSize: 22, marginBottom: 14, color: "#0f172a" }}>
+        <section className="run-requester-surface run-requester-surface--completed">
+          <h2 className="run-requester-heading" style={{ fontSize: 22, marginBottom: 14, color: "#0f172a" }}>
             Completed Runs
           </h2>
 
