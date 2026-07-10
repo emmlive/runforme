@@ -323,22 +323,24 @@ function SecurityProofGrid({ run }) {
             >
               {value}
             </div>
-              <div
-                data-run-ui-1h="requester-delivery-pin-copy"
-                style={{
-                  marginTop: 8,
-                  padding: "10px 12px",
-                  borderRadius: 14,
-                  border: "1px solid rgba(37, 99, 235, 0.18)",
-                  background: "rgba(239, 246, 255, 0.86)",
-                  color: "#1e3a8a",
-                  fontSize: 12,
-                  lineHeight: 1.5,
-                }}
-              >
-                {/* RUN-UI-1H-REQUESTER-PIN-COPY */}
-                Keep this PIN private. Give it to the runner only after the delivery or task handoff is verified with the requester or recipient.
-              </div>
+              {label === "Delivery PIN" && (
+                <div
+                  data-run-ui-1h="requester-delivery-pin-copy"
+                  style={{
+                    marginTop: 8,
+                    padding: "10px 12px",
+                    borderRadius: 14,
+                    border: "1px solid rgba(37, 99, 235, 0.18)",
+                    background: "rgba(239, 246, 255, 0.86)",
+                    color: "#1e3a8a",
+                    fontSize: 12,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {/* RUN-UI-1H-REQUESTER-PIN-COPY */}
+                  Keep this PIN private. Give it to the runner only after the delivery or task handoff is verified with the requester or recipient.
+                </div>
+              )}
           </div>
         ))}
       </div>
