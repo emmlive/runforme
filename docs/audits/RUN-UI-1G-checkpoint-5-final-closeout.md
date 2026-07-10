@@ -63,28 +63,33 @@ PASS. The local requester/runner lifecycle worked after UI-1G polish:
 
 ## Behavior-sensitive source count snapshot
 
-- $pattern: 18
-- $pattern: 9
-- $pattern: 0
-- $pattern: 13
-- $pattern: 12
-- $pattern: 3
-- $pattern: 3
-- $pattern: 3
-- $pattern: 6
-- $pattern: 6
-- $pattern: 1
-- $pattern: 1
-- $pattern: 4
-- $pattern: 0
-- $pattern: 10
-- $pattern: 0
-- $pattern: 0
-- $pattern: 0
-- $pattern: 0
-- $pattern: 0
-- $pattern: 12
-- $pattern: 7
+- `fetch`: 18
+- `apiRequest`: 9
+- `axios`: 0
+- `/api/`: 13
+- `socket`: 12
+- `run.offer`: 3
+- `run.unavailable`: 3
+- `run.updated`: 3
+- `receipt-proof`: 6
+- `confirm-delivery`: 6
+- `authorize-hold`: 1
+- `manual-review`: 1
+- `localStorage`: 4
+- `sessionStorage`: 0
+- `method: "POST"`: 10
+- `method: 'POST'`: 0
+- `method: "PATCH"`: 0
+- `method: 'PATCH'`: 0
+- `method: "DELETE"`: 0
+- `method: 'DELETE'`: 0
+- `onClick=`: 12
+- `useEffect`: 7
+
+## Checkpoint 5A correction
+
+- Corrected the Checkpoint 5 behavior-sensitive source count snapshot labels, which initially rendered with placeholder labels instead of the actual pattern names.
+- This correction is audit-only and does not change runtime source.
 
 ## Deploy
 
