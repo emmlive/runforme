@@ -87,3 +87,70 @@
     letter-spacing: -0.03em !important;
   }
 }
+
+
+/* RUN-UI-1G-CHECKPOINT-4A — keep requester Create Run action visible */
+.run-requester-surface--create {
+  max-width: min(100%, 1120px) !important;
+  overflow: hidden !important;
+}
+
+.run-requester-surface--create form {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)) !important;
+  gap: 16px !important;
+  align-items: end !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.run-requester-surface--create form > * {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.run-requester-surface--create label {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.run-requester-surface--create input,
+.run-requester-surface--create textarea,
+.run-requester-surface--create select {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.run-requester-surface--create textarea,
+.run-requester-surface--create form > div:has(strong),
+.run-requester-surface--create form > div:has(p) {
+  grid-column: 1 / -1 !important;
+}
+
+.run-requester-surface--create button[type="submit"],
+.run-requester-surface--create form button:last-of-type {
+  grid-column: 1 / -1 !important;
+  justify-self: start !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 48px !important;
+  min-width: 150px !important;
+  padding: 0 22px !important;
+  margin-top: 4px !important;
+  white-space: nowrap !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+@media (max-width: 720px) {
+  .run-requester-surface--create form {
+    grid-template-columns: 1fr !important;
+  }
+
+  .run-requester-surface--create button[type="submit"],
+  .run-requester-surface--create form button:last-of-type {
+    width: 100% !important;
+  }
+}
