@@ -1,3 +1,5 @@
+import "./runner/RunnerCommandCenter.css";
+// RUN-UI-1G-CHECKPOINT-3: LiveMap fallback visual shell only.
 const googleMapsKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const googleMapsExplicitlyEnabled =
   import.meta.env.VITE_ENABLE_GOOGLE_MAPS === "true";
@@ -88,7 +90,7 @@ export default function LiveMap(props = {}) {
         borderBottom: "1px solid rgba(15, 23, 42, 0.08)",
       }}
     >
-      <div
+      <div className="run-live-map-fallback"
         style={{
           width: "min(640px, 100%)",
           background: "rgba(255, 255, 255, 0.9)",
@@ -127,7 +129,7 @@ export default function LiveMap(props = {}) {
           {locationLabel}
         </h2>
 
-        <p
+        <p className="run-live-map-fallback__body"
           style={{
             margin: "0 0 16px",
             color: "#475569",
@@ -165,7 +167,7 @@ export default function LiveMap(props = {}) {
             >
               Status
             </div>
-            <div style={{ fontWeight: 800 }}>Map fallback active</div>
+            <div className="run-live-map-fallback__metric-value" style={{ fontWeight: 800 }}>Map fallback active</div>
           </div>
 
           <div

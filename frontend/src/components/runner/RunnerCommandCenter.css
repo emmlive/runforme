@@ -741,3 +741,81 @@
       transform 180ms ease;
   }
 }
+
+
+/* RUN-UI-1G-CHECKPOINT-3 — LiveMap fallback card visual unification */
+.run-live-map-fallback {
+  position: relative !important;
+  isolation: isolate;
+  overflow: hidden !important;
+  margin: clamp(22px, 4vw, 44px) auto !important;
+  max-width: min(760px, calc(100% - 36px)) !important;
+  border: 1px solid rgba(148, 163, 184, 0.28) !important;
+  border-radius: 28px !important;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(37, 99, 235, 0.16), transparent 34%),
+    radial-gradient(circle at 92% 8%, rgba(14, 165, 233, 0.18), transparent 32%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.94)) !important;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.18) !important;
+}
+
+.run-live-map-fallback::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.72), transparent 48%),
+    radial-gradient(circle at 50% 100%, rgba(15, 23, 42, 0.08), transparent 38%);
+  pointer-events: none;
+}
+
+.run-live-map-fallback__eyebrow {
+  display: inline-flex !important;
+  align-items: center !important;
+  width: fit-content !important;
+  border: 1px solid rgba(14, 165, 233, 0.28) !important;
+  border-radius: 999px !important;
+  background: rgba(224, 242, 254, 0.92) !important;
+  color: #075985 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 10px 24px rgba(14, 165, 233, 0.12) !important;
+}
+
+.run-live-map-fallback__title {
+  color: #0f172a !important;
+  letter-spacing: -0.05em !important;
+}
+
+.run-live-map-fallback__body {
+  max-width: 68ch !important;
+  color: #475569 !important;
+  line-height: 1.65 !important;
+}
+
+.run-live-map-fallback__metric {
+  border: 1px solid rgba(148, 163, 184, 0.24) !important;
+  border-radius: 20px !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.76), 0 18px 36px rgba(15, 23, 42, 0.08) !important;
+  backdrop-filter: blur(18px);
+}
+
+.run-live-map-fallback__metric-label {
+  color: #64748b !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+.run-live-map-fallback__metric-value {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+@media (max-width: 720px) {
+  .run-live-map-fallback {
+    max-width: calc(100% - 24px) !important;
+    border-radius: 24px !important;
+  }
+}
