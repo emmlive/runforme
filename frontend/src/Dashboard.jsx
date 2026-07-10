@@ -4,6 +4,23 @@ import { jwtDecode } from "jwt-decode";
 
 import { RequesterRunOverview } from "./components/requester";
 import "./components/requester/RequesterDashboardPolish.css";
+// RUN-UI-1H: Delivery PIN requester handoff copy only.
+              <div
+                data-run-ui-1h="requester-delivery-pin-copy"
+                style={{
+                  marginTop: 8,
+                  padding: "10px 12px",
+                  borderRadius: 14,
+                  border: "1px solid rgba(37, 99, 235, 0.18)",
+                  background: "rgba(239, 246, 255, 0.86)",
+                  color: "#1e3a8a",
+                  fontSize: 12,
+                  lineHeight: 1.5,
+                }}
+              >
+                {/* RUN-UI-1H-REQUESTER-PIN-COPY */}
+                Keep this PIN private. Give it to the runner only after the delivery or task handoff is verified with the requester or recipient.
+              </div>
 // RUN-UI-1G-CHECKPOINT-4: requester dashboard visual polish only.
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5050";
 

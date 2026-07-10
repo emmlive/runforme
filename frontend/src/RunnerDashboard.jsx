@@ -3,6 +3,24 @@ import { apiRequest } from "./api/client";
 import { socket } from "./lib/socket"; // ✅ shared socket (FIX)
 import LiveMap from "./components/LiveMap";
 import { RunnerCommandCenter, deriveRunnerCommandData } from "./components/runner";
+// RUN-UI-1H: Delivery PIN runner handoff copy only.
+              <div
+                data-run-ui-1h="runner-delivery-pin-copy"
+                style={{
+                  marginTop: 8,
+                  marginBottom: 10,
+                  padding: "10px 12px",
+                  borderRadius: 14,
+                  border: "1px solid rgba(14, 165, 233, 0.2)",
+                  background: "rgba(224, 242, 254, 0.82)",
+                  color: "#075985",
+                  fontSize: 12,
+                  lineHeight: 1.5,
+                }}
+              >
+                {/* RUN-UI-1H-RUNNER-PIN-COPY */}
+                Ask the requester or recipient for the Delivery PIN at handoff. Do not request it before the delivery or task is verified.
+              </div>
 
 function getCompletionSafety(run) {
   if (!run) {
