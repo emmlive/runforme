@@ -1,0 +1,34 @@
+﻿
+  frontend\src\RunnerDashboard.jsx:891:        </div>
+  frontend\src\RunnerDashboard.jsx:892:      )}
+  frontend\src\RunnerDashboard.jsx:893:
+  frontend\src\RunnerDashboard.jsx:894:      {/* =========================
+> frontend\src\RunnerDashboard.jsx:895:        AVAILABLE RUNS (BOTTOM SHEET)
+  frontend\src\RunnerDashboard.jsx:896:    ========================= */}
+  frontend\src\RunnerDashboard.jsx:897:      {/* RUN-UI-1F-CHECKPOINT-2: keep the polished runner command center visible on the base runner dashboard when no active run is selected. */}
+  frontend\src\RunnerDashboard.jsx:898:      {!activeRun && (() => {
+  frontend\src\RunnerDashboard.jsx:899:        const {
+  frontend\src\RunnerDashboard.jsx:900:          focusedRun: runnerCommandFocusedRun,
+  frontend\src\RunnerDashboard.jsx:901:          statusLabel: runnerCommandStatusLabel,
+  frontend\src\RunnerDashboard.jsx:927:          padding: 16,
+  frontend\src\RunnerDashboard.jsx:928:          borderTop: "1px solid #222",
+  frontend\src\RunnerDashboard.jsx:929:          background: "#111"
+  frontend\src\RunnerDashboard.jsx:930:        }}>
+> frontend\src\RunnerDashboard.jsx:931:          <h4>Available Runs</h4>
+  frontend\src\RunnerDashboard.jsx:932:
+  frontend\src\RunnerDashboard.jsx:933:          <p style={{
+  frontend\src\RunnerDashboard.jsx:934:            marginTop: 4,
+  frontend\src\RunnerDashboard.jsx:935:            marginBottom: 12,
+  frontend\src\RunnerDashboard.jsx:936:            color: "#cbd5e1",
+  frontend\src\RunnerDashboard.jsx:937:            fontSize: 13,
+  frontend\src\RunnerDashboard.jsx:941:            Current placeholder mode does not make a live card charge.
+  frontend\src\RunnerDashboard.jsx:942:          </p>
+  frontend\src\RunnerDashboard.jsx:943:
+  frontend\src\RunnerDashboard.jsx:944:          {availableRuns.length === 0 && (
+> frontend\src\RunnerDashboard.jsx:945:            <p style={{ opacity: 0.6 }}>Waiting for jobs...</p>
+  frontend\src\RunnerDashboard.jsx:946:          )}
+  frontend\src\RunnerDashboard.jsx:947:
+  frontend\src\RunnerDashboard.jsx:948:          {acceptMessage && (
+  frontend\src\RunnerDashboard.jsx:949:            <div style={{
+  frontend\src\RunnerDashboard.jsx:950:              padding: 10,
+  frontend\src\RunnerDashboard.jsx:951:              borderRadius: 8,

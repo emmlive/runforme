@@ -1,0 +1,56 @@
+﻿
+  frontend\src\components\LiveMap.jsx:21:    props.dropoffLocation,
+  frontend\src\components\LiveMap.jsx:22:    run.location,
+  frontend\src\components\LiveMap.jsx:23:    run.address,
+  frontend\src\components\LiveMap.jsx:24:    run.destination,
+> frontend\src\components\LiveMap.jsx:25:    "Location pending"
+  frontend\src\components\LiveMap.jsx:26:  );
+  frontend\src\components\LiveMap.jsx:27:}
+  frontend\src\components\LiveMap.jsx:28:
+  frontend\src\components\LiveMap.jsx:29:function getCoordinateLabel(props) {
+  frontend\src\components\LiveMap.jsx:30:  const run = getRunLike(props);
+  frontend\src\components\LiveMap.jsx:31:
+  frontend\src\components\LiveMap.jsx:55:    run.runnerLng
+  frontend\src\components\LiveMap.jsx:56:  );
+  frontend\src\components\LiveMap.jsx:57:
+  frontend\src\components\LiveMap.jsx:58:  if (lat === undefined || lng === undefined || lat === null || lng === null) {
+> frontend\src\components\LiveMap.jsx:59:    return "Coordinates unavailable";
+  frontend\src\components\LiveMap.jsx:60:  }
+  frontend\src\components\LiveMap.jsx:61:
+  frontend\src\components\LiveMap.jsx:62:  return `${lat}, ${lng}`;
+  frontend\src\components\LiveMap.jsx:63:}
+  frontend\src\components\LiveMap.jsx:64:
+  frontend\src\components\LiveMap.jsx:65:export default function LiveMap(props = {}) {
+  frontend\src\components\LiveMap.jsx:68:
+  frontend\src\components\LiveMap.jsx:69:  const mapStatus =
+  frontend\src\components\LiveMap.jsx:70:    googleMapsExplicitlyEnabled && googleMapsKey
+  frontend\src\components\LiveMap.jsx:71:      ? "Map provider configured"
+> frontend\src\components\LiveMap.jsx:72:      : "Map preview";
+  frontend\src\components\LiveMap.jsx:73:
+  frontend\src\components\LiveMap.jsx:74:  return (
+  frontend\src\components\LiveMap.jsx:75:    <section
+  frontend\src\components\LiveMap.jsx:76:      aria-label="Run location map fallback"
+  frontend\src\components\LiveMap.jsx:77:      style={{
+  frontend\src\components\LiveMap.jsx:78:        minHeight: "320px",
+  frontend\src\components\LiveMap.jsx:134:            fontSize: "14px",
+  frontend\src\components\LiveMap.jsx:135:            lineHeight: 1.55,
+  frontend\src\components\LiveMap.jsx:136:          }}
+  frontend\src\components\LiveMap.jsx:137:        >
+> frontend\src\components\LiveMap.jsx:138:          Live Google Maps is paused until the production browser key is verified
+  frontend\src\components\LiveMap.jsx:139:          for this domain. The run workflow remains available.
+  frontend\src\components\LiveMap.jsx:140:        </p>
+  frontend\src\components\LiveMap.jsx:141:
+  frontend\src\components\LiveMap.jsx:142:        <div
+  frontend\src\components\LiveMap.jsx:143:          style={{
+  frontend\src\components\LiveMap.jsx:144:            display: "grid",
+  frontend\src\components\LiveMap.jsx:164:              }}
+  frontend\src\components\LiveMap.jsx:165:            >
+  frontend\src\components\LiveMap.jsx:166:              Status
+  frontend\src\components\LiveMap.jsx:167:            </div>
+> frontend\src\components\LiveMap.jsx:168:            <div style={{ fontWeight: 800 }}>Map fallback active</div>
+  frontend\src\components\LiveMap.jsx:169:          </div>
+  frontend\src\components\LiveMap.jsx:170:
+  frontend\src\components\LiveMap.jsx:171:          <div
+  frontend\src\components\LiveMap.jsx:172:            style={{
+  frontend\src\components\LiveMap.jsx:173:              border: "1px solid rgba(15, 23, 42, 0.1)",
+  frontend\src\components\LiveMap.jsx:174:              borderRadius: "16px",

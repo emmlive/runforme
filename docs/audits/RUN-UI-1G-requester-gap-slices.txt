@@ -1,0 +1,122 @@
+﻿
+  frontend\src\Dashboard.jsx:366:        }}
+  frontend\src\Dashboard.jsx:367:      >
+  frontend\src\Dashboard.jsx:368:        <div>
+  frontend\src\Dashboard.jsx:369:          <div style={{ fontSize: 12, opacity: 0.7, fontWeight: 800, letterSpacing: 1.5 }}>
+> frontend\src\Dashboard.jsx:370:            RUN DETAIL
+  frontend\src\Dashboard.jsx:371:          </div>
+  frontend\src\Dashboard.jsx:372:          <h2 style={{ margin: "8px 0 4px", fontSize: 26 }}>
+  frontend\src\Dashboard.jsx:373:            {run.location || "Unknown location"}
+  frontend\src\Dashboard.jsx:374:          </h2>
+  frontend\src\Dashboard.jsx:375:          <p style={{ margin: 0, color: "#cbd5e1" }}>
+  frontend\src\Dashboard.jsx:376:            {run.item || "Run request"}
+  frontend\src\Dashboard.jsx:741:
+  frontend\src\Dashboard.jsx:742:      const data = await response.json();
+  frontend\src\Dashboard.jsx:743:
+  frontend\src\Dashboard.jsx:744:      if (!response.ok || data.success === false) {
+> frontend\src\Dashboard.jsx:745:        throw new Error(data.error || "Failed to create run");
+  frontend\src\Dashboard.jsx:746:      }
+  frontend\src\Dashboard.jsx:747:
+  frontend\src\Dashboard.jsx:748:      setNewRun({
+  frontend\src\Dashboard.jsx:749:        location: "",
+  frontend\src\Dashboard.jsx:750:        item: "",
+  frontend\src\Dashboard.jsx:751:        payout: "25",
+  frontend\src\Dashboard.jsx:755:      });
+  frontend\src\Dashboard.jsx:756:      showSuccess("Run created and sent to available runners.");
+  frontend\src\Dashboard.jsx:757:      await fetchRuns();
+  frontend\src\Dashboard.jsx:758:    } catch (err) {
+> frontend\src\Dashboard.jsx:759:      showError(err.message || "Failed to create run");
+  frontend\src\Dashboard.jsx:760:    } finally {
+  frontend\src\Dashboard.jsx:761:      creatingRunRef.current = false;
+  frontend\src\Dashboard.jsx:762:
+  frontend\src\Dashboard.jsx:763:      setCreatingRun(false);
+  frontend\src\Dashboard.jsx:764:    }
+  frontend\src\Dashboard.jsx:765:  };
+  frontend\src\Dashboard.jsx:1015:            marginBottom: 28,
+  frontend\src\Dashboard.jsx:1016:          }}
+  frontend\src\Dashboard.jsx:1017:        >
+  frontend\src\Dashboard.jsx:1018:          <div style={{ background: "white", borderRadius: 16, padding: 18 }}>
+> frontend\src\Dashboard.jsx:1019:            <div style={{ color: "#64748b", fontWeight: 700 }}>Active Runs</div>
+  frontend\src\Dashboard.jsx:1020:            <div style={{ fontSize: 30, fontWeight: 900, marginTop: 6 }}>
+  frontend\src\Dashboard.jsx:1021:              {activeRuns.length}
+  frontend\src\Dashboard.jsx:1022:            </div>
+  frontend\src\Dashboard.jsx:1023:          </div>
+  frontend\src\Dashboard.jsx:1024:
+  frontend\src\Dashboard.jsx:1025:          <div style={{ background: "white", borderRadius: 16, padding: 18 }}>
+  frontend\src\Dashboard.jsx:1056:            boxShadow: "0 4px 14px rgba(15,23,42,0.04)",
+  frontend\src\Dashboard.jsx:1057:          }}
+  frontend\src\Dashboard.jsx:1058:        >
+  frontend\src\Dashboard.jsx:1059:          <h2 style={{ fontSize: 22, marginTop: 0, marginBottom: 14, color: "#0f172a" }}>
+> frontend\src\Dashboard.jsx:1060:            Create Run
+  frontend\src\Dashboard.jsx:1061:          </h2>
+  frontend\src\Dashboard.jsx:1062:
+  frontend\src\Dashboard.jsx:1063:          <form
+  frontend\src\Dashboard.jsx:1064:            onSubmit={createRun}
+  frontend\src\Dashboard.jsx:1065:            style={{
+  frontend\src\Dashboard.jsx:1066:              display: "grid",
+  frontend\src\Dashboard.jsx:1193:                cursor: creatingRun ? "not-allowed" : "pointer",
+  frontend\src\Dashboard.jsx:1194:                fontWeight: 800,
+  frontend\src\Dashboard.jsx:1195:              }}
+  frontend\src\Dashboard.jsx:1196:            >
+> frontend\src\Dashboard.jsx:1197:              {creatingRun ? "Creating..." : "Create Run"}
+  frontend\src\Dashboard.jsx:1198:            </button>
+  frontend\src\Dashboard.jsx:1199:          </form>
+  frontend\src\Dashboard.jsx:1200:
+  frontend\src\Dashboard.jsx:1201:          <div
+  frontend\src\Dashboard.jsx:1202:            style={{
+  frontend\src\Dashboard.jsx:1203:              marginTop: 14,
+  frontend\src\Dashboard.jsx:1210:              gap: 6,
+  frontend\src\Dashboard.jsx:1211:            }}
+  frontend\src\Dashboard.jsx:1212:          >
+  frontend\src\Dashboard.jsx:1213:            <div style={{ fontWeight: 900, color: "#0f172a" }}>
+> frontend\src\Dashboard.jsx:1214:              Secure hold preview
+  frontend\src\Dashboard.jsx:1215:            </div>
+  frontend\src\Dashboard.jsx:1216:            <div>
+  frontend\src\Dashboard.jsx:1217:              Estimated hold: <strong>{formatMoney(createRunSecurityPreview.holdAmount)}</strong>
+  frontend\src\Dashboard.jsx:1218:            </div>
+  frontend\src\Dashboard.jsx:1219:            <div>
+  frontend\src\Dashboard.jsx:1220:              Max runner spend:{" "}
+  frontend\src\Dashboard.jsx:1228:        </section>
+  frontend\src\Dashboard.jsx:1229:
+  frontend\src\Dashboard.jsx:1230:        <section style={{ marginBottom: 34 }}>
+  frontend\src\Dashboard.jsx:1231:          <h2 style={{ fontSize: 22, marginBottom: 14, color: "#0f172a" }}>
+> frontend\src\Dashboard.jsx:1232:            Active Runs
+  frontend\src\Dashboard.jsx:1233:          </h2>
+  frontend\src\Dashboard.jsx:1234:
+  frontend\src\Dashboard.jsx:1235:          {loading ? (
+  frontend\src\Dashboard.jsx:1236:            <p>Loading...</p>
+  frontend\src\Dashboard.jsx:1237:          ) : activeRuns.length === 0 ? (
+  frontend\src\Dashboard.jsx:1238:            <div
+  frontend\src\Dashboard.jsx:1242:                padding: 24,
+  frontend\src\Dashboard.jsx:1243:                color: "#64748b",
+  frontend\src\Dashboard.jsx:1244:              }}
+  frontend\src\Dashboard.jsx:1245:            >
+> frontend\src\Dashboard.jsx:1246:              No active runs.
+  frontend\src\Dashboard.jsx:1247:            </div>
+  frontend\src\Dashboard.jsx:1248:          ) : (
+  frontend\src\Dashboard.jsx:1249:            activeRuns.map((run) => (
+  frontend\src\Dashboard.jsx:1250:              <RunCard
+  frontend\src\Dashboard.jsx:1251:                key={run.id}
+  frontend\src\Dashboard.jsx:1252:                run={run}
+  frontend\src\Dashboard.jsx:1258:        </section>
+  frontend\src\Dashboard.jsx:1259:
+  frontend\src\Dashboard.jsx:1260:        <section>
+  frontend\src\Dashboard.jsx:1261:          <h2 style={{ fontSize: 22, marginBottom: 14, color: "#0f172a" }}>
+> frontend\src\Dashboard.jsx:1262:            Completed Runs
+  frontend\src\Dashboard.jsx:1263:          </h2>
+  frontend\src\Dashboard.jsx:1264:
+  frontend\src\Dashboard.jsx:1265:          {completedRuns.length === 0 ? (
+  frontend\src\Dashboard.jsx:1266:            <div
+  frontend\src\Dashboard.jsx:1267:              style={{
+  frontend\src\Dashboard.jsx:1268:                background: "white",
+  frontend\src\Dashboard.jsx:1270:                padding: 24,
+  frontend\src\Dashboard.jsx:1271:                color: "#64748b",
+  frontend\src\Dashboard.jsx:1272:              }}
+  frontend\src\Dashboard.jsx:1273:            >
+> frontend\src\Dashboard.jsx:1274:              No completed runs yet.
+  frontend\src\Dashboard.jsx:1275:            </div>
+  frontend\src\Dashboard.jsx:1276:          ) : (
+  frontend\src\Dashboard.jsx:1277:            completedRuns.map((run) => (
+  frontend\src\Dashboard.jsx:1278:              <RunCard
+  frontend\src\Dashboard.jsx:1279:                key={run.id}
+  frontend\src\Dashboard.jsx:1280:                run={run}
