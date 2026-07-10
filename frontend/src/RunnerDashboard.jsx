@@ -922,15 +922,16 @@ return (
         );
       })()}
 
+      {/* RUN-UI-1G-CHECKPOINT-2: visual-only polish for the runner Available Runs shell. */}
       {!activeRun && (
-        <div style={{
+        <div className="runner-available-runs-panel" style={{
           padding: 16,
           borderTop: "1px solid #222",
           background: "#111"
         }}>
-          <h4>Available Runs</h4>
+          <h4 className="runner-available-runs-panel__title">Available Runs</h4>
 
-          <p style={{
+          <p className="runner-available-runs-panel__note" style={{
             marginTop: 4,
             marginBottom: 12,
             color: "#cbd5e1",
@@ -942,7 +943,7 @@ return (
           </p>
 
           {availableRuns.length === 0 && (
-            <p style={{ opacity: 0.6 }}>Waiting for jobs...</p>
+            <p className="runner-available-runs-panel__empty" style={{ opacity: 0.6 }}>Waiting for jobs...</p>
           )}
 
           {acceptMessage && (
