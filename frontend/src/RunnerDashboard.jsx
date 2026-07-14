@@ -325,6 +325,103 @@ export default function RunnerDashboard({ user }) {
     }
   }
 
+
+  function handleReceiptPhotoChange(id, event) {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      setReceiptProofs((prev) => ({
+        ...prev,
+        [id]: {
+          ...(prev[id] || {}),
+          receiptImageUrl: "",
+          receiptImageName: "",
+          receiptImagePreview: "",
+          receiptImageError: "",
+        },
+      }));
+      return;
+    }
+
+    if (!file.type || !file.type.startsWith("image/")) {
+      setReceiptProofs((prev) => ({
+        ...prev,
+        [id]: {
+          ...(prev[id] || {}),
+          receiptImageUrl: "",
+          receiptImageName: "",
+          receiptImagePreview: "",
+          receiptImageError: "Upload a receipt image file.",
+        },
+      }));
+      event.target.value = "";
+      return;
+    }
+
+    const maxBytes = 1500 * 1024;
+
+    if (file.size > maxBytes) {
+      setReceiptProofs((prev) => ({
+        ...prev,
+        [id]: {
+          ...(prev[id] || {}),
+          receiptImageUrl: "",
+          receiptImageName: "",
+          receiptImagePreview: "",
+          receiptImageError: "Receipt photo must be 1.5 MB or smaller for this upload preview.",
+        },
+      }));
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+
+      if (!result) {
+        setReceiptProofs((prev) => ({
+          ...prev,
+          [id]: {
+            ...(prev[id] || {}),
+            receiptImageUrl: "",
+            receiptImageName: "",
+            receiptImagePreview: "",
+            receiptImageError: "Could not read receipt photo. Try another image.",
+          },
+        }));
+        return;
+      }
+
+      setReceiptProofs((prev) => ({
+        ...prev,
+        [id]: {
+          ...(prev[id] || {}),
+          receiptImageUrl: result,
+          receiptImageName: file.name,
+          receiptImagePreview: result,
+          receiptImageError: "",
+        },
+      }));
+    };
+
+    reader.onerror = () => {
+      setReceiptProofs((prev) => ({
+        ...prev,
+        [id]: {
+          ...(prev[id] || {}),
+          receiptImageUrl: "",
+          receiptImageName: "",
+          receiptImagePreview: "",
+          receiptImageError: "Could not read receipt photo. Try another image.",
+        },
+      }));
+    };
+
+    reader.readAsDataURL(file);
+  }
+
   async function submitReceiptProof(id) {
     const proof = receiptProofs[id] || {};
     const receiptAmount = Number(proof.receiptAmount);
@@ -336,7 +433,7 @@ export default function RunnerDashboard({ user }) {
     }
 
     if (!receiptImageUrl) {
-      setActionMessage({ type: "error", text: "Enter a receipt proof URL." });
+      setActionMessage({ type: "error", text: "Upload a receipt photo." });
       return;
     }
 
@@ -697,29 +794,70 @@ export default function RunnerDashboard({ user }) {
                         }}
                       />
 
-                      <input
-                        value={receiptProofs[activeRun.id]?.receiptImageUrl || ""}
-                        onChange={(event) =>
-                          setReceiptProofs((prev) => ({
-                            ...prev,
-                            [activeRun.id]: {
-                              ...(prev[activeRun.id] || {}),
-                              receiptImageUrl: event.target.value,
-                            },
-                          }))
-                        }
-                        placeholder="Receipt proof URL"
+                      <div
+                        data-run-ui-1i="receipt-photo-upload"
                         style={{
-                          width: "100%",
-                          boxSizing: "border-box",
-                          padding: "10px 12px",
-                          borderRadius: 8,
-                          border: "1px solid #444",
-                          background: "#0b0b0b",
-                          color: "white",
+                          display: "grid",
+                          gap: 10,
+                          padding: 14,
+                          borderRadius: 12,
+                          border: "1px solid #334155",
+                          background: "#0f172a",
                           marginBottom: 10,
                         }}
-                      />
+                      >
+                        {/* RUN-UI-1I-RECEIPT-PHOTO-UPLOAD: runner selects or takes a receipt photo instead of pasting a link. */}
+                        <div style={{ fontSize: 13, fontWeight: 900, color: "#e5e7eb" }}>
+                          Receipt photo
+                        </div>
+
+                        <p style={{ margin: 0, color: "#94a3b8", fontSize: 12, lineHeight: 1.45 }}>
+                          Take or upload a clear photo of the receipt after purchase. RUNFORME attaches
+                          the proof automatically, so you do not need to paste a link.
+                        </p>
+
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          onChange={(event) => handleReceiptPhotoChange(activeRun.id, event)}
+                          style={{
+                            width: "100%",
+                            boxSizing: "border-box",
+                            padding: "10px 12px",
+                            borderRadius: 8,
+                            border: "1px solid #475569",
+                            background: "#0b0b0b",
+                            color: "white",
+                          }}
+                        />
+
+                        {receiptProofs[activeRun.id]?.receiptImageName && (
+                          <div style={{ color: "#cbd5e1", fontSize: 12, fontWeight: 800 }}>
+                            Selected receipt: {receiptProofs[activeRun.id]?.receiptImageName}
+                          </div>
+                        )}
+
+                        {receiptProofs[activeRun.id]?.receiptImagePreview && (
+                          <img
+                            src={receiptProofs[activeRun.id]?.receiptImagePreview}
+                            alt="Selected receipt preview"
+                            style={{
+                              width: "100%",
+                              maxHeight: 220,
+                              objectFit: "cover",
+                              borderRadius: 12,
+                              border: "1px solid #334155",
+                            }}
+                          />
+                        )}
+
+                        {receiptProofs[activeRun.id]?.receiptImageError && (
+                          <div role="alert" style={{ color: "#fecaca", fontSize: 12, fontWeight: 800 }}>
+                            {receiptProofs[activeRun.id]?.receiptImageError}
+                          </div>
+                        )}
+                      </div>
 
                       <button
                         onClick={() => submitReceiptProof(activeRun.id)}
