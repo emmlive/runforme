@@ -1,0 +1,155 @@
+# Slice: 01-frontend-receipt-proof-search.md
+
+## frontend/src/RunnerDashboard.jsx
+
+- Pattern 'receipt': 45 match(es)
+  - line 16: const receiptRequired = Number(run.maxRunnerSpend || 0) > 0;
+  - line 17: const receiptUploaded = run.receiptStatus === "uploaded";
+  - line 20: run.receiptStatus === "review_required" ||
+  - line 27: detail: "This run has a receipt or spend issue that must be approved before completion.",
+  - line 31: if (receiptRequired && !receiptUploaded) {
+  - line 34: title: "Waiting for receipt proof",
+  - line 35: detail: "Submit receipt amount and proof before completing this purchase run.",
+  - line 50: detail: "Receipt proof and delivery confirmation are complete.",
+  - line 60: const [receiptProofs, setReceiptProofs] = useState({});
+  - line 328: async function submitReceiptProof(id) {
+  - line 329: const proof = receiptProofs[id] || {};
+  - line 330: const receiptAmount = Number(proof.receiptAmount);
+  - line 331: const receiptImageUrl = String(proof.receiptImageUrl || "").trim();
+  - line 333: if (!Number.isInteger(receiptAmount) || receiptAmount <= 0) {
+  - line 334: setActionMessage({ type: "error", text: "Enter a valid whole-dollar receipt amount." });
+  - line 338: if (!receiptImageUrl) {
+  - line 339: setActionMessage({ type: "error", text: "Enter a receipt proof URL." });
+  - line 343: const actionKey = `${id}:receipt-proof`;
+  - line 352: const res = await apiRequest(`/api/runs/${id}/receipt-proof`, {
+  - line 354: body: { receiptAmount, receiptImageUrl },
+  - line 358: setActionMessage({ type: "success", text: "Receipt proof submitted." });
+  - line 359: setReceiptProofs((prev) => ({ ...prev, [id]: {} }));
+  - line 371: text: res.error || "Could not submit receipt proof.",
+  - line 376: text: err.message || "Could not submit receipt proof.",
+  - line 609: <span style={{ opacity: 0.75 }}>Receipt status</span>
+  - line 610: <strong>{String(activeRun.receiptStatus || "not_uploaded").replaceAll("_", " ")}</strong>
+  - line 630: Submit receipt proof for this purchase. Spending over the max runner spend
+  - line 659: {activeRun.receiptStatus === "uploaded" ||
+  - line 660: activeRun.receiptStatus === "review_required" ? (
+  - line 662: color: activeRun.receiptStatus === "review_required" ? "#fde68a" : "#86efac",
+  - line 665: Receipt proof {activeRun.receiptStatus === "review_required" ? "needs review" : "uploaded"}.
+  - line 670: Submit receipt amount and proof before settlement.
+  - line 676: value={receiptProofs[activeRun.id]?.receiptAmount || ""}
+  - line 678: setReceiptProofs((prev) => ({
+  - line 682: receiptAmount: event.target.value,
+  - line 686: placeholder="Receipt amount"
+  - line 701: value={receiptProofs[activeRun.id]?.receiptImageUrl || ""}
+  - line 703: setReceiptProofs((prev) => ({
+  - line 707: receiptImageUrl: event.target.value,
+  - line 711: placeholder="Receipt proof URL"
+  - line 725: onClick={() => submitReceiptProof(activeRun.id)}
+  - line 726: disabled={activeAction === `${activeRun.id}:receipt-proof`}
+  - line 728: opacity: activeAction === `${activeRun.id}:receipt-proof` ? 0.55 : 1,
+  - line 729: cursor: activeAction === `${activeRun.id}:receipt-proof` ? "not-allowed" : "pointer",
+  - line 732: {activeAction === `${activeRun.id}:receipt-proof` ? "Submitting receipt..." : "Submit Receipt Proof"}
+- Pattern 'receipt proof': 10 match(es)
+  - line 34: title: "Waiting for receipt proof",
+  - line 50: detail: "Receipt proof and delivery confirmation are complete.",
+  - line 339: setActionMessage({ type: "error", text: "Enter a receipt proof URL." });
+  - line 358: setActionMessage({ type: "success", text: "Receipt proof submitted." });
+  - line 371: text: res.error || "Could not submit receipt proof.",
+  - line 376: text: err.message || "Could not submit receipt proof.",
+  - line 630: Submit receipt proof for this purchase. Spending over the max runner spend
+  - line 665: Receipt proof {activeRun.receiptStatus === "review_required" ? "needs review" : "uploaded"}.
+  - line 711: placeholder="Receipt proof URL"
+  - line 732: {activeAction === `${activeRun.id}:receipt-proof` ? "Submitting receipt..." : "Submit Receipt Proof"}
+- Pattern 'receiptProof': 9 match(es)
+  - line 60: const [receiptProofs, setReceiptProofs] = useState({});
+  - line 328: async function submitReceiptProof(id) {
+  - line 329: const proof = receiptProofs[id] || {};
+  - line 359: setReceiptProofs((prev) => ({ ...prev, [id]: {} }));
+  - line 676: value={receiptProofs[activeRun.id]?.receiptAmount || ""}
+  - line 678: setReceiptProofs((prev) => ({
+  - line 701: value={receiptProofs[activeRun.id]?.receiptImageUrl || ""}
+  - line 703: setReceiptProofs((prev) => ({
+  - line 725: onClick={() => submitReceiptProof(activeRun.id)}
+- Pattern 'receiptProofUrl': no matches
+- Pattern 'receiptProofURL': no matches
+- Pattern 'receiptUrl': no matches
+- Pattern 'proof URL': 2 match(es)
+  - line 339: setActionMessage({ type: "error", text: "Enter a receipt proof URL." });
+  - line 711: placeholder="Receipt proof URL"
+- Pattern 'Submit Receipt Proof': 4 match(es)
+  - line 371: text: res.error || "Could not submit receipt proof.",
+  - line 376: text: err.message || "Could not submit receipt proof.",
+  - line 630: Submit receipt proof for this purchase. Spending over the max runner spend
+  - line 732: {activeAction === `${activeRun.id}:receipt-proof` ? "Submitting receipt..." : "Submit Receipt Proof"}
+- Pattern 'Receipt proof URL': 2 match(es)
+  - line 339: setActionMessage({ type: "error", text: "Enter a receipt proof URL." });
+  - line 711: placeholder="Receipt proof URL"
+- Pattern 'manual review': 3 match(es)
+  - line 26: title: "Waiting for requester manual review",
+  - line 631: will require requester manual review before completion or payout.
+  - line 642: Manual review is required. Wait for requester approval before completing.
+- Pattern 'max runner spend': 2 match(es)
+  - line 600: <span style={{ opacity: 0.75 }}>Max runner spend</span>
+  - line 630: Submit receipt proof for this purchase. Spending over the max runner spend
+
+## frontend/src/Dashboard.jsx
+
+- Pattern 'receipt': 8 match(es)
+  - line 259: ["Receipt Status", formatSecurityStatus(run.receiptStatus)],
+  - line 261: "Receipt Amount",
+  - line 262: Number(run.receiptAmount || 0) > 0 ? formatMoney(run.receiptAmount) : "Not submitted",
+  - line 268: ["Receipt Proof", run.receiptImageUrl ? "Uploaded" : "Not uploaded"],
+  - line 572: Review the receipt amount, final amount, max runner spend, and proof status.
+  - line 910: requesterCommandActiveRun?.receiptUrl ||
+  - line 911: requesterCommandActiveRun?.receiptImageUrl
+  - line 1245: and trigger receipt review if the runner spends over the allowed amount.
+- Pattern 'receipt proof': 1 match(es)
+  - line 268: ["Receipt Proof", run.receiptImageUrl ? "Uploaded" : "Not uploaded"],
+- Pattern 'receiptProof': no matches
+- Pattern 'receiptProofUrl': no matches
+- Pattern 'receiptProofURL': no matches
+- Pattern 'receiptUrl': 1 match(es)
+  - line 910: requesterCommandActiveRun?.receiptUrl ||
+- Pattern 'proof URL': no matches
+- Pattern 'Submit Receipt Proof': no matches
+- Pattern 'Receipt proof URL': no matches
+- Pattern 'manual review': 7 match(es)
+  - line 271: ["Manual Review", run.requiresManualReview ? "Required" : "Not required"],
+  - line 567: MANUAL REVIEW REQUIRED
+  - line 571: Manual review is required before this runner can complete the run.
+  - line 588: {approvingManualReview ? "Approving..." : "Approve Manual Review"}
+  - line 862: throw new Error(data.error || "Failed to approve manual review");
+  - line 871: showSuccess("Manual review approved. Runner can complete this run.");
+  - line 874: showError(err.message || "Failed to approve manual review");
+- Pattern 'max runner spend': 3 match(es)
+  - line 257: ["Max Runner Spend", formatMoney(run.maxRunnerSpend)],
+  - line 572: Review the receipt amount, final amount, max runner spend, and proof status.
+  - line 1240: Max runner spend:{" "}
+
+## frontend/src/App.jsx
+
+- Pattern 'receipt': no matches
+- Pattern 'receipt proof': no matches
+- Pattern 'receiptProof': no matches
+- Pattern 'receiptProofUrl': no matches
+- Pattern 'receiptProofURL': no matches
+- Pattern 'receiptUrl': no matches
+- Pattern 'proof URL': no matches
+- Pattern 'Submit Receipt Proof': no matches
+- Pattern 'Receipt proof URL': no matches
+- Pattern 'manual review': no matches
+- Pattern 'max runner spend': no matches
+
+## frontend/src/api/client.js
+
+- Pattern 'receipt': no matches
+- Pattern 'receipt proof': no matches
+- Pattern 'receiptProof': no matches
+- Pattern 'receiptProofUrl': no matches
+- Pattern 'receiptProofURL': no matches
+- Pattern 'receiptUrl': no matches
+- Pattern 'proof URL': no matches
+- Pattern 'Submit Receipt Proof': no matches
+- Pattern 'Receipt proof URL': no matches
+- Pattern 'manual review': no matches
+- Pattern 'max runner spend': no matches
+
