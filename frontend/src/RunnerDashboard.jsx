@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { apiRequest } from "./api/client";
-import { socket } from "./lib/socket"; // ✅ shared socket (FIX)
+import { socket } from "./lib/socket"; // âœ… shared socket (FIX)
 import LiveMap from "./components/LiveMap";
 import { RunnerCommandCenter, deriveRunnerCommandData } from "./components/runner";
 
@@ -106,7 +106,7 @@ export default function RunnerDashboard({ user }) {
 
     socket.emit("join.runner", user.id);
 
-    setRuns([]); // 🔥 CLEAN RESET
+    setRuns([]); // ðŸ”¥ CLEAN RESET
 
     fetchRuns(); // Load existing offers on page load/refresh
 
@@ -326,6 +326,16 @@ export default function RunnerDashboard({ user }) {
   }
 
 
+  function createReceiptPhotoReference(id, fileName) {
+    const safeFileName = String(fileName || "receipt-photo")
+      .trim()
+      .replace(/[^a-zA-Z0-9._-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80) || "receipt-photo";
+
+    return `https://runforme.local/receipt-images/${encodeURIComponent(id)}/${Date.now()}-${safeFileName}`;
+  }
+
   function handleReceiptPhotoChange(id, event) {
     const file = event.target.files?.[0];
 
@@ -398,7 +408,8 @@ export default function RunnerDashboard({ user }) {
         ...prev,
         [id]: {
           ...(prev[id] || {}),
-          receiptImageUrl: result,
+          // RUN-UI-1I-RECEIPT-PHOTO-REFERENCE-BRIDGE: keep the browser preview as a data image, but send a compact proof reference through the existing backend contract.
+          receiptImageUrl: createReceiptPhotoReference(id, file.name),
           receiptImageName: file.name,
           receiptImagePreview: result,
           receiptImageError: "",
@@ -1150,14 +1161,14 @@ return (
                   setAcceptMessage(null);
 
                   try {
-                    console.log("✅ ACCEPTING RUN:", run.id);
+                    console.log("âœ… ACCEPTING RUN:", run.id);
 
                     const res = await apiRequest(
                       `/api/runs/${run.id}/accept`,
                       { method: "POST" }
                     );
 
-                    console.log("✅ ACCEPT RESULT:", res);
+                    console.log("âœ… ACCEPT RESULT:", res);
 
                     if (res.success) {
                       setAcceptMessage({
