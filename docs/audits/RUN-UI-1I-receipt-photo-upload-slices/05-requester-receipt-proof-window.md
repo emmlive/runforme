@@ -4,7 +4,7 @@
 ---
 
 214:         </div>
-215: 
+215:
 216:         <div style={{ padding: 12, background: "#f8fafc", borderRadius: 12 }}>
 217:           <div style={{ fontSize: 12, color: "#64748b", fontWeight: 700 }}>
 218:             Assigned Runner
@@ -13,12 +13,12 @@
 221:             {run.assignedRunnerId ? `Runner #${run.assignedRunnerId}` : "Not assigned yet"}
 222:           </div>
 223:         </div>
-224: 
+224:
 225:         <div style={{ padding: 12, background: "#f8fafc", borderRadius: 12 }}>
 226:           <div style={{ fontSize: 12, color: "#64748b", fontWeight: 700 }}>Payment</div>
 227:           <div style={{ marginTop: 4, fontWeight: 800 }}>{paymentText}</div>
 228:         </div>
-229: 
+229:
 230:         <div style={{ padding: 12, background: "#f8fafc", borderRadius: 12 }}>
 231:           <div style={{ fontSize: 12, color: "#64748b", fontWeight: 700 }}>Created</div>
 232:           <div style={{ marginTop: 4, fontWeight: 800 }}>{formatDate(run.createdAt)}</div>
@@ -27,8 +27,8 @@
 235:     </div>
 236:   );
 237: }
-238: 
-239: 
+238:
+239:
 240: function getNextStep(status) {
 241:   if (status === "open") return "Waiting for a runner to accept this run.";
 242:   if (status === "assigned") return "Runner assigned. Next step: runner arrival.";
@@ -37,11 +37,11 @@
 245:   if (status === "completed") return "Run completed. Review payment and history.";
 246:   return "Monitoring run status.";
 247: }
-248: 
-249: 
+248:
+249:
 250: function SecurityProofGrid({ run }) {
 251:   const isMobile = useIsMobile();
-252: 
+252:
 253:   const items = [
 254:     ["Delivery PIN", run.deliveryPin || "Not generated"],
 255:     ["Authorization", formatSecurityStatus(run.authorizationStatus)],
@@ -62,7 +62,7 @@
 270:     ["Delivery Confirmed", formatDate(run.deliveryConfirmedAt)],
 271:     ["Manual Review", run.requiresManualReview ? "Required" : "Not required"],
 272:   ];
-273: 
+273:
 274:   return (
 275:     <div
 276:       style={{
@@ -84,7 +84,7 @@
 292:       >
 293:         SECURITY & PROOF
 294:       </div>
-295: 
+295:
 296:       <div
 297:         style={{
 298:           display: "grid",
@@ -141,7 +141,7 @@
 551:           </button>
 552:         </div>
 553:       )}
-554: 
+554:
 555:       {run.requiresManualReview && (
 556:         <div
 557:           style={{
@@ -156,12 +156,12 @@
 566:           <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: 1.2 }}>
 567:             MANUAL REVIEW REQUIRED
 568:           </div>
-569: 
+569:
 570:           <p style={{ marginTop: 8, marginBottom: 12, color: "#fde68a" }}>
 571:             Manual review is required before this runner can complete the run.
 572:             Review the receipt amount, final amount, max runner spend, and proof status.
 573:           </p>
-574: 
+574:
 575:           <button
 576:             onClick={() => onApproveManualReview?.(run.id)}
 577:             disabled={approvingManualReview}
@@ -179,7 +179,7 @@
 589:           </button>
 590:         </div>
 591:       )}
-592: 
+592:
 593:       <div
 594:         style={{
 595:           marginTop: 18,
@@ -196,13 +196,13 @@
 606:     </section>
 607:   );
 608: }
-609: 
-610: 
+609:
+610:
 611: export default function Dashboard({ onLogout }) {
 612:   const navigate = useNavigate();
 613:   const token = localStorage.getItem("token");
 614:   const isMobile = useIsMobile();
-615: 
+615:
 616:   const [role, setRole] = useState(null);
 617:   const [runs, setRuns] = useState([]);
 618:   const [loading, setLoading] = useState(true);
@@ -226,19 +226,19 @@
 
 817:         headers: { Authorization: `Bearer ${token}` },
 818:       });
-819: 
+819:
 820:       const data = await response.json();
-821: 
+821:
 822:       if (!response.ok || data.success === false) {
 823:         throw new Error(data.error || "Failed to authorize secure hold");
 824:       }
-825: 
+825:
 826:       setRuns((prev) =>
 827:         prev.map((run) =>
 828:           run.id === runId ? { ...run, ...data.run } : run
 829:         )
 830:       );
-831: 
+831:
 832:       showSuccess(data.message || "Secure hold placeholder authorized. No live charge was made.");
 833:       await fetchRuns();
 834:     } catch (err) {
@@ -247,37 +247,37 @@
 837:       if (authorizingHoldRef.current === runId) {
 838:         authorizingHoldRef.current = null;
 839:       }
-840: 
+840:
 841:       setAuthorizingHold(false);
 842:     }
 843:   };
-844: 
+844:
 845:   const approveManualReview = async (runId) => {
 846:     if (!runId || !token) return;
 847:     if (approvingManualReviewRef.current === runId) return;
-848: 
+848:
 849:     approvingManualReviewRef.current = runId;
-850: 
+850:
 851:     try {
 852:       setApprovingManualReview(true);
-853: 
+853:
 854:       const response = await fetch(`${API_URL}/api/runs/${runId}/manual-review/approve`, {
 855:         method: "POST",
 856:         headers: { Authorization: `Bearer ${token}` },
 857:       });
-858: 
+858:
 859:       const data = await response.json();
-860: 
+860:
 861:       if (!response.ok || data.success === false) {
 862:         throw new Error(data.error || "Failed to approve manual review");
 863:       }
-864: 
+864:
 865:       setRuns((prev) =>
 866:         prev.map((run) =>
 867:           run.id === runId ? { ...run, ...data.run } : run
 868:         )
 869:       );
-870: 
+870:
 871:       showSuccess("Manual review approved. Runner can complete this run.");
 872:       await fetchRuns();
 873:     } catch (err) {
@@ -286,22 +286,22 @@
 876:       if (approvingManualReviewRef.current === runId) {
 877:         approvingManualReviewRef.current = null;
 878:       }
-879: 
+879:
 880:       setApprovingManualReview(false);
 881:     }
 882:   };
-883: 
+883:
 884:   const handleLogout = () => {
 885:     if (onLogout) {
 886:       onLogout();
 887:       return;
 888:     }
-889: 
+889:
 890:     localStorage.removeItem("token");
 891:     localStorage.removeItem("role");
 892:     navigate("/");
 893:   };
-894: 
+894:
 895:     // RUN-UI-1C-CHECKPOINT-4: display-only requester Command Center data.
 896:   const requesterCommandActiveRuns = Array.isArray(activeRuns) ? activeRuns : [];
 897:   const requesterCommandHistoryRuns = Array.isArray(completedRuns) ? completedRuns : [];
