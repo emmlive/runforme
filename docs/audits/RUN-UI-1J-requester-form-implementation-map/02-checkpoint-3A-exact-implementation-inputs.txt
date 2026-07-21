@@ -1,0 +1,1282 @@
+RUN UI-1J CHECKPOINT 3A - EXACT IMPLEMENTATION INPUTS
+
+Baseline commit: a73226b
+Requester controls: 6
+Candidate primitive files: 7
+
+SCOPE RULES
+- Preserve state ownership.
+- Preserve POST /api/runs.
+- Preserve request property names and value conversions.
+- Preserve secure-hold behavior.
+- Do not modify backend, database, Login, or RunnerDashboard.
+- Do not deploy.
+
+================================================================
+REQUESTER RUN-CREATION FORM REGION
+FILE: frontend/src/Dashboard.jsx
+LINES: 1006-1288
+================================================================
+
+1006:                 cursor: "pointer",
+1007:                 fontWeight: 700,
+1008:               }}
+1009:             >
+1010:               Logout
+1011:             </button>
+1012:           </div>
+1013:         </div>
+1014: 
+1015:         {notification && (
+1016:           <div
+1017:             style={{
+1018:               background: notification.type === "success" ? "#dcfce7" : "#fee2e2",
+1019:               color: notification.type === "success" ? "#166534" : "#991b1b",
+1020:               padding: 14,
+1021:               borderRadius: 12,
+1022:               marginBottom: 20,
+1023:               fontWeight: 700,
+1024:             }}
+1025:           >
+1026:             {notification.message}
+1027:           </div>
+1028:         )}
+1029: 
+1030:         <div
+1031:           style={{
+1032:             display: "grid",
+1033:             gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
+1034:             gap: 14,
+1035:             marginBottom: 28,
+1036:           }}
+1037:         >
+1038:           <div style={{ background: "white", borderRadius: 16, padding: 18 }}>
+1039:             <div className="run-requester-heading run-requester-surface run-requester-surface--active" style={{ color: "#64748b", fontWeight: 700 }}>Active Runs</div>
+1040:             <div style={{ fontSize: 30, fontWeight: 900, marginTop: 6 }}>
+1041:               {activeRuns.length}
+1042:             </div>
+1043:           </div>
+1044: 
+1045:           <div style={{ background: "white", borderRadius: 16, padding: 18 }}>
+1046:             <div style={{ color: "#64748b", fontWeight: 700 }}>Completed</div>
+1047:             <div style={{ fontSize: 30, fontWeight: 900, marginTop: 6 }}>
+1048:               {completedRuns.length}
+1049:             </div>
+1050:           </div>
+1051: 
+1052:           <div style={{ background: "white", borderRadius: 16, padding: 18 }}>
+1053:             <div style={{ color: "#64748b", fontWeight: 700 }}>Total Payout</div>
+1054:             <div style={{ fontSize: 30, fontWeight: 900, marginTop: 6 }}>
+1055:               ${runs.reduce((sum, run) => sum + Number(run.payout || 0), 0)}
+1056:             </div>
+1057:           </div>
+1058:         </div>
+1059: 
+1060:         <RunDetailPanel
+1061:           run={selectedRun}
+1062:           onClose={() => setSelectedRunId(null)}
+1063:           onApproveManualReview={approveManualReview}
+1064:           approvingManualReview={approvingManualReview}
+1065:           onAuthorizeHold={authorizeSecureHold}
+1066:           authorizingHold={authorizingHold}
+1067:         />
+1068: 
+1069:         <section className="run-requester-surface run-requester-surface--create"
+1070:           style={{
+1071:             background: "white",
+1072:             borderRadius: 18,
+1073:             padding: 22,
+1074:             marginBottom: 34,
+1075:             border: "1px solid #e5e7eb",
+1076:             boxShadow: "0 4px 14px rgba(15,23,42,0.04)",
+1077:           }}
+1078:         >
+1079:           <h2 className="run-requester-heading" style={{ fontSize: 22, marginTop: 0, marginBottom: 14, color: "#0f172a" }}>
+1080:             Create Run
+1081:           </h2>
+1082: 
+1083:           <form
+1084:             onSubmit={createRun}
+1085:             style={{
+1086:               display: "grid",
+1087:               gridTemplateColumns: isMobile
+1088:                 ? "1fr"
+1089:                 : "1.1fr 1.5fr 0.65fr 0.75fr 0.65fr 0.65fr auto",
+1090:               gap: 12,
+1091:               alignItems: "end",
+1092:             }}
+1093:           >
+1094:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+1095:               Location
+1096:               <input
+1097:                 value={newRun.location}
+1098:                 onChange={(event) =>
+1099:                   setNewRun((prev) => ({ ...prev, location: event.target.value }))
+1100:                 }
+1101:                 placeholder="Chicago Loop"
+1102:                 style={{
+1103:                   padding: "12px 14px",
+1104:                   borderRadius: 12,
+1105:                   border: "1px solid #cbd5e1",
+1106:                   fontSize: 14,
+1107:                 }}
+1108:               />
+1109:             </label>
+1110: 
+1111:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+1112:               Item / Task
+1113:               <input
+1114:                 value={newRun.item}
+1115:                 onChange={(event) =>
+1116:                   setNewRun((prev) => ({ ...prev, item: event.target.value }))
+1117:                 }
+1118:                 placeholder="Pickup documents"
+1119:                 style={{
+1120:                   padding: "12px 14px",
+1121:                   borderRadius: 12,
+1122:                   border: "1px solid #cbd5e1",
+1123:                   fontSize: 14,
+1124:                 }}
+1125:               />
+1126:             </label>
+1127: 
+1128:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+1129:               Payout
+1130:               <input
+1131:                 type="number"
+1132:                 min="1"
+1133:                 value={newRun.payout}
+1134:                 onChange={(event) =>
+1135:                   setNewRun((prev) => ({ ...prev, payout: event.target.value }))
+1136:                 }
+1137:                 style={{
+1138:                   padding: "12px 14px",
+1139:                   borderRadius: 12,
+1140:                   border: "1px solid #cbd5e1",
+1141:                   fontSize: 14,
+1142:                 }}
+1143:               />
+1144:             </label>
+1145: 
+1146:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+1147:               Item Budget
+1148:               <input
+1149:                 type="number"
+1150:                 min="0"
+1151:                 value={newRun.itemBudgetEstimate}
+1152:                 onChange={(event) =>
+1153:                   setNewRun((prev) => ({
+1154:                     ...prev,
+1155:                     itemBudgetEstimate: event.target.value,
+1156:                   }))
+1157:                 }
+1158:                 placeholder="0"
+1159:                 style={{
+1160:                   padding: "12px 14px",
+1161:                   borderRadius: 12,
+1162:                   border: "1px solid #cbd5e1",
+1163:                   fontSize: 14,
+1164:                 }}
+1165:               />
+1166:             </label>
+1167: 
+1168:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+1169:               Platform Fee
+1170:               <input
+1171:                 type="number"
+1172:                 min="0"
+1173:                 value={newRun.platformFee}
+1174:                 onChange={(event) =>
+1175:                   setNewRun((prev) => ({ ...prev, platformFee: event.target.value }))
+1176:                 }
+1177:                 style={{
+1178:                   padding: "12px 14px",
+1179:                   borderRadius: 12,
+1180:                   border: "1px solid #cbd5e1",
+1181:                   fontSize: 14,
+1182:                 }}
+1183:               />
+1184:             </label>
+1185: 
+1186:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+1187:               Buffer
+1188:               <input
+1189:                 type="number"
+1190:                 min="0"
+1191:                 value={newRun.bufferAmount}
+1192:                 onChange={(event) =>
+1193:                   setNewRun((prev) => ({ ...prev, bufferAmount: event.target.value }))
+1194:                 }
+1195:                 style={{
+1196:                   padding: "12px 14px",
+1197:                   borderRadius: 12,
+1198:                   border: "1px solid #cbd5e1",
+1199:                   fontSize: 14,
+1200:                 }}
+1201:               />
+1202:             </label>
+1203: 
+1204:             <button
+1205:               type="submit"
+1206:               disabled={creatingRun}
+1207:               style={{
+1208:                 padding: "13px 16px",
+1209:                 borderRadius: 12,
+1210:                 background: creatingRun ? "#94a3b8" : "#111827",
+1211:                 color: "white",
+1212:                 border: "none",
+1213:                 cursor: creatingRun ? "not-allowed" : "pointer",
+1214:                 fontWeight: 800,
+1215:               }}
+1216:             >
+1217:               {creatingRun ? "Creating..." : "Create Run"}
+1218:             </button>
+1219:           </form>
+1220: 
+1221:           <div
+1222:             style={{
+1223:               marginTop: 14,
+1224:               padding: 14,
+1225:               borderRadius: 14,
+1226:               background: "#f8fafc",
+1227:               border: "1px solid #e2e8f0",
+1228:               color: "#334155",
+1229:               display: "grid",
+1230:               gap: 6,
+1231:             }}
+1232:           >
+1233:             <div style={{ fontWeight: 900, color: "#0f172a" }}>
+1234:               Secure hold preview
+1235:             </div>
+1236:             <div>
+1237:               Estimated hold: <strong>{formatMoney(createRunSecurityPreview.holdAmount)}</strong>
+1238:             </div>
+1239:             <div>
+1240:               Max runner spend:{" "}
+1241:               <strong>{formatMoney(createRunSecurityPreview.maxRunnerSpend)}</strong>
+1242:             </div>
+1243:             <div style={{ fontSize: 12, color: "#64748b" }}>
+1244:               Item budget + payout + platform fee + buffer are used to protect requester funds
+1245:               and trigger receipt review if the runner spends over the allowed amount.
+1246:             </div>
+1247:           </div>
+1248:         </section>
+1249: 
+1250:         <section style={{ marginBottom: 34 }}>
+1251:           <h2 style={{ fontSize: 22, marginBottom: 14, color: "#0f172a" }}>
+1252:             Active Runs
+1253:           </h2>
+1254: 
+1255:           {loading ? (
+1256:             <p>Loading...</p>
+1257:           ) : activeRuns.length === 0 ? (
+1258:             <div
+1259:               style={{
+1260:                 background: "white",
+1261:                 borderRadius: 18,
+1262:                 padding: 24,
+1263:                 color: "#64748b",
+1264:               }}
+1265:             >
+1266:               No active runs.
+1267:             </div>
+1268:           ) : (
+1269:             activeRuns.map((run) => (
+1270:               <RunCard
+1271:                 key={run.id}
+1272:                 run={run}
+1273:                 selected={selectedRun?.id === run.id}
+1274:                 onSelect={() => setSelectedRunId(run.id)}
+1275:               />
+1276:             ))
+1277:           )}
+1278:         </section>
+1279: 
+1280:         <section className="run-requester-surface run-requester-surface--completed">
+1281:           <h2 className="run-requester-heading" style={{ fontSize: 22, marginBottom: 14, color: "#0f172a" }}>
+1282:             Completed Runs
+1283:           </h2>
+1284: 
+1285:           {completedRuns.length === 0 ? (
+1286:             <div
+1287:               style={{
+1288:                 background: "white",
+
+================================================================
+REQUESTER RUN SUBMIT HANDLER AND PAYLOAD REGION
+FILE: frontend/src/Dashboard.jsx
+LINES: 605-1296
+================================================================
+
+605:       </div>
+606:     </section>
+607:   );
+608: }
+609: 
+610: 
+611: export default function Dashboard({ onLogout }) {
+612:   const navigate = useNavigate();
+613:   const token = localStorage.getItem("token");
+614:   const isMobile = useIsMobile();
+615: 
+616:   const [role, setRole] = useState(null);
+617:   const [runs, setRuns] = useState([]);
+618:   const [loading, setLoading] = useState(true);
+619:   const [notification, setNotification] = useState(null);
+620:   const [newRun, setNewRun] = useState({
+621:     location: "",
+622:     item: "",
+623:     payout: "25",
+624:     itemBudgetEstimate: "0",
+625:     platformFee: "3",
+626:     bufferAmount: "5",
+627:   });
+628:   const [creatingRun, setCreatingRun] = useState(false);
+629:   const creatingRunRef = useRef(false);
+630:   const [selectedRunId, setSelectedRunId] = useState(null);
+631:   const [approvingManualReview, setApprovingManualReview] = useState(false);
+632:   const [authorizingHold, setAuthorizingHold] = useState(false);
+633:   const approvingManualReviewRef = useRef(null);
+634:   const authorizingHoldRef = useRef(null);
+635: 
+636:   const showSuccess = (message) => {
+637:     setNotification({ type: "success", message });
+638:     setTimeout(() => setNotification(null), 3000);
+639:   };
+640: 
+641:   const showError = (message) => {
+642:     setNotification({ type: "error", message });
+643:     setTimeout(() => setNotification(null), 4000);
+644:   };
+645: 
+646:   const fetchRuns = useCallback(async () => {
+647:     if (!token) return;
+648: 
+649:     try {
+650:       const response = await fetch(`${API_URL}/api/runs`, {
+651:         headers: { Authorization: `Bearer ${token}` },
+652:       });
+653: 
+654:       const data = await response.json();
+655: 
+656:       if (!response.ok || data.success === false) {
+657:         throw new Error(data.error || "Failed to load runs");
+658:       }
+659: 
+660:       setRuns(data.runs || []);
+661:     } catch (err) {
+662:       showError(err.message || "Failed to load runs");
+663:     } finally {
+664:       setLoading(false);
+665:     }
+666:   }, [token]);
+667: 
+668:   useEffect(() => {
+669:     if (!token) {
+670:       navigate("/");
+671:       return;
+672:     }
+673: 
+674:     try {
+675:       const decoded = jwtDecode(token);
+676:       setRole(decoded.role);
+677:       fetchRuns();
+678:     } catch {
+679:       localStorage.removeItem("token");
+680:       navigate("/");
+681:       return;
+682:     }
+683: 
+684:     const interval = setInterval(fetchRuns, 8000);
+685:     return () => clearInterval(interval);
+686:   }, [fetchRuns, navigate, token]);
+687: 
+688:   const createRunSecurityPreview = useMemo(() => {
+689:     const payout = Number(newRun.payout || 0);
+690:     const itemBudgetEstimate = Number(newRun.itemBudgetEstimate || 0);
+691:     const platformFee = Number(newRun.platformFee || 0);
+692:     const bufferAmount = Number(newRun.bufferAmount || 0);
+693: 
+694:     const safePayout = Number.isFinite(payout) && payout > 0 ? payout : 0;
+695:     const safeBudget =
+696:       Number.isFinite(itemBudgetEstimate) && itemBudgetEstimate > 0 ? itemBudgetEstimate : 0;
+697:     const safePlatformFee =
+698:       Number.isFinite(platformFee) && platformFee > 0 ? platformFee : 0;
+699:     const safeBuffer = Number.isFinite(bufferAmount) && bufferAmount > 0 ? bufferAmount : 0;
+700: 
+701:     return {
+702:       holdAmount: safeBudget + safePayout + safePlatformFee + safeBuffer,
+703:       maxRunnerSpend: safeBudget + safeBuffer,
+704:     };
+705:   }, [
+706:     newRun.payout,
+707:     newRun.itemBudgetEstimate,
+708:     newRun.platformFee,
+709:     newRun.bufferAmount,
+710:   ]);
+711: 
+712:   const createRun = async (event) => {
+713:     event.preventDefault();
+714: 
+715:     const location = newRun.location.trim();
+716:     const item = newRun.item.trim();
+717:     const payout = Number(newRun.payout);
+718:     const itemBudgetEstimate = Number(newRun.itemBudgetEstimate || 0);
+719:     const platformFee = Number(newRun.platformFee || 0);
+720:     const bufferAmount = Number(newRun.bufferAmount || 0);
+721: 
+722:     if (!location || !item || !Number.isFinite(payout) || payout <= 0) {
+723:       showError("Enter a location, item, and valid payout.");
+724:       return;
+725:     }
+726: 
+727:     const secureAmounts = [itemBudgetEstimate, platformFee, bufferAmount];
+728: 
+729:     if (
+730:       secureAmounts.some((amount) => !Number.isInteger(amount) || amount < 0) ||
+731:       itemBudgetEstimate > 5000 ||
+732:       platformFee > 1000 ||
+733:       bufferAmount > 1000
+734:     ) {
+735:       showError("Enter valid whole-dollar budget, platform fee, and buffer amounts.");
+736:       return;
+737:     }
+738: 
+739:     if (creatingRunRef.current) return;
+740: 
+741:     creatingRunRef.current = true;
+742: 
+743:     try {
+744:       setCreatingRun(true);
+745: 
+746:       const response = await fetch(`${API_URL}/api/runs`, {
+747:         method: "POST",
+748:         headers: {
+749:           Authorization: `Bearer ${token}`,
+750:           "Content-Type": "application/json",
+751:         },
+752:         body: JSON.stringify({
+753:           location,
+754:           item,
+755:           payout,
+756:           itemBudgetEstimate,
+757:           platformFee,
+758:           bufferAmount,
+759:         }),
+760:       });
+761: 
+762:       const data = await response.json();
+763: 
+764:       if (!response.ok || data.success === false) {
+765:         throw new Error(data.error || "Failed to create run");
+766:       }
+767: 
+768:       setNewRun({
+769:         location: "",
+770:         item: "",
+771:         payout: "25",
+772:         itemBudgetEstimate: "0",
+773:         platformFee: "3",
+774:         bufferAmount: "5",
+775:       });
+776:       showSuccess("Run created and sent to available runners.");
+777:       await fetchRuns();
+778:     } catch (err) {
+779:       showError(err.message || "Failed to create run");
+780:     } finally {
+781:       creatingRunRef.current = false;
+782: 
+783:       setCreatingRun(false);
+784:     }
+785:   };
+786: 
+787:   const activeRuns = useMemo(
+788:     () => runs.filter((run) => run.status !== "completed"),
+789:     [runs]
+790:   );
+791: 
+792:   const completedRuns = useMemo(
+793:     () => runs.filter((run) => run.status === "completed"),
+794:     [runs]
+795:   );
+796: 
+797:   const selectedRun = useMemo(() => {
+798:     if (selectedRunId) {
+799:       return runs.find((run) => run.id === selectedRunId) || null;
+800:     }
+801: 
+802:     return activeRuns[0] || completedRuns[0] || null;
+803:   }, [runs, selectedRunId, activeRuns, completedRuns]);
+804: 
+805:   const authorizeSecureHold = async (runId) => {
+806:     if (!runId || !token) return;
+807:     if (authorizingHoldRef.current === runId) return;
+808: 
+809:     authorizingHoldRef.current = runId;
+810: 
+811: 
+812:     try {
+813:       setAuthorizingHold(true);
+814: 
+815:       const response = await fetch(`${API_URL}/api/runs/${runId}/authorize-hold`, {
+816:         method: "POST",
+817:         headers: { Authorization: `Bearer ${token}` },
+818:       });
+819: 
+820:       const data = await response.json();
+821: 
+822:       if (!response.ok || data.success === false) {
+823:         throw new Error(data.error || "Failed to authorize secure hold");
+824:       }
+825: 
+826:       setRuns((prev) =>
+827:         prev.map((run) =>
+828:           run.id === runId ? { ...run, ...data.run } : run
+829:         )
+830:       );
+831: 
+832:       showSuccess(data.message || "Secure hold placeholder authorized. No live charge was made.");
+833:       await fetchRuns();
+834:     } catch (err) {
+835:       showError(err.message || "Failed to authorize secure hold");
+836:     } finally {
+837:       if (authorizingHoldRef.current === runId) {
+838:         authorizingHoldRef.current = null;
+839:       }
+840: 
+841:       setAuthorizingHold(false);
+842:     }
+843:   };
+844: 
+845:   const approveManualReview = async (runId) => {
+846:     if (!runId || !token) return;
+847:     if (approvingManualReviewRef.current === runId) return;
+848: 
+849:     approvingManualReviewRef.current = runId;
+850: 
+851:     try {
+852:       setApprovingManualReview(true);
+853: 
+854:       const response = await fetch(`${API_URL}/api/runs/${runId}/manual-review/approve`, {
+855:         method: "POST",
+856:         headers: { Authorization: `Bearer ${token}` },
+857:       });
+858: 
+859:       const data = await response.json();
+860: 
+861:       if (!response.ok || data.success === false) {
+862:         throw new Error(data.error || "Failed to approve manual review");
+863:       }
+864: 
+865:       setRuns((prev) =>
+866:         prev.map((run) =>
+867:           run.id === runId ? { ...run, ...data.run } : run
+868:         )
+869:       );
+870: 
+871:       showSuccess("Manual review approved. Runner can complete this run.");
+872:       await fetchRuns();
+873:     } catch (err) {
+874:       showError(err.message || "Failed to approve manual review");
+875:     } finally {
+876:       if (approvingManualReviewRef.current === runId) {
+877:         approvingManualReviewRef.current = null;
+878:       }
+879: 
+880:       setApprovingManualReview(false);
+881:     }
+882:   };
+883: 
+884:   const handleLogout = () => {
+885:     if (onLogout) {
+886:       onLogout();
+887:       return;
+888:     }
+889: 
+890:     localStorage.removeItem("token");
+891:     localStorage.removeItem("role");
+892:     navigate("/");
+893:   };
+894: 
+895:     // RUN-UI-1C-CHECKPOINT-4: display-only requester Command Center data.
+896:   const requesterCommandActiveRuns = Array.isArray(activeRuns) ? activeRuns : [];
+897:   const requesterCommandHistoryRuns = Array.isArray(completedRuns) ? completedRuns : [];
+898:   const requesterCommandActiveRun = requesterCommandActiveRuns[0] || null;
+899:   const requesterCommandHoldReady = Boolean(
+900:     requesterCommandActiveRun?.authorizationStatus || requesterCommandActiveRun?.holdStatus
+901:   );
+902:   const requesterCommandRunnerReady = Boolean(
+903:     requesterCommandActiveRun?.runnerId ||
+904:       requesterCommandActiveRun?.runner ||
+905:       requesterCommandActiveRun?.acceptedAt
+906:   );
+907:   const requesterCommandProofReady = Boolean(
+908:     requesterCommandActiveRun?.deliveryPin ||
+909:       requesterCommandActiveRun?.deliveryConfirmation ||
+910:       requesterCommandActiveRun?.receiptUrl ||
+911:       requesterCommandActiveRun?.receiptImageUrl
+912:   );
+913:   const requesterCommandSteps = [
+914:     {
+915:       id: "created",
+916:       title: "Run request created",
+917:       copy: requesterCommandActiveRun
+918:         ? "Live requester run data is now feeding this command surface."
+919:         : "Create a run to activate this requester command surface.",
+920:       state: requesterCommandActiveRun ? "done" : "pending",
+921:     },
+922:     {
+923:       id: "hold",
+924:       title: "Secure hold placeholder",
+925:       copy: requesterCommandHoldReady
+926:         ? "Hold readiness is visible from the active requester run."
+927:         : "Hold readiness will appear here when available on the run.",
+928:       state: requesterCommandHoldReady ? "done" : requesterCommandActiveRun ? "active" : "pending",
+929:     },
+930:     {
+931:       id: "runner",
+932:       title: "Runner acceptance",
+933:       copy: requesterCommandRunnerReady
+934:         ? "Runner acceptance details are reflected from the active run."
+935:         : "Runner acceptance will appear here after the run is picked up.",
+936:       state: requesterCommandRunnerReady ? "done" : requesterCommandActiveRun ? "active" : "pending",
+937:     },
+938:     {
+939:       id: "proof",
+940:       title: "Delivery proof and review",
+941:       copy: requesterCommandProofReady
+942:         ? "Delivery proof signals are reflected from the active run."
+943:         : "Proof and review checkpoints will appear here as the run advances.",
+944:       state: requesterCommandProofReady ? "done" : requesterCommandRunnerReady ? "active" : "pending",
+945:     },
+946:   ];
+947: 
+948: return (
+949:     <div
+950:       style={{
+951:         padding: isMobile ? 16 : 32,
+952:         fontFamily: "Inter, system-ui, sans-serif",
+953:         background: "#f8fafc",
+954:         minHeight: "100vh",
+955:       }}
+956:     >
+957:       {/* RUN-UI-1C-CHECKPOINT-6: extracted requester run overview presentation. */}
+958:       <RequesterRunOverview
+959:         activeRun={requesterCommandActiveRun}
+960:         activeRuns={requesterCommandActiveRuns}
+961:         historyRuns={requesterCommandHistoryRuns}
+962:         steps={requesterCommandSteps}
+963:       />
+964: 
+965:       <div style={{ maxWidth: 900, margin: "0 auto", width: "100%" }}>
+966:         <div
+967:           style={{
+968:             display: "flex",
+969:             flexDirection: isMobile ? "column" : "row",
+970:             justifyContent: "space-between",
+971:             alignItems: isMobile ? "flex-start" : "center",
+972:             gap: 16,
+973:             marginBottom: 26,
+974:           }}
+975:         >
+976:           <div>
+977:             <h1 style={{ margin: 0, fontSize: 42, color: "#0f172a" }}>RunForMe</h1>
+978:             <p style={{ marginTop: 8, color: "#64748b" }}>
+979:               Requester command center {role ? `- ${role}` : ""}
+980:             </p>
+981:           </div>
+982: 
+983:           <div style={{ display: "flex", gap: 10 }}>
+984:             <button
+985:               onClick={fetchRuns}
+986:               style={{
+987:                 padding: "10px 14px",
+988:                 borderRadius: 10,
+989:                 border: "1px solid #cbd5e1",
+990:                 background: "white",
+991:                 cursor: "pointer",
+992:                 fontWeight: 700,
+993:               }}
+994:             >
+995:               Refresh
+996:             </button>
+997: 
+998:             <button
+999:               onClick={handleLogout}
+1000:               style={{
+1001:                 padding: "10px 14px",
+1002:                 borderRadius: 10,
+1003:                 background: "#111827",
+1004:                 color: "white",
+1005:                 border: "none",
+1006:                 cursor: "pointer",
+1007:                 fontWeight: 700,
+1008:               }}
+1009:             >
+1010:               Logout
+1011:             </button>
+1012:           </div>
+1013:         </div>
+1014: 
+1015:         {notification && (
+1016:           <div
+1017:             style={{
+1018:               background: notification.type === "success" ? "#dcfce7" : "#fee2e2",
+1019:               color: notification.type === "success" ? "#166534" : "#991b1b",
+1020:               padding: 14,
+1021:               borderRadius: 12,
+1022:               marginBottom: 20,
+1023:               fontWeight: 700,
+1024:             }}
+1025:           >
+1026:             {notification.message}
+1027:           </div>
+1028:         )}
+1029: 
+1030:         <div
+1031:           style={{
+1032:             display: "grid",
+1033:             gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
+1034:             gap: 14,
+1035:             marginBottom: 28,
+1036:           }}
+1037:         >
+1038:           <div style={{ background: "white", borderRadius: 16, padding: 18 }}>
+1039:             <div className="run-requester-heading run-requester-surface run-requester-surface--active" style={{ color: "#64748b", fontWeight: 700 }}>Active Runs</div>
+1040:             <div style={{ fontSize: 30, fontWeight: 900, marginTop: 6 }}>
+1041:               {activeRuns.length}
+1042:             </div>
+1043:           </div>
+1044: 
+1045:           <div style={{ background: "white", borderRadius: 16, padding: 18 }}>
+1046:             <div style={{ color: "#64748b", fontWeight: 700 }}>Completed</div>
+1047:             <div style={{ fontSize: 30, fontWeight: 900, marginTop: 6 }}>
+1048:               {completedRuns.length}
+1049:             </div>
+1050:           </div>
+1051: 
+1052:           <div style={{ background: "white", borderRadius: 16, padding: 18 }}>
+1053:             <div style={{ color: "#64748b", fontWeight: 700 }}>Total Payout</div>
+1054:             <div style={{ fontSize: 30, fontWeight: 900, marginTop: 6 }}>
+1055:               ${runs.reduce((sum, run) => sum + Number(run.payout || 0), 0)}
+1056:             </div>
+1057:           </div>
+1058:         </div>
+1059: 
+1060:         <RunDetailPanel
+1061:           run={selectedRun}
+1062:           onClose={() => setSelectedRunId(null)}
+1063:           onApproveManualReview={approveManualReview}
+1064:           approvingManualReview={approvingManualReview}
+1065:           onAuthorizeHold={authorizeSecureHold}
+1066:           authorizingHold={authorizingHold}
+1067:         />
+1068: 
+1069:         <section className="run-requester-surface run-requester-surface--create"
+1070:           style={{
+1071:             background: "white",
+1072:             borderRadius: 18,
+1073:             padding: 22,
+1074:             marginBottom: 34,
+1075:             border: "1px solid #e5e7eb",
+1076:             boxShadow: "0 4px 14px rgba(15,23,42,0.04)",
+1077:           }}
+1078:         >
+1079:           <h2 className="run-requester-heading" style={{ fontSize: 22, marginTop: 0, marginBottom: 14, color: "#0f172a" }}>
+1080:             Create Run
+1081:           </h2>
+1082: 
+1083:           <form
+1084:             onSubmit={createRun}
+1085:             style={{
+1086:               display: "grid",
+1087:               gridTemplateColumns: isMobile
+1088:                 ? "1fr"
+1089:                 : "1.1fr 1.5fr 0.65fr 0.75fr 0.65fr 0.65fr auto",
+1090:               gap: 12,
+1091:               alignItems: "end",
+1092:             }}
+1093:           >
+1094:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+1095:               Location
+1096:               <input
+1097:                 value={newRun.location}
+1098:                 onChange={(event) =>
+1099:                   setNewRun((prev) => ({ ...prev, location: event.target.value }))
+1100:                 }
+1101:                 placeholder="Chicago Loop"
+1102:                 style={{
+1103:                   padding: "12px 14px",
+1104:                   borderRadius: 12,
+1105:                   border: "1px solid #cbd5e1",
+1106:                   fontSize: 14,
+1107:                 }}
+1108:               />
+1109:             </label>
+1110: 
+1111:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+1112:               Item / Task
+1113:               <input
+1114:                 value={newRun.item}
+1115:                 onChange={(event) =>
+1116:                   setNewRun((prev) => ({ ...prev, item: event.target.value }))
+1117:                 }
+1118:                 placeholder="Pickup documents"
+1119:                 style={{
+1120:                   padding: "12px 14px",
+1121:                   borderRadius: 12,
+1122:                   border: "1px solid #cbd5e1",
+1123:                   fontSize: 14,
+1124:                 }}
+1125:               />
+1126:             </label>
+1127: 
+1128:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+1129:               Payout
+1130:               <input
+1131:                 type="number"
+1132:                 min="1"
+1133:                 value={newRun.payout}
+1134:                 onChange={(event) =>
+1135:                   setNewRun((prev) => ({ ...prev, payout: event.target.value }))
+1136:                 }
+1137:                 style={{
+1138:                   padding: "12px 14px",
+1139:                   borderRadius: 12,
+1140:                   border: "1px solid #cbd5e1",
+1141:                   fontSize: 14,
+1142:                 }}
+1143:               />
+1144:             </label>
+1145: 
+1146:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+1147:               Item Budget
+1148:               <input
+1149:                 type="number"
+1150:                 min="0"
+1151:                 value={newRun.itemBudgetEstimate}
+1152:                 onChange={(event) =>
+1153:                   setNewRun((prev) => ({
+1154:                     ...prev,
+1155:                     itemBudgetEstimate: event.target.value,
+1156:                   }))
+1157:                 }
+1158:                 placeholder="0"
+1159:                 style={{
+1160:                   padding: "12px 14px",
+1161:                   borderRadius: 12,
+1162:                   border: "1px solid #cbd5e1",
+1163:                   fontSize: 14,
+1164:                 }}
+1165:               />
+1166:             </label>
+1167: 
+1168:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+1169:               Platform Fee
+1170:               <input
+1171:                 type="number"
+1172:                 min="0"
+1173:                 value={newRun.platformFee}
+1174:                 onChange={(event) =>
+1175:                   setNewRun((prev) => ({ ...prev, platformFee: event.target.value }))
+1176:                 }
+1177:                 style={{
+1178:                   padding: "12px 14px",
+1179:                   borderRadius: 12,
+1180:                   border: "1px solid #cbd5e1",
+1181:                   fontSize: 14,
+1182:                 }}
+1183:               />
+1184:             </label>
+1185: 
+1186:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
+1187:               Buffer
+1188:               <input
+1189:                 type="number"
+1190:                 min="0"
+1191:                 value={newRun.bufferAmount}
+1192:                 onChange={(event) =>
+1193:                   setNewRun((prev) => ({ ...prev, bufferAmount: event.target.value }))
+1194:                 }
+1195:                 style={{
+1196:                   padding: "12px 14px",
+1197:                   borderRadius: 12,
+1198:                   border: "1px solid #cbd5e1",
+1199:                   fontSize: 14,
+1200:                 }}
+1201:               />
+1202:             </label>
+1203: 
+1204:             <button
+1205:               type="submit"
+1206:               disabled={creatingRun}
+1207:               style={{
+1208:                 padding: "13px 16px",
+1209:                 borderRadius: 12,
+1210:                 background: creatingRun ? "#94a3b8" : "#111827",
+1211:                 color: "white",
+1212:                 border: "none",
+1213:                 cursor: creatingRun ? "not-allowed" : "pointer",
+1214:                 fontWeight: 800,
+1215:               }}
+1216:             >
+1217:               {creatingRun ? "Creating..." : "Create Run"}
+1218:             </button>
+1219:           </form>
+1220: 
+1221:           <div
+1222:             style={{
+1223:               marginTop: 14,
+1224:               padding: 14,
+1225:               borderRadius: 14,
+1226:               background: "#f8fafc",
+1227:               border: "1px solid #e2e8f0",
+1228:               color: "#334155",
+1229:               display: "grid",
+1230:               gap: 6,
+1231:             }}
+1232:           >
+1233:             <div style={{ fontWeight: 900, color: "#0f172a" }}>
+1234:               Secure hold preview
+1235:             </div>
+1236:             <div>
+1237:               Estimated hold: <strong>{formatMoney(createRunSecurityPreview.holdAmount)}</strong>
+1238:             </div>
+1239:             <div>
+1240:               Max runner spend:{" "}
+1241:               <strong>{formatMoney(createRunSecurityPreview.maxRunnerSpend)}</strong>
+1242:             </div>
+1243:             <div style={{ fontSize: 12, color: "#64748b" }}>
+1244:               Item budget + payout + platform fee + buffer are used to protect requester funds
+1245:               and trigger receipt review if the runner spends over the allowed amount.
+1246:             </div>
+1247:           </div>
+1248:         </section>
+1249: 
+1250:         <section style={{ marginBottom: 34 }}>
+1251:           <h2 style={{ fontSize: 22, marginBottom: 14, color: "#0f172a" }}>
+1252:             Active Runs
+1253:           </h2>
+1254: 
+1255:           {loading ? (
+1256:             <p>Loading...</p>
+1257:           ) : activeRuns.length === 0 ? (
+1258:             <div
+1259:               style={{
+1260:                 background: "white",
+1261:                 borderRadius: 18,
+1262:                 padding: 24,
+1263:                 color: "#64748b",
+1264:               }}
+1265:             >
+1266:               No active runs.
+1267:             </div>
+1268:           ) : (
+1269:             activeRuns.map((run) => (
+1270:               <RunCard
+1271:                 key={run.id}
+1272:                 run={run}
+1273:                 selected={selectedRun?.id === run.id}
+1274:                 onSelect={() => setSelectedRunId(run.id)}
+1275:               />
+1276:             ))
+1277:           )}
+1278:         </section>
+1279: 
+1280:         <section className="run-requester-surface run-requester-surface--completed">
+1281:           <h2 className="run-requester-heading" style={{ fontSize: 22, marginBottom: 14, color: "#0f172a" }}>
+1282:             Completed Runs
+1283:           </h2>
+1284: 
+1285:           {completedRuns.length === 0 ? (
+1286:             <div
+1287:               style={{
+1288:                 background: "white",
+1289:                 borderRadius: 18,
+1290:                 padding: 24,
+1291:                 color: "#64748b",
+1292:               }}
+1293:             >
+1294:               No completed runs yet.
+1295:             </div>
+1296:           ) : (
+
+================================================================
+SIX RAW REQUESTER CONTROLS
+================================================================
+
+Dashboard.jsx:1096:               <input
+Dashboard.jsx:1113:               <input
+Dashboard.jsx:1130:               <input
+Dashboard.jsx:1148:               <input
+Dashboard.jsx:1170:               <input
+Dashboard.jsx:1188:               <input
+
+================================================================
+PRIMITIVE API - index
+FILE: frontend/src/components/runner/index.js
+LINES: 1-9
+================================================================
+
+1: export { default as RunnerCommandCenter } from "./RunnerCommandCenter";
+2: export { default as RunnerRunCard } from "./RunnerRunCard";
+3: export { default as RunnerStatusSummary } from "./RunnerStatusSummary";
+4: export { default as RunnerTrustChecklist } from "./RunnerTrustChecklist";
+5: export { deriveRunnerCommandData } from "./deriveRunnerCommandData";
+6: export { RunnerOverviewHeader } from "./RunnerOverviewHeader";
+7: export { RunnerActionStatusPanel } from "./RunnerActionStatusPanel";
+8: export { RunnerFocusedRunSection } from "./RunnerFocusedRunSection";
+9: export { RunnerTrustChecklistSection } from "./RunnerTrustChecklistSection";
+
+================================================================
+PRIMITIVE API - RunnerActionStatusPanel
+FILE: frontend/src/components/runner/RunnerActionStatusPanel.jsx
+LINES: 1-12
+================================================================
+
+1: import RunnerStatusSummary from "./RunnerStatusSummary";
+2: 
+3: export function RunnerActionStatusPanel({ statusLabel, metrics }) {
+4:   const safeStatusLabel = statusLabel || "Ready";
+5:   const safeMetrics = Array.isArray(metrics) ? metrics : [];
+6: 
+7:   return (
+8:     <section className="runner-command-center__action-status-panel" aria-label="Runner status">
+9:       <RunnerStatusSummary statusLabel={safeStatusLabel} metrics={safeMetrics} />
+10:     </section>
+11:   );
+12: }
+
+================================================================
+PRIMITIVE API - RunnerRunCard
+FILE: frontend/src/components/runner/RunnerRunCard.jsx
+LINES: 1-56
+================================================================
+
+1: import "./RunnerCommandCenter.css";
+2: 
+3: function getDisplayTitle(run) {
+4:   return run?.title || run?.storeName || run?.pickupName || run?.id || "Run details";
+5: }
+6: 
+7: function getDisplayDetail(run) {
+8:   const parts = [
+9:     run?.pickupAddress || run?.pickupLocation || run?.storeAddress,
+10:     run?.dropoffAddress || run?.destinationAddress,
+11:   ].filter(Boolean);
+12: 
+13:   if (parts.length > 0) {
+14:     return parts.join(" → ");
+15:   }
+16: 
+17:   return run?.notes || run?.instructions || "Run details will appear here when a request is selected.";
+18: }
+19: 
+20: export default function RunnerRunCard({
+21:   run,
+22:   title = "Focused run",
+23:   statusLabel = "Preview",
+24:   firstLabel = "Route",
+25:   firstValue,
+26:   secondLabel = "Readiness",
+27:   secondValue = "Awaiting selection",
+28: }) {
+29:   const displayTitle = run ? getDisplayTitle(run) : title;
+30:   const displayDetail = run ? getDisplayDetail(run) : "Select an available or active run to review the key handoff details.";
+31: 
+32:   return (
+33:     <section className="runner-run-card" aria-label={displayTitle}>
+34:       <div className="runner-run-card__header">
+35:         <div>
+36:           <p className="runner-run-card__title">{displayTitle}</p>
+37:           <p className="runner-run-card__meta">{title}</p>
+38:         </div>
+39:         <span className="runner-run-card__status">{run?.status || run?.state || statusLabel}</span>
+40:       </div>
+41: 
+42:       <p className="runner-run-card__detail">{displayDetail}</p>
+43: 
+44:       <div className="runner-run-card__footer">
+45:         <div className="runner-run-card__footer-item">
+46:           <p className="runner-run-card__footer-label">{firstLabel}</p>
+47:           <p className="runner-run-card__footer-value">{firstValue || "Pending"}</p>
+48:         </div>
+49:         <div className="runner-run-card__footer-item">
+50:           <p className="runner-run-card__footer-label">{secondLabel}</p>
+51:           <p className="runner-run-card__footer-value">{secondValue}</p>
+52:         </div>
+53:       </div>
+54:     </section>
+55:   );
+56: }
+
+================================================================
+PRIMITIVE API - Button
+FILE: frontend/src/components/ui/Button.jsx
+LINES: 1-50
+================================================================
+
+1: import "./ui.css";
+2: 
+3: const variantClass = {
+4:   primary: "primary",
+5:   secondary: "secondary",
+6:   trust: "trust",
+7:   success: "success",
+8:   warning: "warning",
+9:   danger: "danger",
+10: };
+11: 
+12: const sizeClass = {
+13:   sm: "sm",
+14:   md: "md",
+15:   lg: "lg",
+16: };
+17: 
+18: export default function Button({
+19:   children,
+20:   variant = "primary",
+21:   size = "md",
+22:   fullWidth = false,
+23:   loading = false,
+24:   disabled = false,
+25:   className = "",
+26:   type = "button",
+27:   ...props
+28: }) {
+29:   const classes = [
+30:     "rf-button",
+31:     `rf-button--${variantClass[variant] || "primary"}`,
+32:     `rf-button--${sizeClass[size] || "md"}`,
+33:     fullWidth ? "rf-button--full" : "",
+34:     className,
+35:   ]
+36:     .filter(Boolean)
+37:     .join(" ");
+38: 
+39:   return (
+40:     <button
+41:       type={type}
+42:       className={classes}
+43:       disabled={disabled || loading}
+44:       aria-busy={loading || undefined}
+45:       {...props}
+46:     >
+47:       {loading ? "Working..." : children}
+48:     </button>
+49:   );
+50: }
+
+================================================================
+PRIMITIVE API - Card
+FILE: frontend/src/components/ui/Card.jsx
+LINES: 1-46
+================================================================
+
+1: import "./ui.css";
+2: 
+3: const toneClass = {
+4:   default: "",
+5:   soft: "rf-card--soft",
+6:   trust: "rf-card--trust",
+7: };
+8: 
+9: export default function Card({
+10:   children,
+11:   tone = "default",
+12:   elevated = false,
+13:   interactive = false,
+14:   className = "",
+15:   as = "div",
+16:   ...props
+17: }) {
+18:   const classes = [
+19:     "rf-card",
+20:     toneClass[tone] || "",
+21:     elevated ? "rf-card--elevated" : "",
+22:     interactive ? "rf-card--interactive" : "",
+23:     className,
+24:   ]
+25:     .filter(Boolean)
+26:     .join(" ");
+27: 
+28:   const cardProps = {
+29:     className: classes,
+30:     ...props,
+31:   };
+32: 
+33:   if (as === "section") {
+34:     return <section {...cardProps}>{children}</section>;
+35:   }
+36: 
+37:   if (as === "article") {
+38:     return <article {...cardProps}>{children}</article>;
+39:   }
+40: 
+41:   if (as === "button") {
+42:     return <button type={props.type || "button"} {...cardProps}>{children}</button>;
+43:   }
+44: 
+45:   return <div {...cardProps}>{children}</div>;
+46: }
+
+================================================================
+PRIMITIVE API - index
+FILE: frontend/src/components/ui/index.js
+LINES: 1-11
+================================================================
+
+1: export { default as ActionBar } from "./ActionBar";
+2: export { default as Badge } from "./Badge";
+3: export { default as Button } from "./Button";
+4: export { default as Card } from "./Card";
+5: export { default as Drawer } from "./Drawer";
+6: export { default as EmptyState } from "./EmptyState";
+7: export { default as MissionCard } from "./MissionCard";
+8: export { default as SectionHeader } from "./SectionHeader";
+9: export { default as StatusPill } from "./StatusPill";
+10: export { default as TrustBadge } from "./TrustBadge";
+11: export { default as TrustCheckpoint } from "./TrustCheckpoint";
+
+================================================================
+PRIMITIVE API - MissionCard
+FILE: frontend/src/components/ui/MissionCard.jsx
+LINES: 1-36
+================================================================
+
+1: import "./ui.css";
+2: import Card from "./Card";
+3: import StatusPill from "./StatusPill";
+4: import TrustBadge from "./TrustBadge";
+5: 
+6: export default function MissionCard({
+7:   title = "Run mission",
+8:   subtitle,
+9:   status,
+10:   statusTone = "neutral",
+11:   trustLabel,
+12:   children,
+13:   actions,
+14:   className = "",
+15:   ...props
+16: }) {
+17:   const classes = ["rf-mission-card", className].filter(Boolean).join(" ");
+18: 
+19:   return (
+20:     <Card tone="soft" elevated className={classes} {...props}>
+21:       <div className="rf-mission-card__header">
+22:         <div>
+23:           {trustLabel && <TrustBadge>{trustLabel}</TrustBadge>}
+24:           <h3 className="rf-mission-card__title">{title}</h3>
+25:           {subtitle && <p className="rf-mission-card__subtitle">{subtitle}</p>}
+26:         </div>
+27: 
+28:         {status && <StatusPill tone={statusTone}>{status}</StatusPill>}
+29:       </div>
+30: 
+31:       {children}
+32: 
+33:       {actions && <div className="rf-mission-card__actions">{actions}</div>}
+34:     </Card>
+35:   );
+36: }

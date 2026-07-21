@@ -4,6 +4,8 @@ import { jwtDecode } from "jwt-decode";
 
 import { RequesterRunOverview } from "./components/requester";
 import "./components/requester/RequesterDashboardPolish.css";
+import { Button, Card } from "./components/ui";
+import "./requester-run-form.css";
 // RUN-UI-1G-CHECKPOINT-4: requester dashboard visual polish only.
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5050";
 
@@ -1066,186 +1068,231 @@ return (
           authorizingHold={authorizingHold}
         />
 
-        <section className="run-requester-surface run-requester-surface--create"
-          style={{
-            background: "white",
-            borderRadius: 18,
-            padding: 22,
-            marginBottom: 34,
-            border: "1px solid #e5e7eb",
-            boxShadow: "0 4px 14px rgba(15,23,42,0.04)",
-          }}
+        <Card
+          as="section"
+          elevated
+          className="run-requester-surface run-requester-surface--create requester-run-form-card"
         >
-          <h2 className="run-requester-heading" style={{ fontSize: 22, marginTop: 0, marginBottom: 14, color: "#0f172a" }}>
-            Create Run
-          </h2>
+          <div className="requester-run-form-card__header">
+            <div>
+              <p className="requester-run-form-card__eyebrow">New request</p>
+              <h2 className="run-requester-heading requester-run-form-card__title">
+                Create Run
+              </h2>
+              <p className="requester-run-form-card__intro">
+                Tell the runner where to go, what to complete, and the approved
+                spending limits for this request.
+              </p>
+            </div>
 
-          <form
-            onSubmit={createRun}
-            style={{
-              display: "grid",
-              gridTemplateColumns: isMobile
-                ? "1fr"
-                : "1.1fr 1.5fr 0.65fr 0.75fr 0.65fr 0.65fr auto",
-              gap: 12,
-              alignItems: "end",
-            }}
-          >
-            <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
-              Location
+            <span className="requester-run-form-card__status">
+              Secure hold preview included
+            </span>
+          </div>
+
+          <form className="requester-run-form" onSubmit={createRun}>
+            <div className="requester-run-form__field requester-run-form__field--location">
+              <label className="requester-run-form__label" htmlFor="run-location">
+                Location
+                <span className="requester-run-form__required" aria-hidden="true">
+                  *
+                </span>
+              </label>
               <input
+                id="run-location"
+                className="requester-run-form__control"
                 value={newRun.location}
                 onChange={(event) =>
                   setNewRun((prev) => ({ ...prev, location: event.target.value }))
                 }
                 placeholder="Chicago Loop"
-                style={{
-                  padding: "12px 14px",
-                  borderRadius: 12,
-                  border: "1px solid #cbd5e1",
-                  fontSize: 14,
-                }}
+                autoComplete="street-address"
+                required
               />
-            </label>
+              <p className="requester-run-form__helper">
+                Enter the pickup, store, or service location.
+              </p>
+            </div>
 
-            <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
-              Item / Task
+            <div className="requester-run-form__field requester-run-form__field--task">
+              <label className="requester-run-form__label" htmlFor="run-item">
+                Item / Task
+                <span className="requester-run-form__required" aria-hidden="true">
+                  *
+                </span>
+              </label>
               <input
+                id="run-item"
+                className="requester-run-form__control"
                 value={newRun.item}
                 onChange={(event) =>
                   setNewRun((prev) => ({ ...prev, item: event.target.value }))
                 }
                 placeholder="Pickup documents"
-                style={{
-                  padding: "12px 14px",
-                  borderRadius: 12,
-                  border: "1px solid #cbd5e1",
-                  fontSize: 14,
-                }}
+                required
               />
-            </label>
+              <p className="requester-run-form__helper">
+                Describe the item to collect or task to complete.
+              </p>
+            </div>
 
-            <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
-              Payout
-              <input
-                type="number"
-                min="1"
-                value={newRun.payout}
-                onChange={(event) =>
-                  setNewRun((prev) => ({ ...prev, payout: event.target.value }))
-                }
-                style={{
-                  padding: "12px 14px",
-                  borderRadius: 12,
-                  border: "1px solid #cbd5e1",
-                  fontSize: 14,
-                }}
-              />
-            </label>
+            <div className="requester-run-form__field">
+              <label className="requester-run-form__label" htmlFor="run-payout">
+                Payout
+                <span className="requester-run-form__required" aria-hidden="true">
+                  *
+                </span>
+              </label>
+              <div className="requester-run-form__money-control">
+                <span aria-hidden="true">$</span>
+                <input
+                  id="run-payout"
+                  className="requester-run-form__control requester-run-form__control--money"
+                  type="number"
+                  min="1"
+                  step="1"
+                  inputMode="numeric"
+                  value={newRun.payout}
+                  onChange={(event) =>
+                    setNewRun((prev) => ({ ...prev, payout: event.target.value }))
+                  }
+                  required
+                />
+              </div>
+              <p className="requester-run-form__helper">Runner earnings.</p>
+            </div>
 
-            <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
-              Item Budget
-              <input
-                type="number"
-                min="0"
-                value={newRun.itemBudgetEstimate}
-                onChange={(event) =>
-                  setNewRun((prev) => ({
-                    ...prev,
-                    itemBudgetEstimate: event.target.value,
-                  }))
-                }
-                placeholder="0"
-                style={{
-                  padding: "12px 14px",
-                  borderRadius: 12,
-                  border: "1px solid #cbd5e1",
-                  fontSize: 14,
-                }}
-              />
-            </label>
+            <div className="requester-run-form__field">
+              <label className="requester-run-form__label" htmlFor="run-item-budget">
+                Item Budget
+              </label>
+              <div className="requester-run-form__money-control">
+                <span aria-hidden="true">$</span>
+                <input
+                  id="run-item-budget"
+                  className="requester-run-form__control requester-run-form__control--money"
+                  type="number"
+                  min="0"
+                  max="5000"
+                  step="1"
+                  inputMode="numeric"
+                  value={newRun.itemBudgetEstimate}
+                  onChange={(event) =>
+                    setNewRun((prev) => ({
+                      ...prev,
+                      itemBudgetEstimate: event.target.value,
+                    }))
+                  }
+                  placeholder="0"
+                />
+              </div>
+              <p className="requester-run-form__helper">Maximum item estimate.</p>
+            </div>
 
-            <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
-              Platform Fee
-              <input
-                type="number"
-                min="0"
-                value={newRun.platformFee}
-                onChange={(event) =>
-                  setNewRun((prev) => ({ ...prev, platformFee: event.target.value }))
-                }
-                style={{
-                  padding: "12px 14px",
-                  borderRadius: 12,
-                  border: "1px solid #cbd5e1",
-                  fontSize: 14,
-                }}
-              />
-            </label>
+            <div className="requester-run-form__field">
+              <label className="requester-run-form__label" htmlFor="run-platform-fee">
+                Platform Fee
+              </label>
+              <div className="requester-run-form__money-control">
+                <span aria-hidden="true">$</span>
+                <input
+                  id="run-platform-fee"
+                  className="requester-run-form__control requester-run-form__control--money"
+                  type="number"
+                  min="0"
+                  max="1000"
+                  step="1"
+                  inputMode="numeric"
+                  value={newRun.platformFee}
+                  onChange={(event) =>
+                    setNewRun((prev) => ({
+                      ...prev,
+                      platformFee: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <p className="requester-run-form__helper">Current service fee.</p>
+            </div>
 
-            <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
-              Buffer
-              <input
-                type="number"
-                min="0"
-                value={newRun.bufferAmount}
-                onChange={(event) =>
-                  setNewRun((prev) => ({ ...prev, bufferAmount: event.target.value }))
-                }
-                style={{
-                  padding: "12px 14px",
-                  borderRadius: 12,
-                  border: "1px solid #cbd5e1",
-                  fontSize: 14,
-                }}
-              />
-            </label>
+            <div className="requester-run-form__field">
+              <label className="requester-run-form__label" htmlFor="run-buffer">
+                Buffer
+              </label>
+              <div className="requester-run-form__money-control">
+                <span aria-hidden="true">$</span>
+                <input
+                  id="run-buffer"
+                  className="requester-run-form__control requester-run-form__control--money"
+                  type="number"
+                  min="0"
+                  max="1000"
+                  step="1"
+                  inputMode="numeric"
+                  value={newRun.bufferAmount}
+                  onChange={(event) =>
+                    setNewRun((prev) => ({
+                      ...prev,
+                      bufferAmount: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <p className="requester-run-form__helper">
+                Extra authorized spend protection.
+              </p>
+            </div>
 
-            <button
-              type="submit"
-              disabled={creatingRun}
-              style={{
-                padding: "13px 16px",
-                borderRadius: 12,
-                background: creatingRun ? "#94a3b8" : "#111827",
-                color: "white",
-                border: "none",
-                cursor: creatingRun ? "not-allowed" : "pointer",
-                fontWeight: 800,
-              }}
-            >
-              {creatingRun ? "Creating..." : "Create Run"}
-            </button>
+            <div className="requester-run-form__action">
+              <Button
+                type="submit"
+                size="lg"
+                fullWidth
+                disabled={creatingRun}
+                aria-disabled={creatingRun}
+              >
+                {creatingRun ? "Creating..." : "Create Run"}
+              </Button>
+              <p className="requester-run-form__action-copy">
+                Required fields are marked with an asterisk.
+              </p>
+            </div>
           </form>
 
-          <div
-            style={{
-              marginTop: 14,
-              padding: 14,
-              borderRadius: 14,
-              background: "#f8fafc",
-              border: "1px solid #e2e8f0",
-              color: "#334155",
-              display: "grid",
-              gap: 6,
-            }}
-          >
-            <div style={{ fontWeight: 900, color: "#0f172a" }}>
-              Secure hold preview
+          <div className="requester-run-form-preview" aria-live="polite">
+            <div className="requester-run-form-preview__heading">
+              <div>
+                <p className="requester-run-form-preview__eyebrow">
+                  Funding protection
+                </p>
+                <h3>Secure hold preview</h3>
+              </div>
+              <span>Placeholder mode</span>
             </div>
-            <div>
-              Estimated hold: <strong>{formatMoney(createRunSecurityPreview.holdAmount)}</strong>
+
+            <div className="requester-run-form-preview__metrics">
+              <div>
+                <p>Estimated hold</p>
+                <strong>
+                  {formatMoney(createRunSecurityPreview.holdAmount)}
+                </strong>
+              </div>
+              <div>
+                <p>Max runner spend</p>
+                <strong>
+                  {formatMoney(createRunSecurityPreview.maxRunnerSpend)}
+                </strong>
+              </div>
             </div>
-            <div>
-              Max runner spend:{" "}
-              <strong>{formatMoney(createRunSecurityPreview.maxRunnerSpend)}</strong>
-            </div>
-            <div style={{ fontSize: 12, color: "#64748b" }}>
-              Item budget + payout + platform fee + buffer are used to protect requester funds
-              and trigger receipt review if the runner spends over the allowed amount.
-            </div>
+
+            <p className="requester-run-form-preview__copy">
+              Item budget, payout, platform fee, and buffer are used to protect
+              requester funds and trigger receipt review when runner spending is
+              above the approved amount.
+            </p>
           </div>
-        </section>
+        </Card>
+
 
         <section style={{ marginBottom: 34 }}>
           <h2 style={{ fontSize: 22, marginBottom: 14, color: "#0f172a" }}>
