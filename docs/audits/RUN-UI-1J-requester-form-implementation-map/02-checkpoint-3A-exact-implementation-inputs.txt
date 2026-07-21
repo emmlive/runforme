@@ -26,7 +26,7 @@ LINES: 1006-1288
 1011:             </button>
 1012:           </div>
 1013:         </div>
-1014: 
+1014:
 1015:         {notification && (
 1016:           <div
 1017:             style={{
@@ -41,7 +41,7 @@ LINES: 1006-1288
 1026:             {notification.message}
 1027:           </div>
 1028:         )}
-1029: 
+1029:
 1030:         <div
 1031:           style={{
 1032:             display: "grid",
@@ -56,14 +56,14 @@ LINES: 1006-1288
 1041:               {activeRuns.length}
 1042:             </div>
 1043:           </div>
-1044: 
+1044:
 1045:           <div style={{ background: "white", borderRadius: 16, padding: 18 }}>
 1046:             <div style={{ color: "#64748b", fontWeight: 700 }}>Completed</div>
 1047:             <div style={{ fontSize: 30, fontWeight: 900, marginTop: 6 }}>
 1048:               {completedRuns.length}
 1049:             </div>
 1050:           </div>
-1051: 
+1051:
 1052:           <div style={{ background: "white", borderRadius: 16, padding: 18 }}>
 1053:             <div style={{ color: "#64748b", fontWeight: 700 }}>Total Payout</div>
 1054:             <div style={{ fontSize: 30, fontWeight: 900, marginTop: 6 }}>
@@ -71,7 +71,7 @@ LINES: 1006-1288
 1056:             </div>
 1057:           </div>
 1058:         </div>
-1059: 
+1059:
 1060:         <RunDetailPanel
 1061:           run={selectedRun}
 1062:           onClose={() => setSelectedRunId(null)}
@@ -80,7 +80,7 @@ LINES: 1006-1288
 1065:           onAuthorizeHold={authorizeSecureHold}
 1066:           authorizingHold={authorizingHold}
 1067:         />
-1068: 
+1068:
 1069:         <section className="run-requester-surface run-requester-surface--create"
 1070:           style={{
 1071:             background: "white",
@@ -94,7 +94,7 @@ LINES: 1006-1288
 1079:           <h2 className="run-requester-heading" style={{ fontSize: 22, marginTop: 0, marginBottom: 14, color: "#0f172a" }}>
 1080:             Create Run
 1081:           </h2>
-1082: 
+1082:
 1083:           <form
 1084:             onSubmit={createRun}
 1085:             style={{
@@ -122,7 +122,7 @@ LINES: 1006-1288
 1107:                 }}
 1108:               />
 1109:             </label>
-1110: 
+1110:
 1111:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
 1112:               Item / Task
 1113:               <input
@@ -139,7 +139,7 @@ LINES: 1006-1288
 1124:                 }}
 1125:               />
 1126:             </label>
-1127: 
+1127:
 1128:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
 1129:               Payout
 1130:               <input
@@ -157,7 +157,7 @@ LINES: 1006-1288
 1142:                 }}
 1143:               />
 1144:             </label>
-1145: 
+1145:
 1146:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
 1147:               Item Budget
 1148:               <input
@@ -179,7 +179,7 @@ LINES: 1006-1288
 1164:                 }}
 1165:               />
 1166:             </label>
-1167: 
+1167:
 1168:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
 1169:               Platform Fee
 1170:               <input
@@ -197,7 +197,7 @@ LINES: 1006-1288
 1182:                 }}
 1183:               />
 1184:             </label>
-1185: 
+1185:
 1186:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
 1187:               Buffer
 1188:               <input
@@ -215,7 +215,7 @@ LINES: 1006-1288
 1200:                 }}
 1201:               />
 1202:             </label>
-1203: 
+1203:
 1204:             <button
 1205:               type="submit"
 1206:               disabled={creatingRun}
@@ -232,7 +232,7 @@ LINES: 1006-1288
 1217:               {creatingRun ? "Creating..." : "Create Run"}
 1218:             </button>
 1219:           </form>
-1220: 
+1220:
 1221:           <div
 1222:             style={{
 1223:               marginTop: 14,
@@ -261,12 +261,12 @@ LINES: 1006-1288
 1246:             </div>
 1247:           </div>
 1248:         </section>
-1249: 
+1249:
 1250:         <section style={{ marginBottom: 34 }}>
 1251:           <h2 style={{ fontSize: 22, marginBottom: 14, color: "#0f172a" }}>
 1252:             Active Runs
 1253:           </h2>
-1254: 
+1254:
 1255:           {loading ? (
 1256:             <p>Loading...</p>
 1257:           ) : activeRuns.length === 0 ? (
@@ -291,12 +291,12 @@ LINES: 1006-1288
 1276:             ))
 1277:           )}
 1278:         </section>
-1279: 
+1279:
 1280:         <section className="run-requester-surface run-requester-surface--completed">
 1281:           <h2 className="run-requester-heading" style={{ fontSize: 22, marginBottom: 14, color: "#0f172a" }}>
 1282:             Completed Runs
 1283:           </h2>
-1284: 
+1284:
 1285:           {completedRuns.length === 0 ? (
 1286:             <div
 1287:               style={{
@@ -312,13 +312,13 @@ LINES: 605-1296
 606:     </section>
 607:   );
 608: }
-609: 
-610: 
+609:
+610:
 611: export default function Dashboard({ onLogout }) {
 612:   const navigate = useNavigate();
 613:   const token = localStorage.getItem("token");
 614:   const isMobile = useIsMobile();
-615: 
+615:
 616:   const [role, setRole] = useState(null);
 617:   const [runs, setRuns] = useState([]);
 618:   const [loading, setLoading] = useState(true);
@@ -338,31 +338,31 @@ LINES: 605-1296
 632:   const [authorizingHold, setAuthorizingHold] = useState(false);
 633:   const approvingManualReviewRef = useRef(null);
 634:   const authorizingHoldRef = useRef(null);
-635: 
+635:
 636:   const showSuccess = (message) => {
 637:     setNotification({ type: "success", message });
 638:     setTimeout(() => setNotification(null), 3000);
 639:   };
-640: 
+640:
 641:   const showError = (message) => {
 642:     setNotification({ type: "error", message });
 643:     setTimeout(() => setNotification(null), 4000);
 644:   };
-645: 
+645:
 646:   const fetchRuns = useCallback(async () => {
 647:     if (!token) return;
-648: 
+648:
 649:     try {
 650:       const response = await fetch(`${API_URL}/api/runs`, {
 651:         headers: { Authorization: `Bearer ${token}` },
 652:       });
-653: 
+653:
 654:       const data = await response.json();
-655: 
+655:
 656:       if (!response.ok || data.success === false) {
 657:         throw new Error(data.error || "Failed to load runs");
 658:       }
-659: 
+659:
 660:       setRuns(data.runs || []);
 661:     } catch (err) {
 662:       showError(err.message || "Failed to load runs");
@@ -370,13 +370,13 @@ LINES: 605-1296
 664:       setLoading(false);
 665:     }
 666:   }, [token]);
-667: 
+667:
 668:   useEffect(() => {
 669:     if (!token) {
 670:       navigate("/");
 671:       return;
 672:     }
-673: 
+673:
 674:     try {
 675:       const decoded = jwtDecode(token);
 676:       setRole(decoded.role);
@@ -386,24 +386,24 @@ LINES: 605-1296
 680:       navigate("/");
 681:       return;
 682:     }
-683: 
+683:
 684:     const interval = setInterval(fetchRuns, 8000);
 685:     return () => clearInterval(interval);
 686:   }, [fetchRuns, navigate, token]);
-687: 
+687:
 688:   const createRunSecurityPreview = useMemo(() => {
 689:     const payout = Number(newRun.payout || 0);
 690:     const itemBudgetEstimate = Number(newRun.itemBudgetEstimate || 0);
 691:     const platformFee = Number(newRun.platformFee || 0);
 692:     const bufferAmount = Number(newRun.bufferAmount || 0);
-693: 
+693:
 694:     const safePayout = Number.isFinite(payout) && payout > 0 ? payout : 0;
 695:     const safeBudget =
 696:       Number.isFinite(itemBudgetEstimate) && itemBudgetEstimate > 0 ? itemBudgetEstimate : 0;
 697:     const safePlatformFee =
 698:       Number.isFinite(platformFee) && platformFee > 0 ? platformFee : 0;
 699:     const safeBuffer = Number.isFinite(bufferAmount) && bufferAmount > 0 ? bufferAmount : 0;
-700: 
+700:
 701:     return {
 702:       holdAmount: safeBudget + safePayout + safePlatformFee + safeBuffer,
 703:       maxRunnerSpend: safeBudget + safeBuffer,
@@ -414,24 +414,24 @@ LINES: 605-1296
 708:     newRun.platformFee,
 709:     newRun.bufferAmount,
 710:   ]);
-711: 
+711:
 712:   const createRun = async (event) => {
 713:     event.preventDefault();
-714: 
+714:
 715:     const location = newRun.location.trim();
 716:     const item = newRun.item.trim();
 717:     const payout = Number(newRun.payout);
 718:     const itemBudgetEstimate = Number(newRun.itemBudgetEstimate || 0);
 719:     const platformFee = Number(newRun.platformFee || 0);
 720:     const bufferAmount = Number(newRun.bufferAmount || 0);
-721: 
+721:
 722:     if (!location || !item || !Number.isFinite(payout) || payout <= 0) {
 723:       showError("Enter a location, item, and valid payout.");
 724:       return;
 725:     }
-726: 
+726:
 727:     const secureAmounts = [itemBudgetEstimate, platformFee, bufferAmount];
-728: 
+728:
 729:     if (
 730:       secureAmounts.some((amount) => !Number.isInteger(amount) || amount < 0) ||
 731:       itemBudgetEstimate > 5000 ||
@@ -441,14 +441,14 @@ LINES: 605-1296
 735:       showError("Enter valid whole-dollar budget, platform fee, and buffer amounts.");
 736:       return;
 737:     }
-738: 
+738:
 739:     if (creatingRunRef.current) return;
-740: 
+740:
 741:     creatingRunRef.current = true;
-742: 
+742:
 743:     try {
 744:       setCreatingRun(true);
-745: 
+745:
 746:       const response = await fetch(`${API_URL}/api/runs`, {
 747:         method: "POST",
 748:         headers: {
@@ -464,13 +464,13 @@ LINES: 605-1296
 758:           bufferAmount,
 759:         }),
 760:       });
-761: 
+761:
 762:       const data = await response.json();
-763: 
+763:
 764:       if (!response.ok || data.success === false) {
 765:         throw new Error(data.error || "Failed to create run");
 766:       }
-767: 
+767:
 768:       setNewRun({
 769:         location: "",
 770:         item: "",
@@ -485,56 +485,56 @@ LINES: 605-1296
 779:       showError(err.message || "Failed to create run");
 780:     } finally {
 781:       creatingRunRef.current = false;
-782: 
+782:
 783:       setCreatingRun(false);
 784:     }
 785:   };
-786: 
+786:
 787:   const activeRuns = useMemo(
 788:     () => runs.filter((run) => run.status !== "completed"),
 789:     [runs]
 790:   );
-791: 
+791:
 792:   const completedRuns = useMemo(
 793:     () => runs.filter((run) => run.status === "completed"),
 794:     [runs]
 795:   );
-796: 
+796:
 797:   const selectedRun = useMemo(() => {
 798:     if (selectedRunId) {
 799:       return runs.find((run) => run.id === selectedRunId) || null;
 800:     }
-801: 
+801:
 802:     return activeRuns[0] || completedRuns[0] || null;
 803:   }, [runs, selectedRunId, activeRuns, completedRuns]);
-804: 
+804:
 805:   const authorizeSecureHold = async (runId) => {
 806:     if (!runId || !token) return;
 807:     if (authorizingHoldRef.current === runId) return;
-808: 
+808:
 809:     authorizingHoldRef.current = runId;
-810: 
-811: 
+810:
+811:
 812:     try {
 813:       setAuthorizingHold(true);
-814: 
+814:
 815:       const response = await fetch(`${API_URL}/api/runs/${runId}/authorize-hold`, {
 816:         method: "POST",
 817:         headers: { Authorization: `Bearer ${token}` },
 818:       });
-819: 
+819:
 820:       const data = await response.json();
-821: 
+821:
 822:       if (!response.ok || data.success === false) {
 823:         throw new Error(data.error || "Failed to authorize secure hold");
 824:       }
-825: 
+825:
 826:       setRuns((prev) =>
 827:         prev.map((run) =>
 828:           run.id === runId ? { ...run, ...data.run } : run
 829:         )
 830:       );
-831: 
+831:
 832:       showSuccess(data.message || "Secure hold placeholder authorized. No live charge was made.");
 833:       await fetchRuns();
 834:     } catch (err) {
@@ -543,37 +543,37 @@ LINES: 605-1296
 837:       if (authorizingHoldRef.current === runId) {
 838:         authorizingHoldRef.current = null;
 839:       }
-840: 
+840:
 841:       setAuthorizingHold(false);
 842:     }
 843:   };
-844: 
+844:
 845:   const approveManualReview = async (runId) => {
 846:     if (!runId || !token) return;
 847:     if (approvingManualReviewRef.current === runId) return;
-848: 
+848:
 849:     approvingManualReviewRef.current = runId;
-850: 
+850:
 851:     try {
 852:       setApprovingManualReview(true);
-853: 
+853:
 854:       const response = await fetch(`${API_URL}/api/runs/${runId}/manual-review/approve`, {
 855:         method: "POST",
 856:         headers: { Authorization: `Bearer ${token}` },
 857:       });
-858: 
+858:
 859:       const data = await response.json();
-860: 
+860:
 861:       if (!response.ok || data.success === false) {
 862:         throw new Error(data.error || "Failed to approve manual review");
 863:       }
-864: 
+864:
 865:       setRuns((prev) =>
 866:         prev.map((run) =>
 867:           run.id === runId ? { ...run, ...data.run } : run
 868:         )
 869:       );
-870: 
+870:
 871:       showSuccess("Manual review approved. Runner can complete this run.");
 872:       await fetchRuns();
 873:     } catch (err) {
@@ -582,22 +582,22 @@ LINES: 605-1296
 876:       if (approvingManualReviewRef.current === runId) {
 877:         approvingManualReviewRef.current = null;
 878:       }
-879: 
+879:
 880:       setApprovingManualReview(false);
 881:     }
 882:   };
-883: 
+883:
 884:   const handleLogout = () => {
 885:     if (onLogout) {
 886:       onLogout();
 887:       return;
 888:     }
-889: 
+889:
 890:     localStorage.removeItem("token");
 891:     localStorage.removeItem("role");
 892:     navigate("/");
 893:   };
-894: 
+894:
 895:     // RUN-UI-1C-CHECKPOINT-4: display-only requester Command Center data.
 896:   const requesterCommandActiveRuns = Array.isArray(activeRuns) ? activeRuns : [];
 897:   const requesterCommandHistoryRuns = Array.isArray(completedRuns) ? completedRuns : [];
@@ -650,7 +650,7 @@ LINES: 605-1296
 944:       state: requesterCommandProofReady ? "done" : requesterCommandRunnerReady ? "active" : "pending",
 945:     },
 946:   ];
-947: 
+947:
 948: return (
 949:     <div
 950:       style={{
@@ -667,7 +667,7 @@ LINES: 605-1296
 961:         historyRuns={requesterCommandHistoryRuns}
 962:         steps={requesterCommandSteps}
 963:       />
-964: 
+964:
 965:       <div style={{ maxWidth: 900, margin: "0 auto", width: "100%" }}>
 966:         <div
 967:           style={{
@@ -685,7 +685,7 @@ LINES: 605-1296
 979:               Requester command center {role ? `- ${role}` : ""}
 980:             </p>
 981:           </div>
-982: 
+982:
 983:           <div style={{ display: "flex", gap: 10 }}>
 984:             <button
 985:               onClick={fetchRuns}
@@ -700,7 +700,7 @@ LINES: 605-1296
 994:             >
 995:               Refresh
 996:             </button>
-997: 
+997:
 998:             <button
 999:               onClick={handleLogout}
 1000:               style={{
@@ -717,7 +717,7 @@ LINES: 605-1296
 1011:             </button>
 1012:           </div>
 1013:         </div>
-1014: 
+1014:
 1015:         {notification && (
 1016:           <div
 1017:             style={{
@@ -732,7 +732,7 @@ LINES: 605-1296
 1026:             {notification.message}
 1027:           </div>
 1028:         )}
-1029: 
+1029:
 1030:         <div
 1031:           style={{
 1032:             display: "grid",
@@ -747,14 +747,14 @@ LINES: 605-1296
 1041:               {activeRuns.length}
 1042:             </div>
 1043:           </div>
-1044: 
+1044:
 1045:           <div style={{ background: "white", borderRadius: 16, padding: 18 }}>
 1046:             <div style={{ color: "#64748b", fontWeight: 700 }}>Completed</div>
 1047:             <div style={{ fontSize: 30, fontWeight: 900, marginTop: 6 }}>
 1048:               {completedRuns.length}
 1049:             </div>
 1050:           </div>
-1051: 
+1051:
 1052:           <div style={{ background: "white", borderRadius: 16, padding: 18 }}>
 1053:             <div style={{ color: "#64748b", fontWeight: 700 }}>Total Payout</div>
 1054:             <div style={{ fontSize: 30, fontWeight: 900, marginTop: 6 }}>
@@ -762,7 +762,7 @@ LINES: 605-1296
 1056:             </div>
 1057:           </div>
 1058:         </div>
-1059: 
+1059:
 1060:         <RunDetailPanel
 1061:           run={selectedRun}
 1062:           onClose={() => setSelectedRunId(null)}
@@ -771,7 +771,7 @@ LINES: 605-1296
 1065:           onAuthorizeHold={authorizeSecureHold}
 1066:           authorizingHold={authorizingHold}
 1067:         />
-1068: 
+1068:
 1069:         <section className="run-requester-surface run-requester-surface--create"
 1070:           style={{
 1071:             background: "white",
@@ -785,7 +785,7 @@ LINES: 605-1296
 1079:           <h2 className="run-requester-heading" style={{ fontSize: 22, marginTop: 0, marginBottom: 14, color: "#0f172a" }}>
 1080:             Create Run
 1081:           </h2>
-1082: 
+1082:
 1083:           <form
 1084:             onSubmit={createRun}
 1085:             style={{
@@ -813,7 +813,7 @@ LINES: 605-1296
 1107:                 }}
 1108:               />
 1109:             </label>
-1110: 
+1110:
 1111:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
 1112:               Item / Task
 1113:               <input
@@ -830,7 +830,7 @@ LINES: 605-1296
 1124:                 }}
 1125:               />
 1126:             </label>
-1127: 
+1127:
 1128:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
 1129:               Payout
 1130:               <input
@@ -848,7 +848,7 @@ LINES: 605-1296
 1142:                 }}
 1143:               />
 1144:             </label>
-1145: 
+1145:
 1146:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
 1147:               Item Budget
 1148:               <input
@@ -870,7 +870,7 @@ LINES: 605-1296
 1164:                 }}
 1165:               />
 1166:             </label>
-1167: 
+1167:
 1168:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
 1169:               Platform Fee
 1170:               <input
@@ -888,7 +888,7 @@ LINES: 605-1296
 1182:                 }}
 1183:               />
 1184:             </label>
-1185: 
+1185:
 1186:             <label style={{ display: "grid", gap: 6, fontWeight: 700, color: "#334155" }}>
 1187:               Buffer
 1188:               <input
@@ -906,7 +906,7 @@ LINES: 605-1296
 1200:                 }}
 1201:               />
 1202:             </label>
-1203: 
+1203:
 1204:             <button
 1205:               type="submit"
 1206:               disabled={creatingRun}
@@ -923,7 +923,7 @@ LINES: 605-1296
 1217:               {creatingRun ? "Creating..." : "Create Run"}
 1218:             </button>
 1219:           </form>
-1220: 
+1220:
 1221:           <div
 1222:             style={{
 1223:               marginTop: 14,
@@ -952,12 +952,12 @@ LINES: 605-1296
 1246:             </div>
 1247:           </div>
 1248:         </section>
-1249: 
+1249:
 1250:         <section style={{ marginBottom: 34 }}>
 1251:           <h2 style={{ fontSize: 22, marginBottom: 14, color: "#0f172a" }}>
 1252:             Active Runs
 1253:           </h2>
-1254: 
+1254:
 1255:           {loading ? (
 1256:             <p>Loading...</p>
 1257:           ) : activeRuns.length === 0 ? (
@@ -982,12 +982,12 @@ LINES: 605-1296
 1276:             ))
 1277:           )}
 1278:         </section>
-1279: 
+1279:
 1280:         <section className="run-requester-surface run-requester-surface--completed">
 1281:           <h2 className="run-requester-heading" style={{ fontSize: 22, marginBottom: 14, color: "#0f172a" }}>
 1282:             Completed Runs
 1283:           </h2>
-1284: 
+1284:
 1285:           {completedRuns.length === 0 ? (
 1286:             <div
 1287:               style={{
@@ -1035,11 +1035,11 @@ LINES: 1-12
 ================================================================
 
 1: import RunnerStatusSummary from "./RunnerStatusSummary";
-2: 
+2:
 3: export function RunnerActionStatusPanel({ statusLabel, metrics }) {
 4:   const safeStatusLabel = statusLabel || "Ready";
 5:   const safeMetrics = Array.isArray(metrics) ? metrics : [];
-6: 
+6:
 7:   return (
 8:     <section className="runner-command-center__action-status-panel" aria-label="Runner status">
 9:       <RunnerStatusSummary statusLabel={safeStatusLabel} metrics={safeMetrics} />
@@ -1054,24 +1054,24 @@ LINES: 1-56
 ================================================================
 
 1: import "./RunnerCommandCenter.css";
-2: 
+2:
 3: function getDisplayTitle(run) {
 4:   return run?.title || run?.storeName || run?.pickupName || run?.id || "Run details";
 5: }
-6: 
+6:
 7: function getDisplayDetail(run) {
 8:   const parts = [
 9:     run?.pickupAddress || run?.pickupLocation || run?.storeAddress,
 10:     run?.dropoffAddress || run?.destinationAddress,
 11:   ].filter(Boolean);
-12: 
+12:
 13:   if (parts.length > 0) {
 14:     return parts.join(" → ");
 15:   }
-16: 
+16:
 17:   return run?.notes || run?.instructions || "Run details will appear here when a request is selected.";
 18: }
-19: 
+19:
 20: export default function RunnerRunCard({
 21:   run,
 22:   title = "Focused run",
@@ -1083,7 +1083,7 @@ LINES: 1-56
 28: }) {
 29:   const displayTitle = run ? getDisplayTitle(run) : title;
 30:   const displayDetail = run ? getDisplayDetail(run) : "Select an available or active run to review the key handoff details.";
-31: 
+31:
 32:   return (
 33:     <section className="runner-run-card" aria-label={displayTitle}>
 34:       <div className="runner-run-card__header">
@@ -1093,9 +1093,9 @@ LINES: 1-56
 38:         </div>
 39:         <span className="runner-run-card__status">{run?.status || run?.state || statusLabel}</span>
 40:       </div>
-41: 
+41:
 42:       <p className="runner-run-card__detail">{displayDetail}</p>
-43: 
+43:
 44:       <div className="runner-run-card__footer">
 45:         <div className="runner-run-card__footer-item">
 46:           <p className="runner-run-card__footer-label">{firstLabel}</p>
@@ -1117,7 +1117,7 @@ LINES: 1-50
 ================================================================
 
 1: import "./ui.css";
-2: 
+2:
 3: const variantClass = {
 4:   primary: "primary",
 5:   secondary: "secondary",
@@ -1126,13 +1126,13 @@ LINES: 1-50
 8:   warning: "warning",
 9:   danger: "danger",
 10: };
-11: 
+11:
 12: const sizeClass = {
 13:   sm: "sm",
 14:   md: "md",
 15:   lg: "lg",
 16: };
-17: 
+17:
 18: export default function Button({
 19:   children,
 20:   variant = "primary",
@@ -1153,7 +1153,7 @@ LINES: 1-50
 35:   ]
 36:     .filter(Boolean)
 37:     .join(" ");
-38: 
+38:
 39:   return (
 40:     <button
 41:       type={type}
@@ -1174,13 +1174,13 @@ LINES: 1-46
 ================================================================
 
 1: import "./ui.css";
-2: 
+2:
 3: const toneClass = {
 4:   default: "",
 5:   soft: "rf-card--soft",
 6:   trust: "rf-card--trust",
 7: };
-8: 
+8:
 9: export default function Card({
 10:   children,
 11:   tone = "default",
@@ -1199,24 +1199,24 @@ LINES: 1-46
 24:   ]
 25:     .filter(Boolean)
 26:     .join(" ");
-27: 
+27:
 28:   const cardProps = {
 29:     className: classes,
 30:     ...props,
 31:   };
-32: 
+32:
 33:   if (as === "section") {
 34:     return <section {...cardProps}>{children}</section>;
 35:   }
-36: 
+36:
 37:   if (as === "article") {
 38:     return <article {...cardProps}>{children}</article>;
 39:   }
-40: 
+40:
 41:   if (as === "button") {
 42:     return <button type={props.type || "button"} {...cardProps}>{children}</button>;
 43:   }
-44: 
+44:
 45:   return <div {...cardProps}>{children}</div>;
 46: }
 
@@ -1248,7 +1248,7 @@ LINES: 1-36
 2: import Card from "./Card";
 3: import StatusPill from "./StatusPill";
 4: import TrustBadge from "./TrustBadge";
-5: 
+5:
 6: export default function MissionCard({
 7:   title = "Run mission",
 8:   subtitle,
@@ -1261,7 +1261,7 @@ LINES: 1-36
 15:   ...props
 16: }) {
 17:   const classes = ["rf-mission-card", className].filter(Boolean).join(" ");
-18: 
+18:
 19:   return (
 20:     <Card tone="soft" elevated className={classes} {...props}>
 21:       <div className="rf-mission-card__header">
@@ -1270,12 +1270,12 @@ LINES: 1-36
 24:           <h3 className="rf-mission-card__title">{title}</h3>
 25:           {subtitle && <p className="rf-mission-card__subtitle">{subtitle}</p>}
 26:         </div>
-27: 
+27:
 28:         {status && <StatusPill tone={statusTone}>{status}</StatusPill>}
 29:       </div>
-30: 
+30:
 31:       {children}
-32: 
+32:
 33:       {actions && <div className="rf-mission-card__actions">{actions}</div>}
 34:     </Card>
 35:   );
