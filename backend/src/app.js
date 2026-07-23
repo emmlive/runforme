@@ -2,6 +2,7 @@ console.log("✅ RUNNING APP FILE: src/app.js");
 
 const express = require("express");
 const cors = require("cors");
+const { corsOrigin } = require("./config/cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
@@ -36,7 +37,7 @@ app.use("/webhooks", webhookRouter); // RAW body handled inside route
 
 app.use(
   cors({
-    origin: process.env.NODE_ENV === "production" ? process.env.FRONTEND_URL : true,
+    origin: corsOrigin,
     credentials: true,
   })
 );

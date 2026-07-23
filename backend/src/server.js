@@ -21,6 +21,7 @@ if (process.env.NODE_ENV === "production") {
 const http = require("http");
 const { Server } = require("socket.io");
 const app = require("./app");
+const { corsOrigin } = require("./config/cors");
 
 const PORT = Number(process.env.PORT) || 5050;
 
@@ -34,10 +35,9 @@ const server = http.createServer(app);
 // ============================
 const io = new Server(server, {
   cors: {
-    origin: process.env.NODE_ENV === "production"
-      ? process.env.FRONTEND_URL
-      : "*",
+    origin: corsOrigin,
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
+    credentials: true,
   },
 });
 
