@@ -142,4 +142,3 @@ ALTER TABLE "Rating" ADD CONSTRAINT "Rating_requesterId_fkey" FOREIGN KEY ("requ
 
 -- AddForeignKey
 ALTER TABLE "Rating" ADD CONSTRAINT "Rating_runnerId_fkey" FOREIGN KEY ("runnerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
