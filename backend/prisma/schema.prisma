@@ -70,6 +70,14 @@ model Run {
   requiresManualReview Boolean  @default(false)
   payoutStatus         String   @default("not_started")
 
+  /* SMART HANDOFF / ELIGIBILITY */
+  handoffRequirement   String   @default("standard")
+  identityRequirement  String   @default("none")
+  handoffEligibility   String   @default("eligible")
+  handoffConfirmed     Boolean  @default(false)
+  handoffConfirmedAt   DateTime?
+  handoffInstructions  String?
+
   /* RUNNER BINDING */
   assignedRunnerId  Int?
   assignedRunner    User?   @relation("AssignedRuns", fields: [assignedRunnerId], references: [id])
