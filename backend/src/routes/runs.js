@@ -55,6 +55,178 @@ function requiresHoldAuthorization(run) {
   );
 }
 
+const HANDOFF_REQUIREMENTS = new Set([
+  "standard",
+  "third_party_allowed",
+  "authorized_person_required",
+  "requester_presence_required",
+  "unknown",
+]);
+
+const IDENTITY_REQUIREMENTS = new Set([
+  "none",
+  "name_match",
+  "physical_id_required",
+  "organization_credential_required",
+  "other",
+]);
+
+function normalizeSmartHandoffValue(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+}
+
+function normalizeHandoffRequirement(value) {
+  const normalized = normalizeSmartHandoffValue(value);
+
+  if (!normalized) {
+    return "standard";
+  }
+
+  return HANDOFF_REQUIREMENTS.has(normalized)
+    ? normalized
+    : "unknown";
+}
+
+function normalizeIdentityRequirement(value) {
+  const normalized = normalizeSmartHandoffValue(value);
+
+  if (!normalized) {
+    return "none";
+  }
+
+  return IDENTITY_REQUIREMENTS.has(normalized)
+    ? normalized
+    : "other";
+}
+
+function containsSensitiveHandoffCredential(value) {
+  const text = String(value || "").trim();
+
+  if (!text) {
+    return false;
+  }
+
+  const sensitiveCredentialPatterns = [
+    /\b(?:password|passcode)\s*(?::|=|-|\bis\b)\s*\S+/i,
+
+    /\b(?:student|employee|member)\s+(?:id|identification)\s+(?:number|no\.?)\s*(?::|=|-|\bis\b)?\s*[a-z0-9][a-z0-9-]{3,}/i,
+    /\b(?:student|employee|member)\s+(?:id|identification)\s*#\s*[a-z0-9][a-z0-9-]{3,}/i,
+    /\b(?:student|employee|member)\s+(?:id|identification)\s*(?::|=|-|\bis\b)\s*[a-z0-9][a-z0-9-]{3,}/i,
+
+    /\b(?:government|state)\s+(?:id|identification)\s+(?:number|no\.?)\s*(?::|=|-|\bis\b)?\s*[a-z0-9][a-z0-9-]{3,}/i,
+    /\b(?:government|state)\s+(?:id|identification)\s*#\s*[a-z0-9][a-z0-9-]{3,}/i,
+    /\b(?:government|state)\s+(?:id|identification)\s*(?::|=|-|\bis\b)\s*[a-z0-9][a-z0-9-]{3,}/i,
+
+    /\b(?:driver'?s?\s+licen[cs]e|passport)\s+(?:number|no\.?)\s*(?::|=|-|\bis\b)?\s*[a-z0-9][a-z0-9-]{3,}/i,
+    /\b(?:driver'?s?\s+licen[cs]e|passport)\s*#\s*[a-z0-9][a-z0-9-]{3,}/i,
+    /\b(?:driver'?s?\s+licen[cs]e|passport)\s*(?::|=|-|\bis\b)\s*[a-z0-9][a-z0-9-]{3,}/i,
+
+    /\b(?:ssn|social\s+security(?:\s+number)?)\s*(?::|=|-|\bis\b)\s*\d[\d-]{7,}/i,
+
+    /\b(?:credential|account)\s+(?:number|no\.?)\s*(?::|=|-|\bis\b)?\s*[a-z0-9][a-z0-9-]{3,}/i,
+    /\b(?:credential|account)\s*#\s*[a-z0-9][a-z0-9-]{3,}/i,
+  ];
+
+  return sensitiveCredentialPatterns.some((pattern) =>
+    pattern.test(text)
+  );
+}
+
+function sanitizeHandoffInstructions(value) {
+  const instructions = String(value || "").trim();
+
+  if (!instructions) {
+    return null;
+  }
+
+  return instructions.slice(0, 500);
+}
+
+function classifySmartHandoff({
+  handoffRequirement,
+  identityRequirement,
+  handoffConfirmed,
+}) {
+  const safeHandoffRequirement =
+    normalizeHandoffRequirement(handoffRequirement);
+
+  const safeIdentityRequirement =
+    normalizeIdentityRequirement(identityRequirement);
+
+  const confirmed = handoffConfirmed === true;
+  const riskSignals = [];
+
+  if (safeHandoffRequirement === "unknown") {
+    riskSignals.push("policy_unknown");
+
+    return {
+      handoffRequirement: safeHandoffRequirement,
+      identityRequirement: safeIdentityRequirement,
+      handoffEligibility: "blocked",
+      handoffConfirmed: false,
+      handoffConfirmedAt: null,
+      riskSignals,
+    };
+  }
+
+  if (safeHandoffRequirement === "requester_presence_required") {
+    riskSignals.push("restricted_handoff");
+
+    return {
+      handoffRequirement: safeHandoffRequirement,
+      identityRequirement: safeIdentityRequirement,
+      handoffEligibility: "blocked",
+      handoffConfirmed: false,
+      handoffConfirmedAt: null,
+      riskSignals,
+    };
+  }
+
+  const requiresConfirmation =
+    safeHandoffRequirement === "authorized_person_required" ||
+    safeIdentityRequirement === "physical_id_required" ||
+    safeIdentityRequirement === "organization_credential_required" ||
+    safeIdentityRequirement === "other";
+
+  if (safeHandoffRequirement === "authorized_person_required") {
+    riskSignals.push("authorization_required");
+  }
+
+  if (
+    safeIdentityRequirement === "physical_id_required" ||
+    safeIdentityRequirement === "organization_credential_required"
+  ) {
+    riskSignals.push("identity_sensitive");
+  }
+
+  if (requiresConfirmation && !confirmed) {
+    return {
+      handoffRequirement: safeHandoffRequirement,
+      identityRequirement: safeIdentityRequirement,
+      handoffEligibility: "needs_confirmation",
+      handoffConfirmed: false,
+      handoffConfirmedAt: null,
+      riskSignals,
+    };
+  }
+
+  return {
+    handoffRequirement: safeHandoffRequirement,
+    identityRequirement: safeIdentityRequirement,
+    handoffEligibility: "eligible",
+    handoffConfirmed: confirmed,
+    handoffConfirmedAt: confirmed ? new Date() : null,
+    riskSignals,
+  };
+}
+
+function requiresHandoffEligibility(run) {
+  return run?.handoffEligibility !== "eligible";
+}
+
 /* ============================
    GET RUNS
 ============================ */
@@ -77,7 +249,8 @@ router.get("/", auth, async (req, res) => {
           (offer) =>
             offer.run &&
             offer.run.status === "open" &&
-            !requiresHoldAuthorization(offer.run)
+            !requiresHoldAuthorization(offer.run) &&
+            !requiresHandoffEligibility(offer.run)
         )
         .map((offer) =>
           redactRunForRunner({
@@ -142,6 +315,25 @@ router.post("/", auth, async (req, res) => {
     }
 
     const { location, item, payout } = req.body;
+
+    const smartHandoff = classifySmartHandoff({
+      handoffRequirement: req.body.handoffRequirement,
+      identityRequirement: req.body.identityRequirement,
+      handoffConfirmed: req.body.handoffConfirmed === true,
+    });
+
+    if (containsSensitiveHandoffCredential(req.body.handoffInstructions)) {
+      return res.status(400).json({
+        success: false,
+        error:
+          "Do not include ID numbers, passwords, account credentials, or similar sensitive information in handoff instructions.",
+      });
+    }
+
+    const handoffInstructions = sanitizeHandoffInstructions(
+      req.body.handoffInstructions
+    );
+
     const locationText = String(location || "").trim();
     const itemText = String(item || "").trim();
     const itemBudgetEstimate = readSafeMoney(req.body.itemBudgetEstimate, 0);
@@ -196,6 +388,11 @@ router.post("/", auth, async (req, res) => {
         bufferAmount,
         holdAmount,
         maxRunnerSpend,
+        handoffRequirement: smartHandoff.handoffRequirement,
+        identityRequirement: smartHandoff.identityRequirement,
+        handoffEligibility: smartHandoff.handoffEligibility,
+        handoffConfirmed: smartHandoff.handoffConfirmed,
+        handoffInstructions,
         status: { in: ["open", "assigned", "arrived", "in_progress"] },
         createdAt: { gte: duplicateSince },
       },
@@ -240,16 +437,27 @@ router.post("/", auth, async (req, res) => {
           receiptStatus: "not_uploaded",
           deliveryPin: generateDeliveryPin(),
           riskScore: 0,
-          riskFlags: "[]",
+          riskFlags: JSON.stringify([
+            ...new Set(smartHandoff.riskSignals),
+          ]),
           requiresManualReview: false,
           payoutStatus: "not_started",
+
+          handoffRequirement: smartHandoff.handoffRequirement,
+          identityRequirement: smartHandoff.identityRequirement,
+          handoffEligibility: smartHandoff.handoffEligibility,
+          handoffConfirmed: smartHandoff.handoffConfirmed,
+          handoffConfirmedAt: smartHandoff.handoffConfirmedAt,
+          handoffInstructions,
         },
       });
 
-      const runners = await tx.user.findMany({
-        where: { role: "runner" },
-        select: { id: true },
-      });
+      const runners = requiresHandoffEligibility(run)
+        ? []
+        : await tx.user.findMany({
+            where: { role: "runner" },
+            select: { id: true },
+          });
 
       const offers = await Promise.all(
         runners.map((runner) =>
@@ -272,7 +480,11 @@ router.post("/", auth, async (req, res) => {
 
     const io = req.app.get("io");
 
-    if (io && !requiresHoldAuthorization(result.run)) {
+    if (
+      io &&
+      !requiresHoldAuthorization(result.run) &&
+      !requiresHandoffEligibility(result.run)
+    ) {
       result.offers.forEach((offer) => {
         io.to(`runner:${offer.runnerId}`).emit("run.offer", {
           run: redactRunForRunner({
@@ -352,6 +564,12 @@ router.post("/:runId/accept", auth, async (req, res) => {
 
       if (requiresHoldAuthorization(existing)) {
         throw new Error("Secure hold authorization is required before this run can be accepted");
+      }
+
+      if (requiresHandoffEligibility(existing)) {
+        throw new Error(
+          "Pickup or handoff eligibility must be resolved before this run can be accepted"
+        );
       }
 
       const offer = await tx.offer.findFirst({
@@ -789,7 +1007,11 @@ router.post("/:runId/authorize-hold", auth, async (req, res) => {
       });
 
       // Dispatch pending offers after secure hold authorization.
-      if (!updatedRun.assignedRunnerId && updatedRun.status === "open") {
+      if (
+        !updatedRun.assignedRunnerId &&
+        updatedRun.status === "open" &&
+        !requiresHandoffEligibility(updatedRun)
+      ) {
         const pendingOffers = await prisma.offer.findMany({
           where: {
             runId,
