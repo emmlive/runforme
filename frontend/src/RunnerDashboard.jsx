@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { apiRequest } from "./api/client";
-import { socket } from "./lib/socket"; // âœ… shared socket (FIX)
+import { socket } from "./lib/socket"; // Ã¢Å“â€¦ shared socket (FIX)
 import LiveMap from "./components/LiveMap";
 import { RunnerCommandCenter, deriveRunnerCommandData } from "./components/runner";
 
@@ -52,7 +52,7 @@ function getCompletionSafety(run) {
 }
 
 
-export default function RunnerDashboard({ user }) {
+export default function RunnerDashboard({ user, onLogout }) {
   const [online, setOnline] = useState(false);
   const [runs, setRuns] = useState([]);
   const [statusMessage, setStatusMessage] = useState("Offline");
@@ -106,7 +106,7 @@ export default function RunnerDashboard({ user }) {
 
     socket.emit("join.runner", user.id);
 
-    setRuns([]); // ðŸ”¥ CLEAN RESET
+    setRuns([]); // Ã°Å¸â€Â¥ CLEAN RESET
 
     fetchRuns(); // Load existing offers on page load/refresh
 
@@ -624,7 +624,16 @@ export default function RunnerDashboard({ user }) {
       }}>
         <h3 style={{ margin: 0 }}>RUNFORME</h3>
 
-        <button
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            flexWrap: "wrap",
+            justifyContent: "flex-end",
+          }}
+        >
+          <button
           onClick={toggleOnline}
           style={{
             background: online ? "#16a34a" : "#444",
@@ -636,6 +645,26 @@ export default function RunnerDashboard({ user }) {
         >
           {statusMessage}
         </button>
+
+          <button
+            type="button"
+            onClick={onLogout}
+            aria-label="Sign out of RUNFORME"
+            style={{
+              minHeight: 40,
+              padding: "8px 14px",
+              borderRadius: 12,
+              border: "1px solid rgba(255,255,255,0.28)",
+              background: "rgba(255,255,255,0.08)",
+              color: "#ffffff",
+              fontWeight: 700,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Sign out
+          </button>
+        </div>
       </div>
 
       {/* =========================
@@ -1161,14 +1190,14 @@ return (
                   setAcceptMessage(null);
 
                   try {
-                    console.log("âœ… ACCEPTING RUN:", run.id);
+                    console.log("Ã¢Å“â€¦ ACCEPTING RUN:", run.id);
 
                     const res = await apiRequest(
                       `/api/runs/${run.id}/accept`,
                       { method: "POST" }
                     );
 
-                    console.log("âœ… ACCEPT RESULT:", res);
+                    console.log("Ã¢Å“â€¦ ACCEPT RESULT:", res);
 
                     if (res.success) {
                       setAcceptMessage({
