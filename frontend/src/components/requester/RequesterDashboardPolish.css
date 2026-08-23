@@ -154,3 +154,52 @@
     width: 100% !important;
   }
 }
+
+/* RUN-UI-1K-370PX-REQUESTER-CONTAINMENT
+   Prevent requester dashboard descendants from establishing a layout
+   wider than the mobile viewport. Presentation only. */
+@media (max-width: 560px) {
+  .run-requester-surface,
+  .run-requester-surface--active,
+  .run-requester-surface--completed,
+  .run-requester-surface--create,
+  .requester-run-form-card,
+  .requester-run-form,
+  .requester-run-form > *,
+  .requester-run-form-preview,
+  .requester-command-shell,
+  .requester-command-shell--dashboard,
+  .requester-command-shell__content,
+  .requester-run-lists,
+  .requester-run-list,
+  .requester-run-list__items,
+  .requester-run-list__item {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .requester-run-form-card,
+  .requester-run-form,
+  .requester-run-form-preview,
+  .requester-command-shell,
+  .requester-command-shell--dashboard,
+  .requester-command-shell__content,
+  .requester-run-lists,
+  .requester-run-list {
+    width: 100%;
+  }
+
+  .requester-run-list__item-title,
+  .requester-run-list__item-detail,
+  .run-requester-heading {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .requester-run-form__handoff-notes > summary {
+    width: auto;
+    max-width: 100%;
+  }
+}

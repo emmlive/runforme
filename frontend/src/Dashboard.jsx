@@ -382,9 +382,11 @@ function RunDetailPanel({
       <div
         style={{
           display: "flex",
+          flexDirection: isMobile ? "column" : "row",
           justifyContent: "space-between",
           gap: 16,
-          alignItems: "flex-start",
+          alignItems: isMobile ? "stretch" : "flex-start",
+          minWidth: 0,
         }}
       >
         <div>
@@ -399,7 +401,16 @@ function RunDetailPanel({
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            alignItems: "center",
+            flexWrap: "wrap",
+            maxWidth: "100%",
+            minWidth: 0,
+          }}
+        >
           <Badge tone={statusTone}>{statusLabels[run.status] || run.status}</Badge>
           <button
             onClick={onClose}

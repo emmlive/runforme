@@ -40,3 +40,19 @@
 .read-the-docs {
   color: #888;
 }
+
+/* RUN-UI-1K-MOBILE-ROOT-CONTAINMENT
+   Browser measurement at 370px showed #root at 454px wide.
+   Constrain the application root itself rather than hiding overflow. */
+@media (max-width: 560px) {
+  #root {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
