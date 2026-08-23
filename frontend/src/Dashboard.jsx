@@ -626,6 +626,10 @@ export default function Dashboard({ onLogout }) {
     itemBudgetEstimate: "0",
     platformFee: "3",
     bufferAmount: "5",
+    handoffRequirement: "standard",
+    identityRequirement: "none",
+    handoffConfirmed: false,
+    handoffInstructions: "",
   });
   const [creatingRun, setCreatingRun] = useState(false);
   const creatingRunRef = useRef(false);
@@ -758,6 +762,10 @@ export default function Dashboard({ onLogout }) {
           itemBudgetEstimate,
           platformFee,
           bufferAmount,
+          handoffRequirement: newRun.handoffRequirement,
+          identityRequirement: newRun.identityRequirement,
+          handoffConfirmed: newRun.handoffConfirmed,
+          handoffInstructions: newRun.handoffInstructions,
         }),
       });
 
@@ -774,6 +782,10 @@ export default function Dashboard({ onLogout }) {
         itemBudgetEstimate: "0",
         platformFee: "3",
         bufferAmount: "5",
+        handoffRequirement: "standard",
+        identityRequirement: "none",
+        handoffConfirmed: false,
+        handoffInstructions: "",
       });
       showSuccess("Run created and sent to available runners.");
       await fetchRuns();
@@ -1242,6 +1254,292 @@ return (
                 Extra authorized spend protection.
               </p>
             </div>
+
+            <section className="requester-run-form__handoff">
+              <details className="requester-run-form__handoff-details-shell">
+                <summary className="requester-run-form__handoff-summary">
+                  <div className="requester-run-form__handoff-summary-copy">
+                    <span className="requester-run-form__handoff-icon" aria-hidden="true">
+                      OK
+                    </span>
+
+                    <div>
+                      <strong>Location handoff</strong>
+                      <span>
+                        {newRun.handoffRequirement === "standard"
+                          ? "Standard - no special requirements"
+                          : newRun.handoffRequirement ===
+                              "requester_presence_required"
+                            ? "You must be there"
+                            : newRun.handoffRequirement === "unknown"
+                              ? "Needs clarification"
+                              : "Special requirement"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <span className="requester-run-form__handoff-change">
+                    Change
+                  </span>
+                </summary>
+
+                <div className="requester-run-form__handoff-panel">
+                  <div className="requester-run-form__handoff-intro">
+                    <strong>
+                      Can the runner complete the handoff on your behalf?
+                    </strong>
+                    <p>
+                      Most errands need nothing extra. Change this only when
+                      the location has a special rule.
+                    </p>
+                  </div>
+
+                  <div
+                    className="requester-run-form__handoff-answer-row"
+                    role="group"
+                    aria-label="Can the runner complete the handoff"
+                  >
+                    <button
+                      type="button"
+                      className={`requester-run-form__handoff-answer ${
+                        newRun.handoffRequirement === "third_party_allowed" ||
+                        newRun.handoffRequirement ===
+                          "authorized_person_required"
+                          ? "requester-run-form__handoff-answer--selected"
+                          : ""
+                      }`}
+                      aria-pressed={
+                        newRun.handoffRequirement === "third_party_allowed" ||
+                        newRun.handoffRequirement ===
+                          "authorized_person_required"
+                      }
+                      onClick={() =>
+                        setNewRun((prev) => ({
+                          ...prev,
+                          handoffRequirement: "third_party_allowed",
+                          identityRequirement: "none",
+                          handoffConfirmed: false,
+                        }))
+                      }
+                    >
+                      Yes
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`requester-run-form__handoff-answer ${
+                        newRun.handoffRequirement ===
+                        "requester_presence_required"
+                          ? "requester-run-form__handoff-answer--selected"
+                          : ""
+                      }`}
+                      aria-pressed={
+                        newRun.handoffRequirement ===
+                        "requester_presence_required"
+                      }
+                      onClick={() =>
+                        setNewRun((prev) => ({
+                          ...prev,
+                          handoffRequirement: "requester_presence_required",
+                          identityRequirement: "none",
+                          handoffConfirmed: false,
+                          handoffInstructions: "",
+                        }))
+                      }
+                    >
+                      No
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`requester-run-form__handoff-answer ${
+                        newRun.handoffRequirement === "unknown"
+                          ? "requester-run-form__handoff-answer--selected"
+                          : ""
+                      }`}
+                      aria-pressed={newRun.handoffRequirement === "unknown"}
+                      onClick={() =>
+                        setNewRun((prev) => ({
+                          ...prev,
+                          handoffRequirement: "unknown",
+                          identityRequirement: "none",
+                          handoffConfirmed: false,
+                          handoffInstructions: "",
+                        }))
+                      }
+                    >
+                      I'm not sure
+                    </button>
+                  </div>
+
+                  {(newRun.handoffRequirement === "third_party_allowed" ||
+                    newRun.handoffRequirement ===
+                      "authorized_person_required") && (
+                    <div className="requester-run-form__handoff-followup">
+                      <label
+                        className="requester-run-form__label"
+                        htmlFor="run-identity-requirement"
+                      >
+                        Will the location ask the runner for anything?
+                      </label>
+
+                      <select
+                        id="run-identity-requirement"
+                        className="requester-run-form__control"
+                        value={
+                          newRun.handoffRequirement ===
+                          "authorized_person_required"
+                            ? "authorized_person_required"
+                            : newRun.identityRequirement
+                        }
+                        onChange={(event) => {
+                          const requirement = event.target.value;
+
+                          if (
+                            requirement === "authorized_person_required"
+                          ) {
+                            setNewRun((prev) => ({
+                              ...prev,
+                              handoffRequirement:
+                                "authorized_person_required",
+                              identityRequirement: "name_match",
+                              handoffConfirmed: false,
+                            }));
+                            return;
+                          }
+
+                          setNewRun((prev) => ({
+                            ...prev,
+                            handoffRequirement: "third_party_allowed",
+                            identityRequirement: requirement,
+                            handoffConfirmed: false,
+                          }));
+                        }}
+                      >
+                        <option value="none">Nothing extra</option>
+                        <option value="authorized_person_required">
+                          Runner must be named or authorized
+                        </option>
+                        <option value="physical_id_required">
+                          Runner must show photo ID
+                        </option>
+                        <option value="organization_credential_required">
+                          Organization credential required
+                        </option>
+                        <option value="other">
+                          Another requirement
+                        </option>
+                      </select>
+
+                      {(newRun.handoffRequirement ===
+                        "authorized_person_required" ||
+                        newRun.identityRequirement ===
+                          "physical_id_required" ||
+                        newRun.identityRequirement ===
+                          "organization_credential_required" ||
+                        newRun.identityRequirement === "other") && (
+                        <>
+                          <p className="requester-run-form__security-note">
+                            Do not enter ID numbers, passwords, barcodes, or
+                            private credentials. RUNFORME only needs to know
+                            what the location requires.
+                          </p>
+
+                          <label className="requester-run-form__confirmation">
+                            <input
+                              type="checkbox"
+                              checked={newRun.handoffConfirmed}
+                              onChange={(event) =>
+                                setNewRun((prev) => ({
+                                  ...prev,
+                                  handoffConfirmed: event.target.checked,
+                                }))
+                              }
+                            />
+                            <span>
+                              I confirmed the runner can complete this errand
+                              under the location's rules.
+                            </span>
+                          </label>
+                        </>
+                      )}
+
+                      <details className="requester-run-form__handoff-notes">
+                        <summary>Add helpful location instructions</summary>
+
+                        <label
+                          className="requester-run-form__label"
+                          htmlFor="run-handoff-instructions"
+                        >
+                          Location instructions
+                        </label>
+
+                        <textarea
+                          id="run-handoff-instructions"
+                          className="requester-run-form__control requester-run-form__textarea"
+                          rows="3"
+                          maxLength={500}
+                          value={newRun.handoffInstructions}
+                          onChange={(event) =>
+                            setNewRun((prev) => ({
+                              ...prev,
+                              handoffInstructions: event.target.value,
+                            }))
+                          }
+                          placeholder="Example: Use the east service desk."
+                        />
+
+                        <div className="requester-run-form__instruction-meta">
+                          <span>Optional</span>
+                          <span>
+                            {newRun.handoffInstructions.length}/500
+                          </span>
+                        </div>
+                      </details>
+                    </div>
+                  )}
+
+                  {newRun.handoffRequirement ===
+                    "requester_presence_required" && (
+                    <div
+                      className="requester-run-form__handoff-warning"
+                      role="status"
+                    >
+                      This location requires you personally. RUNFORME will keep
+                      this errand from runners.
+                    </div>
+                  )}
+
+                  {newRun.handoffRequirement === "unknown" && (
+                    <div
+                      className="requester-run-form__handoff-warning"
+                      role="status"
+                    >
+                      Check the location's rule first. Dispatch stays paused
+                      until eligibility is known.
+                    </div>
+                  )}
+
+                  {newRun.handoffRequirement !== "standard" && (
+                    <button
+                      type="button"
+                      className="requester-run-form__handoff-reset"
+                      onClick={() =>
+                        setNewRun((prev) => ({
+                          ...prev,
+                          handoffRequirement: "standard",
+                          identityRequirement: "none",
+                          handoffConfirmed: false,
+                          handoffInstructions: "",
+                        }))
+                      }
+                    >
+                      Reset to standard
+                    </button>
+                  )}
+                </div>
+              </details>
+            </section>
 
             <div className="requester-run-form__action">
               <Button
