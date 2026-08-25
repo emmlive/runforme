@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 
-import { RequesterRunOverview } from "./components/requester";
+import { RequesterMobileShell, RequesterRunOverview } from "./components/requester";
 import "./components/requester/RequesterDashboardPolish.css";
 import { Button, Card } from "./components/ui";
 import "./requester-run-form.css";
@@ -979,6 +979,40 @@ return (
         minHeight: "100vh",
       }}
     >
+      {isMobile ? (
+        <RequesterMobileShell
+          activeRuns={requesterCommandActiveRuns}
+          completedRuns={requesterCommandHistoryRuns}
+          selectedRun={selectedRunId ? selectedRun : requesterCommandActiveRun}
+          notification={notification}
+          form={{
+            newRun,
+            setNewRun,
+            creatingRun,
+            createRun,
+            preview: createRunSecurityPreview,
+            formatMoney,
+          }}
+          runDetailContent={
+            <RunDetailPanel
+              run={selectedRunId ? selectedRun : requesterCommandActiveRun}
+              onClose={() => setSelectedRunId(null)}
+              onApproveManualReview={approveManualReview}
+              approvingManualReview={approvingManualReview}
+              onAuthorizeHold={authorizeSecureHold}
+              authorizingHold={authorizingHold}
+            />
+          }
+          onSelectRun={setSelectedRunId}
+          onAuthorizeHold={authorizeSecureHold}
+          onApproveManualReview={approveManualReview}
+          authorizingHold={authorizingHold}
+          approvingManualReview={approvingManualReview}
+          onRefresh={fetchRuns}
+          onLogout={handleLogout}
+        />
+      ) : (
+        <>
       {/* RUN-UI-1C-CHECKPOINT-6: extracted requester run overview presentation. */}
       <RequesterRunOverview
         activeRun={requesterCommandActiveRun}
@@ -1662,6 +1696,8 @@ return (
           )}
         </section>
       </div>
+        </>
+      )}
     </div>
   );
 }

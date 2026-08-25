@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { apiRequest } from "./api/client";
-import { socket } from "./lib/socket"; // Ã¢Å“â€¦ shared socket (FIX)
+import { socket } from "./lib/socket"; // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ shared socket (FIX)
 import LiveMap from "./components/LiveMap";
 import { RunnerCommandCenter, deriveRunnerCommandData } from "./components/runner";
 
@@ -52,6 +52,147 @@ function getCompletionSafety(run) {
 }
 
 
+function RunnerSmartHandoffCard({ run }) {
+  if (!run || run.handoffEligibility !== "eligible") {
+    return null;
+  }
+
+  const handoffRequirement = run.handoffRequirement || "standard";
+  const identityRequirement = run.identityRequirement || "none";
+
+  if (
+    handoffRequirement === "standard" &&
+    identityRequirement === "none" &&
+    !run.handoffInstructions
+  ) {
+    return null;
+  }
+
+  let title = "Handoff approved";
+  let guidance = "You can complete this errand for the requester.";
+
+  if (handoffRequirement === "authorized_person_required") {
+    title = "Confirm you are the authorized runner";
+    guidance =
+      "The location requires an authorized person for this handoff.";
+  } else if (handoffRequirement === "third_party_allowed") {
+    title = "Handoff approved";
+    guidance =
+      "The requester confirmed that a runner can complete this handoff.";
+  }
+
+  if (identityRequirement === "physical_id_required") {
+    title = "Bring an accepted photo ID";
+    guidance =
+      "The location requires identification before completing the handoff.";
+  } else if (identityRequirement === "organization_credential_required") {
+    title = "Required credential must be available";
+    guidance =
+      "Make sure you have the required organization credential before you go.";
+  } else if (identityRequirement === "other") {
+    title = "Review the location requirement";
+    guidance =
+      "Check the handoff instructions before heading to the location.";
+  } else if (
+    identityRequirement === "name_match" &&
+    handoffRequirement !== "authorized_person_required"
+  ) {
+    title = "Name must match";
+    guidance =
+      "The location may verify the authorized runner's name.";
+  }
+
+  return (
+    <div
+      className="runner-smart-handoff-card"
+      style={{
+        marginTop: 12,
+        marginBottom: 12,
+        padding: 14,
+        border: "1px solid #334155",
+        borderRadius: 12,
+        background: "#0f172a",
+      }}
+    >
+      <div
+        style={{
+          marginBottom: 6,
+          color: "#93c5fd",
+          fontSize: 11,
+          fontWeight: 800,
+          letterSpacing: 1,
+          textTransform: "uppercase",
+        }}
+      >
+        Before you go
+      </div>
+
+      <div
+        style={{
+          color: "#f8fafc",
+          fontSize: 15,
+          fontWeight: 800,
+          lineHeight: 1.35,
+        }}
+      >
+        {title}
+      </div>
+
+      <div
+        style={{
+          marginTop: 5,
+          color: "#cbd5e1",
+          fontSize: 13,
+          lineHeight: 1.5,
+        }}
+      >
+        {guidance}
+      </div>
+
+      {run.handoffInstructions && (
+        <div
+          style={{
+            marginTop: 10,
+            paddingTop: 10,
+            borderTop: "1px solid #334155",
+            color: "#e2e8f0",
+            fontSize: 13,
+            lineHeight: 1.5,
+            overflowWrap: "anywhere",
+          }}
+        >
+          {run.handoffInstructions}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RunnerMobileNavIcon({ name }) {
+  const paths = {
+    home: "M3 10.5 12 3l9 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19.5v-9Z M9 21v-6h6v6",
+    earnings: "M12 3v18 M16.5 7.5c0-1.1-1.8-2-4-2s-4 .9-4 2 1.8 2 4 2 4 .9 4 2-1.8 2-4 2-4-.9-4-2",
+    activity: "M4 18V9 M10 18V5 M16 18v-7 M22 18H2",
+    menu: "M4 6h16 M4 12h16 M4 18h16",
+  };
+
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      width="19"
+      height="19"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d={paths[name]} />
+    </svg>
+  );
+}
+
 export default function RunnerDashboard({ user, onLogout }) {
   const [online, setOnline] = useState(false);
   const [runs, setRuns] = useState([]);
@@ -62,6 +203,7 @@ export default function RunnerDashboard({ user, onLogout }) {
   const [acceptMessage, setAcceptMessage] = useState(null);
   const [acceptingRunId, setAcceptingRunId] = useState(null);
   const [activeAction, setActiveAction] = useState(null);
+  const [mobileSection, setMobileSection] = useState("home");
 
   const watchIdRef = useRef(null);
   const lastSentRef = useRef(0);
@@ -106,7 +248,7 @@ export default function RunnerDashboard({ user, onLogout }) {
 
     socket.emit("join.runner", user.id);
 
-    setRuns([]); // Ã°Å¸â€Â¥ CLEAN RESET
+    setRuns([]); // ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â¥ CLEAN RESET
 
     fetchRuns(); // Load existing offers on page load/refresh
 
@@ -610,7 +752,7 @@ export default function RunnerDashboard({ user, onLogout }) {
   // UI
   ////////////////////////////////////////////////////////
   return (
-    <div style={{ height: "100vh", background: "#0f0f0f", color: "#fff" }}>
+    <div className="runner-dashboard-shell" style={{ height: "100vh", background: "#0f0f0f", color: "#fff" }}>
 
       {/* =========================
         TOP STATUS BAR
@@ -670,7 +812,10 @@ export default function RunnerDashboard({ user, onLogout }) {
       {/* =========================
         MAP (PRIMARY SURFACE)
     ========================= */}
-      <div style={{ height: "55%" }}>
+      <div
+        className={activeRun ? "runner-map-surface" : "runner-map-surface runner-ui-1l-mobile-map-secondary"}
+        style={{ height: "55%" }}
+      >
         <LiveMap run={activeRun} />
       </div>
 
@@ -685,6 +830,8 @@ export default function RunnerDashboard({ user, onLogout }) {
         }}>
           <h4>Active Run</h4>
           <p>{activeRun.item}</p>
+
+          <RunnerSmartHandoffCard run={activeRun} />
 
           {actionMessage && (
             <div style={{
@@ -1014,7 +1161,7 @@ return (
                   }}>
       {/* RUN-UI-1D-CHECKPOINT-3: display-only runner command center preview. */}
       {/* RUN-UI-1D-CHECKPOINT-5: layout-only placement shell for runner command center preview. */}
-      <div className="runner-command-center-preview-slot">
+      <div className="runner-command-center-preview-slot runner-ui-1l-mobile-secondary">
         <RunnerCommandCenter
           title="Runner command center preview"
           note="Live display data now powers this preview while existing runner actions remain untouched."
@@ -1104,7 +1251,7 @@ return (
         });
 
         return (
-          <div className="runner-command-center-preview-slot">
+          <div className="runner-command-center-preview-slot runner-ui-1l-mobile-secondary">
             <RunnerCommandCenter
               title="Runner command center preview"
               note="Live display data now powers this preview while existing runner actions remain untouched."
@@ -1117,24 +1264,226 @@ return (
         );
       })()}
 
+      {/* RUN-UI-1L-A: action-first mobile runner home. */}
+      <style>{`
+        .runner-mobile-nav,
+        .runner-mobile-section-sheet {
+          display: none;
+        }
+
+        @media (max-width: 560px) {
+          .runner-dashboard-shell {
+            box-sizing: border-box;
+            padding-bottom: 82px;
+          }
+
+          .runner-ui-1l-mobile-secondary {
+            display: none !important;
+          }
+
+          .runner-ui-1l-mobile-primary {
+            margin-top: 0 !important;
+            padding: 16px 14px 20px !important;
+            border-top: 0 !important;
+            background: #0f0f0f !important;
+          }
+
+          .runner-ui-1l-mobile-map-secondary {
+            display: none !important;
+          }
+
+          .runner-ui-1l-mobile-primary .runner-available-runs-panel__title {
+            margin: 0 0 4px !important;
+            color: #f8fafc;
+            font-size: 22px !important;
+            line-height: 1.15 !important;
+            letter-spacing: -0.02em;
+          }
+
+          .runner-ui-1l-mobile-primary .runner-available-runs-panel__note {
+            margin: 0 0 10px !important;
+            color: #94a3b8 !important;
+            font-size: 12px !important;
+            line-height: 1.35 !important;
+            max-width: 36rem;
+          }
+
+          .runner-ui-1l-mobile-primary > div {
+            min-width: 0;
+            max-width: 100%;
+          }
+
+          .runner-ui-1l-mobile-primary p {
+            max-width: 100%;
+            overflow-wrap: anywhere;
+          }
+
+          .runner-ui-1l-mobile-primary .runner-available-run-card {
+            padding: 16px !important;
+            margin: 0 !important;
+            border: 1px solid rgba(148, 163, 184, 0.22) !important;
+            border-radius: 18px !important;
+            background: #172033 !important;
+            box-shadow: 0 12px 28px rgba(2, 6, 23, 0.24);
+          }
+
+          .runner-ui-1l-mobile-primary .runner-available-run-card__title {
+            margin: 0 !important;
+            color: #f8fafc;
+            font-size: 18px !important;
+            font-weight: 800;
+            line-height: 1.25 !important;
+          }
+
+          .runner-ui-1l-mobile-primary .runner-available-run-card__payout {
+            margin: 8px 0 0 !important;
+            color: #fbbf24;
+            font-size: 16px !important;
+            font-weight: 800;
+          }
+
+          .runner-ui-1l-mobile-primary .runner-smart-handoff-card {
+            margin: 14px 0 !important;
+            padding: 12px !important;
+            border-color: rgba(147, 197, 253, 0.32) !important;
+            border-radius: 14px !important;
+            background: rgba(15, 23, 42, 0.72) !important;
+          }
+
+          .runner-ui-1l-mobile-primary .runner-smart-handoff-card > div:nth-child(2) {
+            font-size: 14px !important;
+          }
+
+          .runner-ui-1l-mobile-primary .runner-smart-handoff-card > div:nth-child(3),
+          .runner-ui-1l-mobile-primary .runner-smart-handoff-card > div:nth-child(4) {
+            font-size: 12px !important;
+            line-height: 1.4 !important;
+          }
+
+          .runner-ui-1l-mobile-primary .runner-location-disclosure {
+            margin: 0 0 14px;
+            padding: 0;
+          }
+
+          .runner-ui-1l-mobile-primary .runner-location-disclosure summary {
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            color: #bfdbfe;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 800;
+            list-style-position: inside;
+          }
+
+          .runner-ui-1l-mobile-primary .runner-location-disclosure__content {
+            padding: 0 12px 10px;
+            color: #cbd5e1;
+            font-size: 12px;
+            line-height: 1.4;
+          }
+
+          .runner-ui-1l-mobile-primary button {
+            width: 100%;
+            min-height: 52px;
+            padding: 13px 16px !important;
+            border-radius: 14px !important;
+            font-size: 15px;
+            font-weight: 800;
+          }
+
+          .runner-mobile-section-sheet {
+            display: block;
+            margin: 0 14px 18px;
+            padding: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 16px;
+            background: #151c2b;
+            color: #e2e8f0;
+          }
+
+          .runner-mobile-section-sheet__eyebrow {
+            color: #93c5fd;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+          }
+
+          .runner-mobile-section-sheet p {
+            margin: 8px 0 14px;
+            color: #cbd5e1;
+            font-size: 13px;
+            line-height: 1.45;
+          }
+
+          .runner-mobile-section-sheet button {
+            min-height: 44px;
+            padding: 10px 14px;
+            border: 1px solid rgba(147, 197, 253, 0.4);
+            border-radius: 11px;
+            background: transparent;
+            color: #bfdbfe;
+            font-size: 13px;
+            font-weight: 800;
+          }
+
+          .runner-mobile-nav {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 20;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+            border-top: 1px solid rgba(148, 163, 184, 0.16);
+            background: rgba(9, 14, 25, 0.96);
+            box-shadow: 0 -10px 28px rgba(2, 6, 23, 0.24);
+          }
+
+          .runner-mobile-nav__item {
+            min-height: 54px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            border: 0;
+            border-radius: 12px;
+            background: transparent;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 750;
+            letter-spacing: 0.01em;
+          }
+
+          .runner-mobile-nav__item--selected {
+            background: rgba(147, 197, 253, 0.1);
+            color: #dbeafe;
+          }
+        }
+      `}</style>
       {/* RUN-UI-1G-CHECKPOINT-2: visual-only polish for the runner Available Runs shell. */}
       {!activeRun && (
-        <div className="runner-available-runs-panel" style={{
-          padding: 16,
-          borderTop: "1px solid #222",
-          background: "#111"
+        <div className="runner-available-runs-panel runner-ui-1l-mobile-primary" style={{
+            padding: 16,
+            borderTop: "1px solid #222",
+            background: "#111"
         }}>
-          <h4 className="runner-available-runs-panel__title">Available Runs</h4>
+          <h4 className="runner-available-runs-panel__title">
+            {availableRuns.length === 1 ? "Available run" : "Available runs"}
+          </h4>
 
           <p className="runner-available-runs-panel__note" style={{
             marginTop: 4,
-            marginBottom: 12,
+            marginBottom: 14,
             color: "#cbd5e1",
             fontSize: 13,
             lineHeight: 1.5
           }}>
-            Purchase-budget runs are only shown here after the requester authorizes the secure hold.
-            Current placeholder mode does not make a live card charge.
+            Secure-hold authorized offers only. Placeholder mode does not charge a live card.
           </p>
 
           {availableRuns.length === 0 && (
@@ -1156,13 +1505,35 @@ return (
           )}
 
           {availableRuns.slice(0, 3).map((run) => (
-            <div key={run.id} style={{
+            <div key={run.id} className="runner-available-run-card" style={{
               border: "1px solid #333",
               padding: 12,
               marginBottom: 10,
               borderRadius: 8
             }}>
-              <p>{run.item}</p>
+              <p className="runner-available-run-card__title">{run.item || run.title || "Available run"}</p>
+
+              {(() => {
+                const payout = run.runnerPayout ?? run.payout ?? run.earnings ?? run.payoutAmount;
+                const location = run.pickupAddress || run.pickupLocation || run.storeAddress || run.location || run.address;
+
+                return (
+                  <>
+                    {payout !== undefined && payout !== null && String(payout).trim() !== "" && (
+                      <p className="runner-available-run-card__payout">Earn {String(payout).startsWith("$") ? payout : `$${payout}`}</p>
+                    )}
+
+                    <details className="runner-location-disclosure">
+                      <summary>View location</summary>
+                      <div className="runner-location-disclosure__content">
+                        {location || "Location details will appear after you accept this run."}
+                      </div>
+                    </details>
+                  </>
+                );
+              })()}
+
+              <RunnerSmartHandoffCard run={run} />
 
               {Number(run.maxRunnerSpend || 0) > 0 && (
                 <p style={{
@@ -1173,7 +1544,7 @@ return (
                   lineHeight: 1.45,
                   fontWeight: 700
                 }}>
-                  Secure hold authorized by requester before this offer appeared. Placeholder mode only - no live card charge.
+                  Secure hold authorized before this offer appeared. No live card charge in placeholder mode.
                 </p>
               )}
 
@@ -1190,14 +1561,14 @@ return (
                   setAcceptMessage(null);
 
                   try {
-                    console.log("Ã¢Å“â€¦ ACCEPTING RUN:", run.id);
+                    console.log("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ ACCEPTING RUN:", run.id);
 
                     const res = await apiRequest(
                       `/api/runs/${run.id}/accept`,
                       { method: "POST" }
                     );
 
-                    console.log("Ã¢Å“â€¦ ACCEPT RESULT:", res);
+                    console.log("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ ACCEPT RESULT:", res);
 
                     if (res.success) {
                       setAcceptMessage({
@@ -1247,12 +1618,46 @@ return (
                   borderRadius: 6
                 }}
               >
-                {acceptingRunId === run.id ? "Accepting..." : "Accept"}
+                  {acceptingRunId === run.id ? "Accepting..." : "Accept run"}
               </button>
             </div>
           ))}
         </div>
       )}
+
+      {mobileSection !== "home" && (
+        <section className="runner-mobile-section-sheet" aria-live="polite">
+          <div className="runner-mobile-section-sheet__eyebrow">RUNFORME / {mobileSection}</div>
+          <p>
+            {mobileSection === "earnings"
+              ? "Earnings details are not available in this checkpoint. Your run payout will continue to appear on available offers."
+              : mobileSection === "activity"
+                ? "Activity history is not available in this checkpoint. Your current run status remains on Home."
+                : "Menu settings are not available in this checkpoint. Use Home to return to your run dashboard."}
+          </p>
+          <button type="button" onClick={() => setMobileSection("home")}>Return to Home</button>
+        </section>
+      )}
+
+      <nav className="runner-mobile-nav" aria-label="Runner navigation">
+        {[
+          ["home", "Home"],
+          ["earnings", "Earnings"],
+          ["activity", "Activity"],
+          ["menu", "Menu"],
+        ].map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            className={mobileSection === id ? "runner-mobile-nav__item runner-mobile-nav__item--selected" : "runner-mobile-nav__item"}
+            aria-current={mobileSection === id ? "page" : undefined}
+            onClick={() => setMobileSection(id)}
+          >
+            <RunnerMobileNavIcon name={id} />
+            <span>{label}</span>
+          </button>
+        ))}
+      </nav>
     </div>
   );
 }
