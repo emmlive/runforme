@@ -1274,7 +1274,9 @@ return (
         @media (max-width: 560px) {
           .runner-dashboard-shell {
             box-sizing: border-box;
-            padding-bottom: 82px;
+            height: auto !important;
+            min-height: 100vh;
+            padding-bottom: calc(82px + env(safe-area-inset-bottom));
           }
 
           .runner-ui-1l-mobile-secondary {
