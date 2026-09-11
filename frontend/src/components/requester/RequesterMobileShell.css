@@ -7,7 +7,7 @@
   color: var(--requester-mobile-ink);
   min-height: 100vh;
   min-width: 0;
-  padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  padding-bottom: calc(76px + var(--rf-shell-safe-bottom, env(safe-area-inset-bottom)));
 }
 
 .requester-mobile-header {
@@ -36,7 +36,7 @@
 .requester-mobile-request-card { background: linear-gradient(145deg, #0b1220, #172554); color: white; }
 .requester-mobile-request-card__symbol { align-items: center; background: rgba(255,255,255,.12); border-radius: 14px; display: inline-flex; font-size: 25px; height: 44px; justify-content: center; width: 44px; }
 .requester-mobile-request-card h2, .requester-mobile-active-card h2 { font-size: 21px; letter-spacing: -.04em; line-height: 1.12; margin: 0; }
-.requester-mobile-active-card h2 { display: -webkit-box; max-height: 2.5em; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.requester-mobile-active-card h2 { overflow-wrap: anywhere; }
 .requester-mobile-request-card p { color: #cbd5e1; font-size: 14px; line-height: 1.5; margin: -4px 0 2px; }
 .requester-mobile-card-heading { align-items: start; display: flex; gap: 12px; justify-content: space-between; }
 .requester-mobile-card-heading .requester-mobile-eyebrow { margin-bottom: 5px; }
@@ -61,7 +61,7 @@
 .requester-mobile-destination .requester-run-form-card { margin-bottom: 0; }
 .requester-mobile-destination .requester-run-form-card__header { display: none; }
 .requester-mobile-form-card { gap: 12px; }
-.requester-mobile-form-card .requester-run-form { gap: 12px 10px; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+.requester-mobile-form-card .requester-run-form { gap: 12px 10px; grid-template-columns: 1fr !important; }
 .requester-mobile-form-card .requester-run-form__field { grid-column: span 1 !important; }
 .requester-mobile-form-card .requester-run-form__field--location, .requester-mobile-form-card .requester-run-form__field--task { grid-column: 1 / -1 !important; }
 .requester-mobile-form-card .requester-run-form__helper { display: none; }
@@ -95,7 +95,7 @@
 .requester-mobile-run-row { align-items: center; background: white; border: 1px solid rgba(15,23,42,.08); border-radius: 17px; display: flex; gap: 12px; justify-content: space-between; min-height: 68px; padding: 12px 14px; text-align: left; }
 .requester-mobile-run-row.is-selected { border-color: var(--requester-mobile-blue); box-shadow: 0 0 0 2px rgba(14,165,233,.12); }
 .requester-mobile-run-row > span:first-child { display: grid; gap: 4px; min-width: 0; }
-.requester-mobile-run-row strong, .requester-mobile-run-row small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.requester-mobile-run-row strong, .requester-mobile-run-row small { overflow-wrap: anywhere; }
 .requester-mobile-run-row strong { font-size: 14px; }
 .requester-mobile-run-row small { color: var(--requester-mobile-muted); font-size: 12px; }
 .requester-mobile-empty-card { padding: 24px; text-align: center; }
@@ -107,7 +107,7 @@
 .requester-mobile-back { background: transparent; border: 0; color: #075985; font-size: 13px; font-weight: 850; justify-self: start; min-height: 44px; padding: 0 2px; }
 .requester-mobile-run-detail__heading { align-items: start; display: flex; gap: 10px; justify-content: space-between; }
 .requester-mobile-run-detail__heading > div { min-width: 0; }
-.requester-mobile-run-detail__heading h1 { display: -webkit-box; font-size: 24px; letter-spacing: -.05em; line-height: 1.08; margin: 0; max-height: 2.2em; min-width: 0; overflow: hidden; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.requester-mobile-run-detail__heading h1 { font-size: 24px; letter-spacing: -.05em; line-height: 1.08; margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .requester-mobile-run-detail__heading p:last-child { color: var(--requester-mobile-muted); font-size: 13px; margin: 5px 0 0; }
 .requester-mobile-detail-status { border-radius: 999px; flex: 0 0 auto; font-size: 11px; font-weight: 900; padding: 6px 8px; }
 .requester-mobile-detail-status--neutral { background: #f1f5f9; color: #334155; }
@@ -154,11 +154,53 @@
 .requester-mobile-notification { border-radius: 14px; font-size: 13px; font-weight: 750; line-height: 1.4; margin: 12px 16px 0; padding: 12px 14px; }
 .requester-mobile-notification--success { background: #dcfce7; color: #166534; }
 .requester-mobile-notification--error { background: #fee2e2; color: #991b1b; }
-.requester-mobile-nav { align-items: stretch; background: rgba(255,255,255,.96); border-top: 1px solid rgba(15,23,42,.1); bottom: 0; display: grid; grid-template-columns: repeat(4, 1fr); left: 0; min-height: 64px; padding: 4px 8px env(safe-area-inset-bottom); position: fixed; right: 0; z-index: 20; }
+.requester-mobile-nav { align-items: stretch; background: rgba(255,255,255,.96); border-top: 1px solid rgba(15,23,42,.1); bottom: 0; display: grid; grid-template-columns: repeat(4, 1fr); left: 0; min-height: 64px; padding: 4px 8px var(--rf-shell-safe-bottom, env(safe-area-inset-bottom)); position: fixed; right: 0; z-index: 20; }
 .requester-mobile-nav button { align-items: center; background: transparent; border: 0; border-radius: 14px; color: #64748b; display: grid; gap: 2px; justify-items: center; min-height: 56px; padding: 4px 2px; }
 .requester-mobile-nav button > span { font-size: 19px; font-weight: 900; line-height: 1; }
 .requester-mobile-nav button small { font-size: 10px; font-weight: 850; white-space: nowrap; }
 .requester-mobile-nav button.is-selected { background: #e0f2fe; color: #075985; }
+
+/* RUN-UI-1N-B1-TASK-3-FOCUS-VISIBILITY
+   Shared, role-specific focus treatment for mobile shell controls that
+   previously relied only on the generic global outline. */
+.requester-mobile-nav button:focus-visible {
+  outline: var(--rf-focus-ring-width, 3px) solid var(--rf-focus-ring-color, #0ea5e9);
+  outline-offset: -2px;
+}
+.requester-mobile-tabs button:focus-visible {
+  outline: var(--rf-focus-ring-width, 3px) solid var(--rf-focus-ring-color, #0ea5e9);
+  outline-offset: 2px;
+}
+.requester-mobile-run-row:focus-visible {
+  outline: var(--rf-focus-ring-width, 3px) solid var(--rf-focus-ring-color, #0ea5e9);
+  outline-offset: 2px;
+}
+.requester-mobile-menu-list button:focus-visible {
+  outline: var(--rf-focus-ring-width, 3px) solid var(--rf-focus-ring-color, #0ea5e9);
+  outline-offset: -2px;
+}
+.requester-mobile-back:focus-visible {
+  outline: var(--rf-focus-ring-width, 3px) solid var(--rf-focus-ring-color, #0ea5e9);
+  outline-offset: 2px;
+}
+.requester-mobile-header__menu:focus-visible {
+  outline: var(--rf-focus-ring-width, 3px) solid var(--rf-focus-ring-color, #0ea5e9);
+  outline-offset: 2px;
+}
+.requester-mobile-runs-link:focus-visible {
+  outline: var(--rf-focus-ring-width, 3px) solid var(--rf-focus-ring-color, #0ea5e9);
+  outline-offset: -2px;
+}
+
+/* RUN-UI-1N-B1-TASK-3-COMPACT-FORM
+   Compact mobile (360-430, the protected representatives) must stay one
+   column per the approved rule. Naturally paired fields may resume a
+   two-column layout only once the shell has room to breathe, while
+   staying below the 761px point where the shell yields to the wide
+   branch entirely. */
+@media (min-width: 480px) {
+  .requester-mobile-form-card .requester-run-form { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
 
 @media (min-width: 761px) { .requester-mobile-shell { display: none; } }
 @media (max-width: 380px) { .requester-mobile-request-card, .requester-mobile-active-card { padding: 18px; } .requester-mobile-nav { padding-left: 4px; padding-right: 4px; } }
