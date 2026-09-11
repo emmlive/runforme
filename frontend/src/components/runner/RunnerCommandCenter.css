@@ -100,8 +100,8 @@
   display: inline-flex;
   font-size: 0.72rem;
   font-weight: 850;
+  overflow-wrap: anywhere;
   padding: 7px 10px;
-  white-space: nowrap;
 }
 
 .runner-status-summary__metrics {
@@ -740,6 +740,25 @@
       box-shadow 180ms ease,
       transform 180ms ease;
   }
+}
+
+/* RUN-UI-1N-B1-TASK-4-BOUNDED-COMPOSITION
+   Desktop/tablet must not stretch the operational Runner surfaces edge to
+   edge into a generic dashboard. Reuse the existing runner-command-center
+   bounded-frame precedent (min(100%, 1120px), centered) instead of
+   inventing a new width. */
+.runner-available-runs-panel,
+.runner-active-panel {
+  width: min(100%, 1120px);
+  margin-inline: auto;
+}
+
+/* RUN-UI-1N-B1-TASK-4-FOCUS-VISIBILITY
+   Explicit focus treatment for the available-run disclosure, which
+   previously relied only on the generic global outline. */
+.runner-location-disclosure summary:focus-visible {
+  outline: var(--rf-focus-ring-width, 3px) solid var(--rf-focus-ring-color, #0ea5e9);
+  outline-offset: 2px;
 }
 
 
