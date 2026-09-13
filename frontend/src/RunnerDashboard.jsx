@@ -821,6 +821,45 @@ export default function RunnerDashboard({ user, onLogout }) {
         </div>
       </div>
 
+      {/* RUN-UI-1N-TASK-6-CHECKPOINT-3B: navigation moved near the top of
+          the Runner experience so it is discoverable without scrolling
+          past the full dashboard body at wide widths. At <=560px the
+          existing position: fixed mobile presentation is unaffected by
+          this DOM position. */}
+      <nav className="runner-mobile-nav" aria-label="Runner navigation">
+        {[
+          ["home", "Home"],
+          ["earnings", "Earnings"],
+          ["activity", "Activity"],
+          ["menu", "Menu"],
+        ].map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            className={mobileSection === id ? "runner-mobile-nav__item runner-mobile-nav__item--selected" : "runner-mobile-nav__item"}
+            aria-current={mobileSection === id ? "page" : undefined}
+            onClick={() => setMobileSection(id)}
+          >
+            <RunnerMobileNavIcon name={id} />
+            <span>{label}</span>
+          </button>
+        ))}
+      </nav>
+
+      {mobileSection !== "home" && (
+        <section className="runner-mobile-section-sheet" aria-live="polite">
+          <div className="runner-mobile-section-sheet__eyebrow">RUNFORME / {mobileSection}</div>
+          <p>
+            {mobileSection === "earnings"
+              ? "Earnings details are not available in this checkpoint. Your run payout will continue to appear on available offers."
+              : mobileSection === "activity"
+                ? "Activity history is not available in this checkpoint. Your current run status remains on Home."
+                : "Menu settings are not available in this checkpoint. Use Home to return to your run dashboard."}
+          </p>
+          <button type="button" onClick={() => setMobileSection("home")}>Return to Home</button>
+        </section>
+      )}
+
       {/* =========================
         MAP (PRIMARY SURFACE)
     ========================= */}
@@ -1309,9 +1348,75 @@ return (
 
       {/* RUN-UI-1L-A: action-first mobile runner home. */}
       <style>{`
-        .runner-mobile-nav,
+        /* RUN-UI-1N-TASK-6: navigation shell reachable at every width.
+           Base (all-width) rules present Home/Earnings/Activity/Menu as an
+           in-flow tab-style bar so they remain reachable above the narrow
+           mobile branch below, which overrides this with the existing
+           fixed bottom-bar presentation unchanged. */
+        .runner-mobile-nav {
+          display: flex;
+          gap: 8px;
+          padding: 12px clamp(16px, 4vw, 32px);
+          border-top: 1px solid rgba(148, 163, 184, 0.16);
+          background: rgba(9, 14, 25, 0.96);
+        }
+
+        .runner-mobile-nav__item {
+          flex: 1 1 0;
+          min-height: 44px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          border: 0;
+          border-radius: 10px;
+          background: transparent;
+          color: #94a3b8;
+          font-size: 12px;
+          font-weight: 750;
+        }
+
+        .runner-mobile-nav__item--selected {
+          background: rgba(147, 197, 253, 0.12);
+          color: #dbeafe;
+        }
+
         .runner-mobile-section-sheet {
-          display: none;
+          display: block;
+          width: min(100%, 640px);
+          margin: 0 auto 18px;
+          padding: 16px;
+          border: 1px solid rgba(148, 163, 184, 0.2);
+          border-radius: 16px;
+          background: #151c2b;
+          color: #e2e8f0;
+        }
+
+        .runner-mobile-section-sheet__eyebrow {
+          color: #93c5fd;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .runner-mobile-section-sheet p {
+          margin: 8px 0 14px;
+          color: #cbd5e1;
+          font-size: 13px;
+          line-height: 1.45;
+        }
+
+        .runner-mobile-section-sheet button {
+          min-height: 44px;
+          padding: 10px 14px;
+          border: 1px solid rgba(147, 197, 253, 0.4);
+          border-radius: 11px;
+          background: transparent;
+          color: #bfdbfe;
+          font-size: 13px;
+          font-weight: 800;
         }
 
         /* RUN-UI-1N-B1-TASK-4-FOCUS-VISIBILITY
@@ -1714,40 +1819,6 @@ return (
           ))}
         </div>
       )}
-
-      {mobileSection !== "home" && (
-        <section className="runner-mobile-section-sheet" aria-live="polite">
-          <div className="runner-mobile-section-sheet__eyebrow">RUNFORME / {mobileSection}</div>
-          <p>
-            {mobileSection === "earnings"
-              ? "Earnings details are not available in this checkpoint. Your run payout will continue to appear on available offers."
-              : mobileSection === "activity"
-                ? "Activity history is not available in this checkpoint. Your current run status remains on Home."
-                : "Menu settings are not available in this checkpoint. Use Home to return to your run dashboard."}
-          </p>
-          <button type="button" onClick={() => setMobileSection("home")}>Return to Home</button>
-        </section>
-      )}
-
-      <nav className="runner-mobile-nav" aria-label="Runner navigation">
-        {[
-          ["home", "Home"],
-          ["earnings", "Earnings"],
-          ["activity", "Activity"],
-          ["menu", "Menu"],
-        ].map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            className={mobileSection === id ? "runner-mobile-nav__item runner-mobile-nav__item--selected" : "runner-mobile-nav__item"}
-            aria-current={mobileSection === id ? "page" : undefined}
-            onClick={() => setMobileSection(id)}
-          >
-            <RunnerMobileNavIcon name={id} />
-            <span>{label}</span>
-          </button>
-        ))}
-      </nav>
     </div>
   );
 }
