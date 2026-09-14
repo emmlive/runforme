@@ -158,3 +158,56 @@ test("lifecycle routes do not call Stripe PaymentIntents directly", () => {
     /paymentIntents\./
   );
 });
+
+
+test("completed and captured Run retains idempotent early return", () => {
+  const earlyReturnMatch = completeRun.match(
+    /if\s*\(\s*existing\.status\s*===\s*"completed"([\s\S]*?)\)\s*\{([\s\S]*?)alreadyCompleted/
+  );
+
+  assert.ok(
+    earlyReturnMatch,
+    "completeRun must retain an idempotent completed-run early return"
+  );
+
+  const condition = earlyReturnMatch[1];
+
+  assert.match(
+    condition,
+    /paymentStatus\s*===\s*"captured"/,
+    "completed-run early return must require canonical captured payment state"
+  );
+
+  assert.match(
+    condition,
+    /payoutStatus\s*===\s*"ready_for_payout"/,
+    "completed-run early return must require canonical payout-ready state"
+  );
+});
+
+test("completed but uncaptured Run remains eligible to reach canonical settlement", () => {
+  const statusGateMatch = completeRun.match(
+    /if\s*\(\s*!\[([^\]]+)\]\.includes\(existing\.status\)\s*\)/
+  );
+
+  assert.ok(
+    statusGateMatch,
+    "completeRun must retain an explicit lifecycle eligibility gate"
+  );
+
+  const allowedStatuses = statusGateMatch[1];
+
+  assert.match(
+    allowedStatuses,
+    /"completed"/,
+    "completed-but-uncaptured recovery must be allowed to continue to settlement"
+  );
+
+  const statusGateIndex = completeRun.indexOf(statusGateMatch[0]);
+  const captureIndex = completeRun.indexOf("captureRunPayment({");
+
+  assert.ok(
+    captureIndex > statusGateIndex,
+    "canonical capture must remain downstream of the lifecycle gate"
+  );
+});

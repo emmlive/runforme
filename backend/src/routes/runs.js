@@ -1548,7 +1548,11 @@ async function completeRun(req, res) {
       });
     }
 
-    if (existing.status === "completed") {
+    if (
+      existing.status === "completed" &&
+      existing.paymentStatus === "captured" &&
+      existing.payoutStatus === "ready_for_payout"
+    ) {
       return res.json({
         success: true,
         alreadyCompleted: true,
@@ -1556,7 +1560,7 @@ async function completeRun(req, res) {
       });
     }
 
-    if (!["arrived", "in_progress"].includes(existing.status)) {
+    if (!["arrived", "in_progress", "completed"].includes(existing.status)) {
       return res.status(400).json({
         success: false,
         error: "Run must be arrived before completion",

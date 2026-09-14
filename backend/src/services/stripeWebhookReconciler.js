@@ -32,12 +32,6 @@ function paymentIntentStateForEvent(type) {
         paymentStatus: "authorized",
       };
 
-    case "payment_intent.succeeded":
-      return {
-        paymentStatus: "captured",
-        payoutStatus: "ready_for_payout",
-      };
-
     case "payment_intent.canceled":
       return {
         authorizationStatus: "canceled",
@@ -48,6 +42,30 @@ function paymentIntentStateForEvent(type) {
     default:
       return null;
   }
+}
+
+function duplicateResult() {
+  return {
+    deduped: true,
+    applied: false,
+    reason: "duplicate event already recorded",
+  };
+}
+
+async function markEventApplied({
+  prisma,
+  eventId,
+  runId,
+}) {
+  await prisma.stripeWebhookEvent.update({
+    where: {
+      id: eventId,
+    },
+    data: {
+      runId,
+      applied: true,
+    },
+  });
 }
 
 async function reconcileStripeEvent({
@@ -81,30 +99,47 @@ async function reconcileStripeEvent({
     "prisma.run.update"
   );
 
-  const existingEvent =
+  let existingEvent =
     await prisma.stripeWebhookEvent.findUnique({
       where: {
         id: event.id,
       },
     });
 
-  if (existingEvent) {
-    return {
-      deduped: true,
-      applied: false,
-      reason: "duplicate event already recorded",
-    };
+  if (existingEvent?.applied) {
+    return duplicateResult();
   }
 
-  await prisma.stripeWebhookEvent.create({
-    data: {
-      id: event.id,
-      type: event.type,
-      runId: null,
-      applied: false,
-      rawEvent: event,
-    },
-  });
+  if (!existingEvent) {
+    try {
+      await prisma.stripeWebhookEvent.create({
+        data: {
+          id: event.id,
+          type: event.type,
+          runId: null,
+          applied: false,
+          rawEvent: event,
+        },
+      });
+    } catch (error) {
+      if (error?.code !== "P2002") {
+        throw error;
+      }
+
+      existingEvent =
+        await prisma.stripeWebhookEvent.findUnique({
+          where: {
+            id: event.id,
+          },
+        });
+
+      if (!existingEvent) {
+        throw error;
+      }
+
+      return duplicateResult();
+    }
+  }
 
   if (!SUPPORTED_PAYMENT_INTENT_EVENTS.has(event.type)) {
     return {
@@ -138,6 +173,37 @@ async function reconcileStripeEvent({
     };
   }
 
+  if (event.type === "payment_intent.succeeded") {
+    await markEventApplied({
+      prisma,
+      eventId: event.id,
+      runId: run.id,
+    });
+
+    return {
+      deduped: false,
+      applied: true,
+      reason: "Stripe event reconciled without claiming settlement authority",
+    };
+  }
+
+  if (
+    run.paymentStatus === "captured" ||
+    run.paymentStatus === "canceled"
+  ) {
+    await markEventApplied({
+      prisma,
+      eventId: event.id,
+      runId: run.id,
+    });
+
+    return {
+      deduped: false,
+      applied: true,
+      reason: "Stripe event recorded without regressing terminal Run state",
+    };
+  }
+
   const runState = paymentIntentStateForEvent(
     event.type
   );
@@ -149,14 +215,10 @@ async function reconcileStripeEvent({
     data: runState,
   });
 
-  await prisma.stripeWebhookEvent.update({
-    where: {
-      id: event.id,
-    },
-    data: {
-      runId: updatedRun.id,
-      applied: true,
-    },
+  await markEventApplied({
+    prisma,
+    eventId: event.id,
+    runId: updatedRun.id,
   });
 
   return {
