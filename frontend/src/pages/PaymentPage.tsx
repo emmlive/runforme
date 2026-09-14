@@ -1,12 +1,23 @@
 import { useState } from "react";
-import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import {
+  CardElement,
+  useElements,
+  useStripe,
+} from "@stripe/react-stripe-js";
 
 type Props = {
   clientSecret: string;
   runId: number;
+  onAuthorized: (runId: number) => Promise<void> | void;
+  onCancel?: () => void;
 };
 
-export default function PaymentPage({ clientSecret, runId }: Props) {
+export default function PaymentPage({
+  clientSecret,
+  runId,
+  onAuthorized,
+  onCancel,
+}: Props) {
   const stripe = useStripe();
   const elements = useElements();
 
@@ -14,68 +25,76 @@ export default function PaymentPage({ clientSecret, runId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  ////////////////////////////////////////////////////////
-  // HANDLE PAYMENT CONFIRMATION
-  ////////////////////////////////////////////////////////
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!stripe || !elements) return;
+    if (!stripe || !elements || loading) {
+      return;
+    }
 
     setLoading(true);
     setError(null);
 
-    const card = elements.getElement(CardElement);
+    try {
+      const card = elements.getElement(CardElement);
 
-    if (!card) {
-      setError("Card element not found");
+      if (!card) {
+        setError("Card element not found");
+        return;
+      }
+
+      const result = await stripe.confirmCardPayment(
+        clientSecret,
+        {
+          payment_method: {
+            card,
+          },
+        }
+      );
+
+      if (result.error) {
+        setError(
+          result.error.message ||
+            "Payment authorization failed"
+        );
+        return;
+      }
+
+      if (result.paymentIntent?.status === "requires_capture") {
+        await onAuthorized(runId);
+        setSuccess(true);
+      } else {
+        setError("Unexpected payment status");
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Payment authorization failed"
+      );
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const result = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: {
-        card,
-      },
-    });
-
-    ////////////////////////////////////////////////////////
-    // HANDLE RESULT
-    ////////////////////////////////////////////////////////
-
-    if (result.error) {
-      setError(result.error.message || "Payment failed");
-      setLoading(false);
-      return;
-    }
-
-    if (result.paymentIntent?.status === "requires_capture") {
-      // ✅ SUCCESS (matches your backend flow)
-      setSuccess(true);
-    } else {
-      setError("Unexpected payment status");
-    }
-
-    setLoading(false);
   };
-
-  ////////////////////////////////////////////////////////
-  // UI
-  ////////////////////////////////////////////////////////
 
   if (success) {
     return (
       <div style={{ padding: 20 }}>
-        <h2>✅ Payment Authorized</h2>
-        <p>Your runner will begin shortly.</p>
+        <h2>Payment authorized</h2>
+        <p>
+          Your secure hold is authorized and the run
+          can continue.
+        </p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ padding: 20, maxWidth: 400 }}>
-      <h2>Confirm Payment</h2>
+    <form
+      onSubmit={handleSubmit}
+      style={{ padding: 20, maxWidth: 400 }}
+    >
+      <h2>Confirm secure hold</h2>
 
       <div
         style={{
@@ -89,7 +108,13 @@ export default function PaymentPage({ clientSecret, runId }: Props) {
       </div>
 
       {error && (
-        <div style={{ color: "red", marginBottom: 10 }}>
+        <div
+          role="alert"
+          style={{
+            color: "red",
+            marginBottom: 10,
+          }}
+        >
           {error}
         </div>
       )}
@@ -106,8 +131,28 @@ export default function PaymentPage({ clientSecret, runId }: Props) {
           cursor: "pointer",
         }}
       >
-        {loading ? "Processing..." : "Pay"}
+        {loading
+          ? "Authorizing..."
+          : "Authorize secure hold"}
       </button>
+
+      {onCancel && (
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={loading}
+          style={{
+            width: "100%",
+            padding: 12,
+            marginTop: 8,
+            background: "transparent",
+            border: "1px solid #cbd5e1",
+            cursor: "pointer",
+          }}
+        >
+          Cancel
+        </button>
+      )}
     </form>
   );
 }

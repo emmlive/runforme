@@ -5,6 +5,7 @@ import { jwtDecode } from "jwt-decode";
 import { RequesterMobileShell, RequesterRunOverview } from "./components/requester";
 import "./components/requester/RequesterDashboardPolish.css";
 import { Button, Card } from "./components/ui";
+import PaymentPage from "./pages/PaymentPage";
 import "./requester-run-form.css";
 // RUN-UI-1G-CHECKPOINT-4: requester dashboard visual polish only.
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5050";
@@ -529,20 +530,20 @@ function RunDetailPanel({
             onClick={() => onAuthorizeHold?.(run.id)}
             disabled={
               authorizingHold ||
-              run.authorizationStatus === "placeholder_authorized"
+              run.authorizationStatus === "authorized"
             }
             aria-busy={authorizingHold}
             title="This uses the safe placeholder endpoint. No live charge is made."
             style={{
               border: "1px solid rgba(148,163,184,0.45)",
               background:
-                run.authorizationStatus === "placeholder_authorized"
+                run.authorizationStatus === "authorized"
                   ? "rgba(34,197,94,0.20)"
                   : authorizingHold
                     ? "rgba(148,163,184,0.18)"
                     : "#22c55e",
               color:
-                run.authorizationStatus === "placeholder_authorized"
+                run.authorizationStatus === "authorized"
                   ? "#bbf7d0"
                   : authorizingHold
                     ? "#cbd5e1"
@@ -551,14 +552,14 @@ function RunDetailPanel({
               padding: "10px 14px",
               cursor:
                 authorizingHold ||
-                run.authorizationStatus === "placeholder_authorized"
+                run.authorizationStatus === "authorized"
                   ? "not-allowed"
                   : "pointer",
               fontWeight: 900,
             }}
           >
-            {run.authorizationStatus === "placeholder_authorized"
-              ? "Secure Hold Placeholder Authorized"
+            {run.authorizationStatus === "authorized"
+              ? "Secure Hold Authorized"
               : authorizingHold
                 ? "Authorizing..."
                 : "Authorize Secure Hold"}
@@ -649,6 +650,7 @@ export default function Dashboard({ onLogout }) {
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [approvingManualReview, setApprovingManualReview] = useState(false);
   const [authorizingHold, setAuthorizingHold] = useState(false);
+  const [secureHoldConfirmation, setSecureHoldConfirmation] = useState(null);
   const approvingManualReviewRef = useRef(null);
   const authorizingHoldRef = useRef(null);
 
@@ -835,7 +837,6 @@ export default function Dashboard({ onLogout }) {
 
     authorizingHoldRef.current = runId;
 
-
     try {
       setAuthorizingHold(true);
 
@@ -850,14 +851,35 @@ export default function Dashboard({ onLogout }) {
         throw new Error(data.error || "Failed to authorize secure hold");
       }
 
-      setRuns((prev) =>
-        prev.map((run) =>
-          run.id === runId ? { ...run, ...data.run } : run
-        )
-      );
+      if (data.run) {
+        setRuns((prev) =>
+          prev.map((run) =>
+            run.id === runId ? { ...run, ...data.run } : run
+          )
+        );
+      }
 
-      showSuccess(data.message || "Secure hold placeholder authorized. No live charge was made.");
-      await fetchRuns();
+      if (data.clientSecret) {
+        setSecureHoldConfirmation({
+          runId,
+          clientSecret: data.clientSecret,
+        });
+
+        showSuccess("Card confirmation is required to authorize this Secure Hold.");
+        return;
+      }
+
+      if (data.run?.authorizationStatus === "authorized") {
+        setSecureHoldConfirmation(null);
+        showSuccess("Secure Hold authorized.");
+        await fetchRuns();
+        return;
+      }
+
+      showError(
+        data.message ||
+          "Secure Hold authorization is not complete yet."
+      );
     } catch (err) {
       showError(err.message || "Failed to authorize secure hold");
     } finally {
@@ -869,6 +891,61 @@ export default function Dashboard({ onLogout }) {
     }
   };
 
+  const reconcileSecureHold = async (runId) => {
+    if (!runId || !token) return;
+    if (authorizingHoldRef.current === runId) return;
+
+    authorizingHoldRef.current = runId;
+
+    try {
+      setAuthorizingHold(true);
+
+      const response = await fetch(`${API_URL}/api/runs/${runId}/authorize-hold`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data.success === false) {
+        throw new Error(
+          data.error || "Failed to reconcile secure hold authorization"
+        );
+      }
+
+      const isAuthorized =
+        data.run &&
+        data.run.authorizationStatus === "authorized";
+
+      if (!isAuthorized) {
+        throw new Error(
+          "Secure Hold confirmation succeeded, but canonical authorization is still pending."
+        );
+      }
+
+      setRuns((prev) =>
+        prev.map((run) =>
+          run.id === runId ? { ...run, ...data.run } : run
+        )
+      );
+
+      setSecureHoldConfirmation(null);
+      await fetchRuns();
+      showSuccess("Secure Hold authorized.");
+    } catch (err) {
+      showError(
+        err.message ||
+          "Failed to reconcile secure hold authorization"
+      );
+      throw err;
+    } finally {
+      if (authorizingHoldRef.current === runId) {
+        authorizingHoldRef.current = null;
+      }
+
+      setAuthorizingHold(false);
+    }
+  };
   const approveManualReview = async (runId) => {
     if (!runId || !token) return;
     if (approvingManualReviewRef.current === runId) return;
@@ -924,7 +1001,7 @@ export default function Dashboard({ onLogout }) {
   const requesterCommandHistoryRuns = Array.isArray(completedRuns) ? completedRuns : [];
   const requesterCommandActiveRun = requesterCommandActiveRuns[0] || null;
   const requesterCommandHoldReady = Boolean(
-    requesterCommandActiveRun?.authorizationStatus || requesterCommandActiveRun?.holdStatus
+    requesterCommandActiveRun?.authorizationStatus === "authorized"
   );
   const requesterCommandRunnerReady = Boolean(
     requesterCommandActiveRun?.runnerId ||
@@ -948,7 +1025,7 @@ export default function Dashboard({ onLogout }) {
     },
     {
       id: "hold",
-      title: "Secure hold placeholder",
+      title: "Secure hold authorization",
       copy: requesterCommandHoldReady
         ? "Hold readiness is visible from the active requester run."
         : "Hold readiness will appear here when available on the run.",
@@ -981,6 +1058,25 @@ return (
         minHeight: "100vh",
       }}
     >
+      {secureHoldConfirmation && (
+        <div
+          style={{
+            maxWidth: 520,
+            margin: "0 auto 20px",
+            background: "white",
+            borderRadius: 16,
+            border: "1px solid #e2e8f0",
+            overflow: "hidden",
+          }}
+        >
+          <PaymentPage
+            clientSecret={secureHoldConfirmation.clientSecret}
+            runId={secureHoldConfirmation.runId}
+            onAuthorized={reconcileSecureHold}
+            onCancel={() => setSecureHoldConfirmation(null)}
+          />
+        </div>
+      )}
       {isMobile ? (
         <RequesterMobileShell
           activeRuns={requesterCommandActiveRuns}
@@ -1614,7 +1710,7 @@ return (
                 </p>
                 <h3>Secure hold preview</h3>
               </div>
-              <span>Placeholder mode</span>
+              <span>Authorization estimate</span>
             </div>
 
             <div className="requester-run-form-preview__metrics">

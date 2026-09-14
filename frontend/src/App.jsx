@@ -5,9 +5,7 @@ import { stripePromise } from "./lib/stripe";
 import Login from "./Login";
 import Dashboard from "./Dashboard";
 import RunnerDashboard from "./RunnerDashboard";
-import PaymentPage from "./pages/PaymentPage";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5050";
 
 ////////////////////////////////////////////////////////
 // 🔐 TOKEN DECODER (SAFE)
@@ -29,15 +27,6 @@ function decodeToken(token) {
 export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  ////////////////////////////////////////////////////////
-  // 💳 PAYMENT STATE
-  ////////////////////////////////////////////////////////
-
-  const [clientSecret, setClientSecret] = useState(null);
-  const [showPayment, setShowPayment] = useState(false);
-  const [activeRunId, setActiveRunId] = useState(null);
-
   ////////////////////////////////////////////////////////
   // 🔥 INIT SESSION (FIXED)
   ////////////////////////////////////////////////////////
@@ -69,46 +58,6 @@ export default function App() {
 
     setLoading(false);
   }, []);
-
-  ////////////////////////////////////////////////////////
-  // 💳 CREATE PAYMENT INTENT
-  ////////////////////////////////////////////////////////
-
-  async function startPayment(runId) {
-    try {
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(
-        `${API_URL}/api/payments/create-intent`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ runId }),
-        }
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to create payment");
-      }
-
-      setClientSecret(data.clientSecret);
-      setActiveRunId(runId);
-      setShowPayment(true);
-    } catch (err) {
-      console.error("Payment init error:", err);
-      alert("Failed to start payment");
-    }
-  }
-
-  ////////////////////////////////////////////////////////
-  // 🚪 LOGOUT
-  ////////////////////////////////////////////////////////
-
   function handleLogout() {
     localStorage.removeItem("token");
     setUser(null);
@@ -129,26 +78,6 @@ export default function App() {
   if (!user) {
     return <Login setUser={setUser} />;
   }
-
-  ////////////////////////////////////////////////////////
-  // 💳 PAYMENT SCREEN
-  ////////////////////////////////////////////////////////
-
-  if (showPayment && clientSecret) {
-    return (
-      <Elements stripe={stripePromise}>
-        <PaymentPage
-          clientSecret={clientSecret}
-          runId={activeRunId}
-        />
-      </Elements>
-    );
-  }
-
-  ////////////////////////////////////////////////////////
-  // 🧠 DASHBOARD ROUTING
-  ////////////////////////////////////////////////////////
-
   return (
     <Elements stripe={stripePromise}>
       {user.role === "runner" ? (
@@ -157,7 +86,6 @@ export default function App() {
         <Dashboard
           user={user}
           onLogout={handleLogout}
-          onStartPayment={startPayment}
         />
       )}
     </Elements>
