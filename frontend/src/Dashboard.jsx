@@ -522,7 +522,7 @@ function RunDetailPanel({
 
           <p style={{ marginTop: 12, marginBottom: 12, color: "#cbd5e1", lineHeight: 1.5 }}>
             This prepares RUNFORME for secure pre-authorization. No live charge is made from
-            this placeholder yet. Stripe PaymentIntent wiring will be added in a later security step.
+            Secure Hold authorization is completed through the canonical payment flow before runner dispatch.
           </p>
 
           <button

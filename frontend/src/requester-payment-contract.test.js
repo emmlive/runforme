@@ -1,4 +1,4 @@
-﻿import test from "node:test";
+import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -254,5 +254,42 @@ test("Dashboard keeps client confirmation pending until canonical reconciliation
   assert.match(
     dashboardSource,
     /authorizationStatus\s*===\s*["']authorized["']/
+  );
+});
+
+test("Task 7 removes dead PaymentModal module", () => {
+  assert.equal(
+    fs.existsSync(
+      path.join(srcRoot, "components/PaymentModal.jsx")
+    ),
+    false,
+    "dead PaymentModal.jsx must be removed"
+  );
+});
+
+test("Task 7 removes dead StripeWrapper module", () => {
+  assert.equal(
+    fs.existsSync(
+      path.join(srcRoot, "StripeWrapper.jsx")
+    ),
+    false,
+    "dead StripeWrapper.jsx must be removed"
+  );
+});
+
+test("Task 7 removes transitively dead root stripe module", () => {
+  assert.equal(
+    fs.existsSync(
+      path.join(srcRoot, "stripe.js")
+    ),
+    false,
+    "dead root stripe.js must be removed"
+  );
+});
+
+test("Task 7 removes stale placeholder PaymentIntent copy", () => {
+  assert.doesNotMatch(
+    dashboardSource,
+    /placeholder yet|PaymentIntent wiring|later security step/i
   );
 });
