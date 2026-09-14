@@ -99,3 +99,45 @@ test("runner accept gate recognizes canonical authorization rather than placehol
     /authorizationStatus\s*!==\s*"authorized"/
   );
 });
+test("positive hold requires canonical provider authorization even when purchase budget is zero", () => {
+  const helperStart = source.indexOf(
+    "function requiresHoldAuthorization(run)"
+  );
+
+  assert.notEqual(
+    helperStart,
+    -1,
+    "requiresHoldAuthorization helper must remain present"
+  );
+
+  const helperEnd = source.indexOf(
+    "const HANDOFF_REQUIREMENTS",
+    helperStart
+  );
+
+  assert.notEqual(
+    helperEnd,
+    -1,
+    "requiresHoldAuthorization helper boundary must remain present"
+  );
+
+  const helper = source.slice(
+    helperStart,
+    helperEnd
+  );
+
+  assert.match(
+    helper,
+    /holdAmount/
+  );
+
+  assert.doesNotMatch(
+    helper,
+    /itemBudgetEstimate/
+  );
+
+  assert.match(
+    helper,
+    /authorizationStatus\s*!==\s*"authorized"/
+  );
+});

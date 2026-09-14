@@ -74,7 +74,7 @@ function addRiskFlag(existingFlags, flag) {
 
 function requiresHoldAuthorization(run) {
   return (
-    Number(run?.itemBudgetEstimate || 0) > 0 &&
+    Number(run?.holdAmount || 0) > 0 &&
     run?.authorizationStatus !== "authorized"
   );
 }
