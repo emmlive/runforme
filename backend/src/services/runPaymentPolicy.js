@@ -68,7 +68,25 @@ function evaluateCaptureEligibility(run) {
     };
   }
 
-  if (run?.receiptStatus !== "uploaded") {
+  const hasExplicitMaxRunnerSpend =
+    run?.maxRunnerSpend !== undefined &&
+    run?.maxRunnerSpend !== null;
+
+  const receiptIsRequired =
+    hasExplicitMaxRunnerSpend
+      ? Number(run.maxRunnerSpend) > 0
+      : (
+          run?.receiptStatus === "uploaded" ||
+          (
+            run?.receiptAmount !== undefined &&
+            run?.receiptAmount !== null
+          )
+        );
+
+  if (
+    receiptIsRequired &&
+    run?.receiptStatus !== "uploaded"
+  ) {
     return {
       eligible: false,
       reason: "receipt upload required",
@@ -76,7 +94,13 @@ function evaluateCaptureEligibility(run) {
     };
   }
 
-  const captureAmount = computeCaptureAmount(run);
+  const captureAmount = computeCaptureAmount({
+    ...run,
+    receiptAmount:
+      receiptIsRequired
+        ? run?.receiptAmount
+        : 0,
+  });
 
   const holdAmount = requireWholeDollarAmount(
     run?.holdAmount,

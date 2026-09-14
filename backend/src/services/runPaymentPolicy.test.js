@@ -216,3 +216,44 @@ test("provider authorization helper recognizes only canonical authorized state",
     false
   );
 });
+test("receipt-required run remains blocked without uploaded receipt", () => {
+  const { evaluateCaptureEligibility } = loadPolicy();
+
+  const result = evaluateCaptureEligibility({
+    authorizationStatus: "authorized",
+    receiptAmount: undefined,
+    runnerPayout: 5,
+    platformFee: 3,
+    holdAmount: 18,
+    maxRunnerSpend: 10,
+    receiptStatus: "not_uploaded",
+    deliveryConfirmedAt: "2026-09-14T19:00:00.000Z",
+    requiresManualReview: false,
+  });
+
+  assert.equal(result.eligible, false);
+  assert.match(result.reason, /receipt/i);
+  assert.equal(result.captureAmount, null);
+});
+
+test("no-receipt run captures runner payout and platform fee without receipt proof", () => {
+  const { evaluateCaptureEligibility } = loadPolicy();
+
+  const result = evaluateCaptureEligibility({
+    authorizationStatus: "authorized",
+    receiptAmount: undefined,
+    runnerPayout: 5,
+    platformFee: 3,
+    holdAmount: 8,
+    maxRunnerSpend: 0,
+    receiptStatus: "not_uploaded",
+    deliveryConfirmedAt: "2026-09-14T19:00:00.000Z",
+    requiresManualReview: false,
+  });
+
+  assert.deepEqual(result, {
+    eligible: true,
+    reason: "eligible",
+    captureAmount: 8,
+  });
+});
