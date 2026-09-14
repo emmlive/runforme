@@ -14,14 +14,23 @@ function getSecureHoldPaymentService() {
   }
 
   const secretKey = process.env.STRIPE_SECRET_KEY;
+  const currency = String(
+    process.env.STRIPE_CURRENCY || ""
+  )
+    .trim()
+    .toLowerCase();
 
   if (!secretKey) {
     throw new Error("Stripe payment provider is not configured");
   }
 
+  if (!currency) {
+    throw new Error("Stripe payment currency is not configured");
+  }
+
   secureHoldPaymentService = createPaymentService({
     stripe: createStripeClient(secretKey),
-    currency: "usd",
+    currency: currency,
   });
 
   return secureHoldPaymentService;

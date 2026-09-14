@@ -141,3 +141,57 @@ test("positive hold requires canonical provider authorization even when purchase
     /authorizationStatus\s*!==\s*"authorized"/
   );
 });
+test("payment service factory requires configured runtime currency", () => {
+  const factoryStart = source.indexOf(
+    "function getSecureHoldPaymentService()"
+  );
+
+  assert.notEqual(
+    factoryStart,
+    -1,
+    "payment service factory must remain present"
+  );
+
+  const factoryEnd = source.indexOf(
+    "const router = express.Router()",
+    factoryStart
+  );
+
+  assert.notEqual(
+    factoryEnd,
+    -1,
+    "payment service factory boundary must remain present"
+  );
+
+  const factory = source.slice(
+    factoryStart,
+    factoryEnd
+  );
+
+  assert.match(
+    factory,
+    /process\.env\.STRIPE_CURRENCY/
+  );
+
+  assert.match(
+    factory,
+    /if\s*\(\s*!currency\s*\)/
+  );
+
+  assert.doesNotMatch(
+    factory,
+    /currency\s*:\s*["']usd["']/
+  );
+
+  assert.match(
+    factory,
+    /currency\s*:\s*currency/
+  );
+});
+
+test("runs route contains no hard-coded provider currency literal", () => {
+  assert.doesNotMatch(
+    source,
+    /currency\s*:\s*["']usd["']/
+  );
+});
