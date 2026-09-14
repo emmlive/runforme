@@ -365,4 +365,45 @@ test("Requester responsive hardening", async (t) => {
       );
     }
   );
+
+  // RUN-UI-1N TASK 7 - CHECKPOINT 2A (P2 Finding 1)
+  // The wide-branch "Active Runs" stat label carries stray requester
+  // surface/card classes (run-requester-surface, run-requester-surface--active)
+  // meant for full card/section surfaces, unlike its sibling stat labels
+  // ("Completed", "Total Payout"), which render as plain text. This renders
+  // a mismatched decorative gradient pill behind just the label text.
+  await t.test(
+    "wide branch: Active Runs stat label does not carry full requester surface/card classes",
+    async () => {
+      globalThis.localStorage = {
+        getItem: () => null,
+        setItem() {},
+        removeItem() {},
+      };
+
+      const { default: Dashboard } = await vite.ssrLoadModule("/src/Dashboard.jsx");
+      const dashboardMarkup = renderToStaticMarkup(
+        React.createElement(
+          MemoryRouter,
+          null,
+          React.createElement(Dashboard, { onLogout() {} })
+        )
+      );
+
+      const labelMatch = dashboardMarkup.match(
+        /<div class="([^"]*)"[^>]*>Active Runs<\/div>/
+      );
+      assert.ok(
+        labelMatch,
+        "expected the Active Runs stat label to render as a classed div"
+      );
+      assert.doesNotMatch(
+        labelMatch[1],
+        /run-requester-surface/,
+        "the Active Runs stat label must not carry full requester surface/card classes " +
+          "(run-requester-surface, run-requester-surface--active) - its sibling stat " +
+          "labels (Completed, Total Payout) render as plain text with no such classes"
+      );
+    }
+  );
 });

@@ -177,6 +177,86 @@ test("Runner responsive hardening", async (t) => {
     }
   );
 
+  // RUN-UI-1N TASK 7 - CHECKPOINT 2C (P2 Finding 2)
+  // The status pill (e.g. "Offline") sits in a flex header alongside the
+  // title/subtitle text with no flex-shrink protection, so at some widths
+  // it gets compressed and the existing overflow-wrap: anywhere rule (kept
+  // above, for long status values) breaks short words mid-word instead
+  // ("Offli" / "ne"). flex-shrink: 0 - not white-space: nowrap, which the
+  // test above requires absent - keeps the pill at its natural width.
+  await t.test(
+    "runner status pills do not shrink into mid-word wrapping",
+    () => {
+      const pillMatch = commandCenterCss.match(
+        /\.runner-status-summary__pill,\s*\n?\s*\.runner-run-card__status\s*\{([^}]*)\}/
+      );
+      assert.ok(pillMatch, "expected the shared status pill rule");
+      assert.match(
+        pillMatch[1],
+        /flex-shrink:\s*0/,
+        "status pills must declare flex-shrink: 0 so a short value like \"Offline\" is " +
+          "never compressed and broken mid-word by the sibling overflow-wrap: anywhere rule"
+      );
+    }
+  );
+
+  // RUN-UI-1N TASK 7 - CHECKPOINT 2E-R1 (P2 Finding 3, scope-corrected)
+  // Only the two overflow:hidden card/panel rules are in scope for this
+  // defect: [class*='run-card'] / [class*='status-summary'] also match
+  // nested descendants (e.g. .runner-run-card__meta, .runner-status-summary__pill)
+  // there, unintentionally clipping them. The same substrings recur in
+  // unrelated sibling rules (::before, > *, h3/strong, p) elsewhere in this
+  // file, which are out of scope and must not be forced to change by this
+  // test. Rules are located structurally (selector group immediately
+  // followed by a body opening with `position: relative; overflow: hidden;`),
+  // not by line number.
+  await t.test(
+    "runner command center overflow clipping targets outer containers only",
+    () => {
+      const overflowHiddenGroups = [
+        ...commandCenterCss.matchAll(
+          /([^{}]+)\{\s*position:\s*relative;\s*overflow:\s*hidden;[^}]*\}/g
+        ),
+      ].map((match) => match[1]);
+
+      const focusedRunGroup = overflowHiddenGroups.find((selectors) =>
+        selectors.includes("focused-run-section")
+      );
+      assert.ok(
+        focusedRunGroup,
+        "expected an overflow:hidden rule for the focused-run card"
+      );
+      assert.match(
+        focusedRunGroup,
+        /\.runner-command-center__focused-run-section \.runner-run-card\b/,
+        "the focused-run overflow:hidden rule must target the explicit .runner-run-card outer container"
+      );
+      assert.doesNotMatch(
+        focusedRunGroup,
+        /\[class\*=['"]run-card['"]\]/,
+        "the focused-run overflow:hidden rule must not also use a substring selector that clips nested run-card descendants"
+      );
+
+      const statusSummaryGroup = overflowHiddenGroups.find((selectors) =>
+        selectors.includes("action-status-panel")
+      );
+      assert.ok(
+        statusSummaryGroup,
+        "expected an overflow:hidden rule for the action-status panel"
+      );
+      assert.match(
+        statusSummaryGroup,
+        /\.runner-command-center__action-status-panel \.runner-status-summary\b/,
+        "the action-status overflow:hidden rule must target the explicit .runner-status-summary outer container"
+      );
+      assert.doesNotMatch(
+        statusSummaryGroup,
+        /\[class\*=['"]status-summary['"]\]/,
+        "the action-status overflow:hidden rule must not also use a substring selector that clips nested status-summary descendants"
+      );
+    }
+  );
+
   await t.test(
     "desktop: available-run and active-run surfaces use a bounded, centered composition instead of stretching edge to edge",
     () => {

@@ -1098,7 +1098,7 @@ return (
           }}
         >
           <div style={{ background: "white", borderRadius: 16, padding: 18 }}>
-            <div className="run-requester-heading run-requester-surface run-requester-surface--active" style={{ color: "#64748b", fontWeight: 700 }}>Active Runs</div>
+            <div className="run-requester-heading" style={{ color: "#64748b", fontWeight: 700 }}>Active Runs</div>
             <div style={{ fontSize: 30, fontWeight: 900, marginTop: 6 }}>
               {activeRuns.length}
             </div>

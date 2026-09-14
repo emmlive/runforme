@@ -98,6 +98,7 @@
   box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.08);
   color: #1d4ed8;
   display: inline-flex;
+  flex-shrink: 0;
   font-size: 0.72rem;
   font-weight: 850;
   overflow-wrap: anywhere;
@@ -342,8 +343,7 @@
 }
 
 /* RUN-UI-1E-CHECKPOINT-2: Runner run card and trust checklist micro-polish. */
-.runner-command-center__focused-run-section .runner-run-card,
-.runner-command-center__focused-run-section [class*='run-card'] {
+.runner-command-center__focused-run-section .runner-run-card {
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(15, 23, 42, 0.075);
@@ -437,8 +437,7 @@
 }
 
 /* RUN-UI-1E-CHECKPOINT-3: Runner status and metrics micro-polish. */
-.runner-command-center__action-status-panel .runner-status-summary,
-.runner-command-center__action-status-panel [class*='status-summary'] {
+.runner-command-center__action-status-panel .runner-status-summary {
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(37, 99, 235, 0.1);
