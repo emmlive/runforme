@@ -58,6 +58,14 @@
   --rf-text-body: 16px;
   --rf-text-small: 13px;
   --rf-text-micro: 12px;
+
+  --rf-shell-gutter: clamp(16px, 4vw, 40px);
+  --rf-shell-frame-max: 1440px;
+  --rf-shell-safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  --rf-focus-ring-width: 3px;
+  --rf-focus-ring-color: var(--rf-color-trust);
+  --rf-focus-ring-offset: 2px;
 }
 
 * {

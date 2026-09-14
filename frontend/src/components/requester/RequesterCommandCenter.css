@@ -388,11 +388,8 @@
   color: #1d4ed8;
   font-size: 0.72rem;
   font-weight: 850;
-  max-width: 140px;
-  overflow: hidden;
+  overflow-wrap: anywhere;
   padding: 6px 9px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .requester-run-list__empty {

@@ -531,6 +531,7 @@ function RunDetailPanel({
               authorizingHold ||
               run.authorizationStatus === "placeholder_authorized"
             }
+            aria-busy={authorizingHold}
             title="This uses the safe placeholder endpoint. No live charge is made."
             style={{
               border: "1px solid rgba(148,163,184,0.45)",
@@ -588,6 +589,7 @@ function RunDetailPanel({
           <button
             onClick={() => onApproveManualReview?.(run.id)}
             disabled={approvingManualReview}
+            aria-busy={approvingManualReview}
             style={{
               border: "none",
               background: approvingManualReview ? "#92400e" : "#fbbf24",
@@ -1073,6 +1075,7 @@ return (
 
         {notification && (
           <div
+            role={notification.type === "error" ? "alert" : "status"}
             style={{
               background: notification.type === "success" ? "#dcfce7" : "#fee2e2",
               color: notification.type === "success" ? "#166534" : "#991b1b",
@@ -1095,7 +1098,7 @@ return (
           }}
         >
           <div style={{ background: "white", borderRadius: 16, padding: 18 }}>
-            <div className="run-requester-heading run-requester-surface run-requester-surface--active" style={{ color: "#64748b", fontWeight: 700 }}>Active Runs</div>
+            <div className="run-requester-heading" style={{ color: "#64748b", fontWeight: 700 }}>Active Runs</div>
             <div style={{ fontSize: 30, fontWeight: 900, marginTop: 6 }}>
               {activeRuns.length}
             </div>
@@ -1593,6 +1596,7 @@ return (
                 fullWidth
                 disabled={creatingRun}
                 aria-disabled={creatingRun}
+                aria-busy={creatingRun}
               >
                 {creatingRun ? "Creating..." : "Create Run"}
               </Button>
@@ -1643,7 +1647,7 @@ return (
           </h2>
 
           {loading ? (
-            <p>Loading...</p>
+            <p role="status">Loading...</p>
           ) : activeRuns.length === 0 ? (
             <div
               style={{

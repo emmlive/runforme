@@ -22,11 +22,35 @@ a:hover {
   color: #535bf2;
 }
 
+/* RUN-UI-1N-B1-ROOT-FRAME
+   index.css is the only active global root owner (App.css is dormant and
+   unimported). The prior RUN-UI-1K containment below applied only under
+   560px, leaving 561-1440px widths without a shared width floor or bounded
+   frame. Apply block sizing, a 100% width floor, and a fluid bounded
+   desktop frame at every width instead of a narrow-only device branch. */
+html,
+body {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
+  display: block;
   min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: min(100%, var(--rf-shell-frame-max, 1440px));
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 0;
+  padding-right: 0;
   min-height: 100vh;
 }
 
@@ -54,6 +78,14 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+/* RUN-UI-1N-B1-FOCUS-VISIBILITY
+   Shared baseline for any focusable control that does not already own a
+   role-specific focus treatment. */
+:focus-visible {
+  outline: var(--rf-focus-ring-width, 3px) solid var(--rf-focus-ring-color, #0ea5e9);
+  outline-offset: var(--rf-focus-ring-offset, 2px);
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -64,32 +96,5 @@ button:focus-visible {
   }
   button {
     background-color: #f9f9f9;
-  }
-}
-
-/* RUN-UI-1K-MOBILE-BODY-ROOT-CONTAINMENT
-   At a measured 370px viewport, the Vite-era flex body allowed #root
-   to expand to 454px. Restore normal block sizing on narrow screens. */
-@media (max-width: 560px) {
-  html,
-  body {
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-  }
-
-  body {
-    display: block;
-  }
-
-  #root {
-    box-sizing: border-box;
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-    margin-left: 0;
-    margin-right: 0;
-    padding-left: 0;
-    padding-right: 0;
   }
 }

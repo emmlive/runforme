@@ -10,8 +10,10 @@ test("mobile runner shell grows and reserves safe-area clearance below active co
     appType: "custom",
     server: { middlewareMode: true },
   });
+  let socket;
 
   try {
+    ({ socket } = await vite.ssrLoadModule("/src/lib/socket.js"));
     const { default: RunnerDashboard } = await vite.ssrLoadModule(
       "/src/RunnerDashboard.jsx"
     );
@@ -38,6 +40,10 @@ test("mobile runner shell grows and reserves safe-area clearance below active co
       "mobile shell must reserve fixed-nav clearance plus the bottom safe area"
     );
   } finally {
-    await vite.close();
+    try {
+      socket?.disconnect();
+    } finally {
+      await vite.close();
+    }
   }
 });

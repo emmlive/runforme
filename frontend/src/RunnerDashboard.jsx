@@ -196,6 +196,8 @@ function RunnerMobileNavIcon({ name }) {
 export default function RunnerDashboard({ user, onLogout }) {
   const [online, setOnline] = useState(false);
   const [runs, setRuns] = useState([]);
+  const [runsLoading, setRunsLoading] = useState(true);
+  const [runsError, setRunsError] = useState(null);
   const [statusMessage, setStatusMessage] = useState("Offline");
   const [deliveryPins, setDeliveryPins] = useState({});
   const [receiptProofs, setReceiptProofs] = useState({});
@@ -214,6 +216,8 @@ export default function RunnerDashboard({ user, onLogout }) {
   // FETCH RUNS
   ////////////////////////////////////////////////////////
   async function fetchRuns() {
+    setRunsLoading(true);
+
     try {
       const res = await apiRequest("/api/runs");
 
@@ -234,9 +238,15 @@ export default function RunnerDashboard({ user, onLogout }) {
 
           return Array.from(map.values());
         });
+        setRunsError(null);
+      } else {
+        setRunsError(res.error || "Could not load available runs.");
       }
     } catch (err) {
       console.error("Fetch runs error:", err);
+      setRunsError(err.message || "Could not load available runs.");
+    } finally {
+      setRunsLoading(false);
     }
   }
 
@@ -776,7 +786,9 @@ export default function RunnerDashboard({ user, onLogout }) {
           }}
         >
           <button
+          type="button"
           onClick={toggleOnline}
+          aria-pressed={online}
           style={{
             background: online ? "#16a34a" : "#444",
             color: "#fff",
@@ -809,6 +821,45 @@ export default function RunnerDashboard({ user, onLogout }) {
         </div>
       </div>
 
+      {/* RUN-UI-1N-TASK-6-CHECKPOINT-3B: navigation moved near the top of
+          the Runner experience so it is discoverable without scrolling
+          past the full dashboard body at wide widths. At <=560px the
+          existing position: fixed mobile presentation is unaffected by
+          this DOM position. */}
+      <nav className="runner-mobile-nav" aria-label="Runner navigation">
+        {[
+          ["home", "Home"],
+          ["earnings", "Earnings"],
+          ["activity", "Activity"],
+          ["menu", "Menu"],
+        ].map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            className={mobileSection === id ? "runner-mobile-nav__item runner-mobile-nav__item--selected" : "runner-mobile-nav__item"}
+            aria-current={mobileSection === id ? "page" : undefined}
+            onClick={() => setMobileSection(id)}
+          >
+            <RunnerMobileNavIcon name={id} />
+            <span>{label}</span>
+          </button>
+        ))}
+      </nav>
+
+      {mobileSection !== "home" && (
+        <section className="runner-mobile-section-sheet" aria-live="polite">
+          <div className="runner-mobile-section-sheet__eyebrow">RUNFORME / {mobileSection}</div>
+          <p>
+            {mobileSection === "earnings"
+              ? "Earnings details are not available in this checkpoint. Your run payout will continue to appear on available offers."
+              : mobileSection === "activity"
+                ? "Activity history is not available in this checkpoint. Your current run status remains on Home."
+                : "Menu settings are not available in this checkpoint. Use Home to return to your run dashboard."}
+          </p>
+          <button type="button" onClick={() => setMobileSection("home")}>Return to Home</button>
+        </section>
+      )}
+
       {/* =========================
         MAP (PRIMARY SURFACE)
     ========================= */}
@@ -823,7 +874,7 @@ export default function RunnerDashboard({ user, onLogout }) {
         ACTIVE RUN PANEL
     ========================= */}
       {activeRun && (
-        <div style={{
+        <div className="runner-active-panel runner-ui-1l-mobile-primary" style={{
           padding: 16,
           borderTop: "1px solid #222",
           background: "#111"
@@ -834,21 +885,26 @@ export default function RunnerDashboard({ user, onLogout }) {
           <RunnerSmartHandoffCard run={activeRun} />
 
           {actionMessage && (
-            <div style={{
-              padding: 10,
-              borderRadius: 8,
-              marginBottom: 10,
-              background: actionMessage.type === "success" ? "#064e3b" : "#7f1d1d",
-              color: "white"
-            }}>
+            <div
+              role={actionMessage.type === "error" ? "alert" : "status"}
+              style={{
+                padding: 10,
+                borderRadius: 8,
+                marginBottom: 10,
+                background: actionMessage.type === "success" ? "#064e3b" : "#7f1d1d",
+                color: "white"
+              }}
+            >
               {actionMessage.text}
             </div>
           )}
 
           {activeRun.status === "assigned" && (
             <button
+              type="button"
               onClick={() => markArrived(activeRun.id)}
               disabled={activeAction === `${activeRun.id}:arrived`}
+              aria-busy={activeAction === `${activeRun.id}:arrived`}
               style={{
                 opacity: activeAction === `${activeRun.id}:arrived` ? 0.55 : 1,
                 cursor: activeAction === `${activeRun.id}:arrived` ? "not-allowed" : "pointer",
@@ -954,7 +1010,15 @@ export default function RunnerDashboard({ user, onLogout }) {
                         Submit receipt amount and proof before settlement.
                       </p>
 
+                      <label
+                        htmlFor="runner-receipt-amount"
+                        style={{ display: "block", marginBottom: 6, fontSize: 12, fontWeight: 800 }}
+                      >
+                        Receipt amount
+                      </label>
+
                       <input
+                        id="runner-receipt-amount"
                         type="number"
                         min="1"
                         value={receiptProofs[activeRun.id]?.receiptAmount || ""}
@@ -994,9 +1058,12 @@ export default function RunnerDashboard({ user, onLogout }) {
                         }}
                       >
                         {/* RUN-UI-1I-RECEIPT-PHOTO-UPLOAD: runner selects or takes a receipt photo instead of pasting a link. */}
-                        <div style={{ fontSize: 13, fontWeight: 900, color: "#e5e7eb" }}>
+                        <label
+                          htmlFor="runner-receipt-photo"
+                          style={{ fontSize: 13, fontWeight: 900, color: "#e5e7eb" }}
+                        >
                           Receipt photo
-                        </div>
+                        </label>
 
                         <p style={{ margin: 0, color: "#94a3b8", fontSize: 12, lineHeight: 1.45 }}>
                           Take or upload a clear photo of the receipt after purchase. RUNFORME attaches
@@ -1004,6 +1071,7 @@ export default function RunnerDashboard({ user, onLogout }) {
                         </p>
 
                         <input
+                          id="runner-receipt-photo"
                           type="file"
                           accept="image/*"
                           capture="environment"
@@ -1047,8 +1115,10 @@ export default function RunnerDashboard({ user, onLogout }) {
                       </div>
 
                       <button
+                        type="button"
                         onClick={() => submitReceiptProof(activeRun.id)}
                         disabled={activeAction === `${activeRun.id}:receipt-proof`}
+                        aria-busy={activeAction === `${activeRun.id}:receipt-proof`}
                         style={{
                           opacity: activeAction === `${activeRun.id}:receipt-proof` ? 0.55 : 1,
                           cursor: activeAction === `${activeRun.id}:receipt-proof` ? "not-allowed" : "pointer",
@@ -1080,7 +1150,15 @@ export default function RunnerDashboard({ user, onLogout }) {
                       Ask the requester for their delivery PIN before completing this run.
                     </p>
 
+                    <label
+                      htmlFor="runner-delivery-pin"
+                      style={{ display: "block", marginBottom: 6, fontSize: 12, fontWeight: 800 }}
+                    >
+                      Delivery PIN
+                    </label>
+
                     <input
+                      id="runner-delivery-pin"
                       value={deliveryPins[activeRun.id] || ""}
                       onChange={(event) =>
                         setDeliveryPins((prev) => ({
@@ -1103,8 +1181,10 @@ export default function RunnerDashboard({ user, onLogout }) {
                     />
 
                     <button
+                      type="button"
                       onClick={() => confirmDelivery(activeRun.id)}
                       disabled={activeAction === `${activeRun.id}:confirm-delivery`}
+                      aria-busy={activeAction === `${activeRun.id}:confirm-delivery`}
                       style={{
                         opacity: activeAction === `${activeRun.id}:confirm-delivery` ? 0.55 : 1,
                         cursor: activeAction === `${activeRun.id}:confirm-delivery` ? "not-allowed" : "pointer",
@@ -1200,11 +1280,13 @@ return (
                     </p>
 
                     <button
+                      type="button"
                       onClick={() => markComplete(activeRun.id)}
                       disabled={
                         completionSafety.disabled ||
                         activeAction === `${activeRun.id}:complete`
                       }
+                      aria-busy={activeAction === `${activeRun.id}:complete`}
                       style={{
                         opacity:
                           completionSafety.disabled ||
@@ -1266,9 +1348,93 @@ return (
 
       {/* RUN-UI-1L-A: action-first mobile runner home. */}
       <style>{`
-        .runner-mobile-nav,
+        /* RUN-UI-1N-TASK-6: navigation shell reachable at every width.
+           Base (all-width) rules present Home/Earnings/Activity/Menu as an
+           in-flow tab-style bar so they remain reachable above the narrow
+           mobile branch below, which overrides this with the existing
+           fixed bottom-bar presentation unchanged. */
+        .runner-mobile-nav {
+          display: flex;
+          gap: 8px;
+          padding: 12px clamp(16px, 4vw, 32px);
+          border-top: 1px solid rgba(148, 163, 184, 0.16);
+          background: rgba(9, 14, 25, 0.96);
+        }
+
+        .runner-mobile-nav__item {
+          flex: 1 1 0;
+          min-height: 44px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          border: 0;
+          border-radius: 10px;
+          background: transparent;
+          color: #94a3b8;
+          font-size: 12px;
+          font-weight: 750;
+        }
+
+        .runner-mobile-nav__item--selected {
+          background: rgba(147, 197, 253, 0.12);
+          color: #dbeafe;
+        }
+
         .runner-mobile-section-sheet {
-          display: none;
+          display: block;
+          width: min(100%, 640px);
+          margin: 0 auto 18px;
+          padding: 16px;
+          border: 1px solid rgba(148, 163, 184, 0.2);
+          border-radius: 16px;
+          background: #151c2b;
+          color: #e2e8f0;
+        }
+
+        .runner-mobile-section-sheet__eyebrow {
+          color: #93c5fd;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .runner-mobile-section-sheet p {
+          margin: 8px 0 14px;
+          color: #cbd5e1;
+          font-size: 13px;
+          line-height: 1.45;
+        }
+
+        .runner-mobile-section-sheet button {
+          min-height: 44px;
+          padding: 10px 14px;
+          border: 1px solid rgba(147, 197, 253, 0.4);
+          border-radius: 11px;
+          background: transparent;
+          color: #bfdbfe;
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        /* RUN-UI-1N-B1-TASK-4-FOCUS-VISIBILITY
+           Shared, fluid focus treatment for shell-level controls that
+           previously relied only on the generic global outline. Applies
+           at every width, not just the narrow mobile branch below. */
+        .runner-dashboard-shell button:focus-visible {
+          outline: var(--rf-focus-ring-width, 3px) solid var(--rf-focus-ring-color, #0ea5e9);
+          outline-offset: 2px;
+        }
+
+        /* RUN-UI-1N-B1-TASK-4-LONG-CONTENT
+           Fluid long-content guard for active/available run text that is
+           not already covered by an extracted component's wrapping rules. */
+        .runner-active-panel p,
+        .runner-available-run-card__title,
+        .runner-available-runs-panel__empty {
+          overflow-wrap: anywhere;
         }
 
         @media (max-width: 560px) {
@@ -1488,20 +1654,45 @@ return (
             Secure-hold authorized offers only. Placeholder mode does not charge a live card.
           </p>
 
-          {availableRuns.length === 0 && (
+          {!online ? (
+            <p className="runner-available-runs-panel__empty" role="status" style={{ opacity: 0.6 }}>
+              You&rsquo;re offline. Go online to see available runs.
+            </p>
+          ) : runsLoading ? (
+            <p className="runner-available-runs-panel__empty" role="status" style={{ opacity: 0.6 }}>
+              Loading available runs...
+            </p>
+          ) : runsError ? (
+            <div role="alert" style={{ marginBottom: 10 }}>
+              <p className="runner-available-runs-panel__empty" style={{ marginBottom: 8 }}>
+                {runsError}
+              </p>
+              <button
+                type="button"
+                className="runner-available-runs-panel__retry"
+                onClick={fetchRuns}
+                disabled={runsLoading}
+              >
+                Retry
+              </button>
+            </div>
+          ) : availableRuns.length === 0 ? (
             <p className="runner-available-runs-panel__empty" style={{ opacity: 0.6 }}>Waiting for jobs...</p>
-          )}
+          ) : null}
 
           {acceptMessage && (
-            <div style={{
-              padding: 10,
-              borderRadius: 8,
-              marginBottom: 10,
-              background: acceptMessage.type === "success" ? "#064e3b" : "#7f1d1d",
-              color: "white",
-              fontSize: 13,
-              lineHeight: 1.45
-            }}>
+            <div
+              role={acceptMessage.type === "error" ? "alert" : "status"}
+              style={{
+                padding: 10,
+                borderRadius: 8,
+                marginBottom: 10,
+                background: acceptMessage.type === "success" ? "#064e3b" : "#7f1d1d",
+                color: "white",
+                fontSize: 13,
+                lineHeight: 1.45
+              }}
+            >
               {acceptMessage.text}
             </div>
           )}
@@ -1551,7 +1742,9 @@ return (
               )}
 
               <button
+                type="button"
                 disabled={acceptingRunId === run.id}
+                aria-busy={acceptingRunId === run.id}
                 onClick={async () => {
                   if (!run.id) return;
 
@@ -1626,40 +1819,6 @@ return (
           ))}
         </div>
       )}
-
-      {mobileSection !== "home" && (
-        <section className="runner-mobile-section-sheet" aria-live="polite">
-          <div className="runner-mobile-section-sheet__eyebrow">RUNFORME / {mobileSection}</div>
-          <p>
-            {mobileSection === "earnings"
-              ? "Earnings details are not available in this checkpoint. Your run payout will continue to appear on available offers."
-              : mobileSection === "activity"
-                ? "Activity history is not available in this checkpoint. Your current run status remains on Home."
-                : "Menu settings are not available in this checkpoint. Use Home to return to your run dashboard."}
-          </p>
-          <button type="button" onClick={() => setMobileSection("home")}>Return to Home</button>
-        </section>
-      )}
-
-      <nav className="runner-mobile-nav" aria-label="Runner navigation">
-        {[
-          ["home", "Home"],
-          ["earnings", "Earnings"],
-          ["activity", "Activity"],
-          ["menu", "Menu"],
-        ].map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            className={mobileSection === id ? "runner-mobile-nav__item runner-mobile-nav__item--selected" : "runner-mobile-nav__item"}
-            aria-current={mobileSection === id ? "page" : undefined}
-            onClick={() => setMobileSection(id)}
-          >
-            <RunnerMobileNavIcon name={id} />
-            <span>{label}</span>
-          </button>
-        ))}
-      </nav>
     </div>
   );
 }
