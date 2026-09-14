@@ -5,6 +5,9 @@ const auth = require("../middleware/auth");
 const createStripeClient = require("stripe");
 const { createPaymentService } = require("../services/paymentService");
 const { authorizeSecureHold } = require("../services/secureHoldService");
+const {
+  captureRunPayment,
+} = require("../services/runPaymentSettlement");
 
 let secureHoldPaymentService = null;
 
@@ -1163,7 +1166,7 @@ router.post("/:runId/receipt-proof", auth, async (req, res) => {
     const nextPayoutStatus = exceedsMaxSpend
       ? "manual_review_required"
       : existing.deliveryConfirmedAt
-        ? "ready_for_payout"
+        ? "awaiting_completion"
         : "proof_uploaded";
 
     const receiptUpdate = await prisma.run.updateMany({
@@ -1318,7 +1321,7 @@ router.post("/:runId/confirm-delivery", auth, async (req, res) => {
       ? "manual_review_required"
       : receiptIsRequired && !receiptIsUploaded
         ? "awaiting_receipt"
-        : "ready_for_payout";
+        : "awaiting_completion";
 
     const deliveryUpdate = await prisma.run.updateMany({
       where: {
@@ -1426,7 +1429,7 @@ router.post("/:runId/manual-review/approve", auth, async (req, res) => {
 
     const nextRiskFlags = addRiskFlag(existing.riskFlags, "manual_review_approved");
     const nextPayoutStatus = existing.deliveryConfirmedAt
-      ? "ready_for_payout"
+      ? "awaiting_completion"
       : "proof_uploaded";
 
     const manualReviewUpdate = await prisma.run.updateMany({
@@ -1588,14 +1591,23 @@ async function completeRun(req, res) {
       });
     }
 
-    const reviewRequired =
-      Boolean(existing.requiresManualReview) ||
-      existing.receiptStatus === "review_required";
-    const nextPayoutStatus = reviewRequired
-      ? "manual_review_required"
-      : receiptIsRequired && !receiptIsUploaded
-        ? "awaiting_receipt"
-        : "ready_for_payout";
+    const settlement = await captureRunPayment({
+      run: existing,
+      prisma,
+      paymentService: getSecureHoldPaymentService(),
+    });
+
+    const capturedRun = settlement.run;
+
+    if (
+      !capturedRun ||
+      capturedRun.paymentStatus !== "captured" ||
+      capturedRun.payoutStatus !== "ready_for_payout"
+    ) {
+      throw new Error(
+        "Payment capture did not produce canonical captured settlement state"
+      );
+    }
 
     const completionWhere = {
       id: runId,
@@ -1604,7 +1616,8 @@ async function completeRun(req, res) {
       deliveryConfirmedAt: { not: null },
       requiresManualReview: false,
       receiptStatus: receiptIsRequired ? "uploaded" : { not: "review_required" },
-      payoutStatus: { not: "manual_review_required" },
+      paymentStatus: capturedRun.paymentStatus,
+      payoutStatus: capturedRun.payoutStatus,
     };
 
     const updateResult = await prisma.run.updateMany({
@@ -1612,10 +1625,9 @@ async function completeRun(req, res) {
       data: {
         status: "completed",
         purchaseStatus:
-          existing.purchaseStatus === "delivered"
+          capturedRun.purchaseStatus === "delivered"
             ? "completed"
-            : existing.purchaseStatus,
-        payoutStatus: nextPayoutStatus,
+            : capturedRun.purchaseStatus,
       },
     });
 
