@@ -3,6 +3,9 @@ const prisma = require("../config/db");
 const auth = require("../middleware/auth");
 
 const createStripeClient = require("stripe");
+const {
+  assertPaymentRuntimeAuthorized,
+} = require("../services/paymentRuntimeGuard");
 const { createPaymentService } = require("../services/paymentService");
 const { authorizeSecureHold } = require("../services/secureHoldService");
 const {
@@ -30,6 +33,13 @@ function getSecureHoldPaymentService() {
   if (!currency) {
     throw new Error("Stripe payment currency is not configured");
   }
+
+  assertPaymentRuntimeAuthorized({
+    nodeEnv: process.env.NODE_ENV,
+    stripeSecretKey: secretKey,
+    livePaymentsAuthorized:
+      process.env.RUNFORME_LIVE_PAYMENTS_AUTHORIZED,
+  });
 
   secureHoldPaymentService = createPaymentService({
     stripe: createStripeClient(secretKey),

@@ -1,5 +1,16 @@
 ﻿const express = require("express");
 const router = express.Router();
+const {
+  assertPaymentRuntimeAuthorized,
+} = require("../services/paymentRuntimeGuard");
+
+assertPaymentRuntimeAuthorized({
+  nodeEnv: process.env.NODE_ENV,
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+  livePaymentsAuthorized:
+    process.env.RUNFORME_LIVE_PAYMENTS_AUTHORIZED,
+});
+
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const prisma = require("../config/db");
 const {
