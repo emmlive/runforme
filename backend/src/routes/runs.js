@@ -1,12 +1,58 @@
-const express = require("express");
+﻿const express = require("express");
 const prisma = require("../config/db");
 const auth = require("../middleware/auth");
 
+const createStripeClient = require("stripe");
+const {
+  assertPaymentRuntimeAuthorized,
+} = require("../services/paymentRuntimeGuard");
+const { createPaymentService } = require("../services/paymentService");
+const { authorizeSecureHold } = require("../services/secureHoldService");
+const {
+  captureRunPayment,
+} = require("../services/runPaymentSettlement");
+
+let secureHoldPaymentService = null;
+
+function getSecureHoldPaymentService() {
+  if (secureHoldPaymentService) {
+    return secureHoldPaymentService;
+  }
+
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  const currency = String(
+    process.env.STRIPE_CURRENCY || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (!secretKey) {
+    throw new Error("Stripe payment provider is not configured");
+  }
+
+  if (!currency) {
+    throw new Error("Stripe payment currency is not configured");
+  }
+
+  assertPaymentRuntimeAuthorized({
+    nodeEnv: process.env.NODE_ENV,
+    stripeSecretKey: secretKey,
+    livePaymentsAuthorized:
+      process.env.RUNFORME_LIVE_PAYMENTS_AUTHORIZED,
+  });
+
+  secureHoldPaymentService = createPaymentService({
+    stripe: createStripeClient(secretKey),
+    currency: currency,
+  });
+
+  return secureHoldPaymentService;
+}
 const router = express.Router();
 
 const CREATE_RUN_DUPLICATE_WINDOW_MS = 15_000;
 
-console.log("🚨 ACTIVE JS RUNS ROUTE LOADED");
+console.log("ðŸš¨ ACTIVE JS RUNS ROUTE LOADED");
 
 function parseRunId(value) {
   const id = Number(value);
@@ -50,8 +96,8 @@ function addRiskFlag(existingFlags, flag) {
 
 function requiresHoldAuthorization(run) {
   return (
-    Number(run?.itemBudgetEstimate || 0) > 0 &&
-    run?.authorizationStatus !== "placeholder_authorized"
+    Number(run?.holdAmount || 0) > 0 &&
+    run?.authorizationStatus !== "authorized"
   );
 }
 
@@ -292,7 +338,7 @@ router.get("/", auth, async (req, res) => {
       error: "Unsupported role",
     });
   } catch (err) {
-    console.error("❌ GET RUNS ERROR:", err);
+    console.error("âŒ GET RUNS ERROR:", err);
     return res.status(500).json({
       success: false,
       error: "Failed to load runs",
@@ -305,7 +351,7 @@ router.get("/", auth, async (req, res) => {
 ============================ */
 router.post("/", auth, async (req, res) => {
   try {
-    console.log("➡️ CREATE RUN HIT");
+    console.log("âž¡ï¸ CREATE RUN HIT");
 
     if (req.user.role !== "requester") {
       return res.status(403).json({
@@ -475,8 +521,8 @@ router.post("/", auth, async (req, res) => {
       return { run, offers };
     });
 
-    console.log(`✅ Run created: ${result.run.id}`);
-    console.log(`📨 Offers created: ${result.offers.length}`);
+    console.log(`âœ… Run created: ${result.run.id}`);
+    console.log(`ðŸ“¨ Offers created: ${result.offers.length}`);
 
     const io = req.app.get("io");
 
@@ -503,7 +549,7 @@ router.post("/", auth, async (req, res) => {
       queued: true,
     });
   } catch (err) {
-    console.error("❌ CREATE RUN ERROR:", err);
+    console.error("âŒ CREATE RUN ERROR:", err);
     return res.status(500).json({
       success: false,
       error: "Failed to create run",
@@ -515,7 +561,7 @@ router.post("/", auth, async (req, res) => {
    ACCEPT RUN
 ============================ */
 router.post("/:runId/accept", auth, async (req, res) => {
-  console.log("🚨 ACCEPT ROUTE HIT");
+  console.log("ðŸš¨ ACCEPT ROUTE HIT");
 
   const runId = parseRunId(req.params.runId);
   const runnerId = req.user.id;
@@ -543,7 +589,7 @@ router.post("/:runId/accept", auth, async (req, res) => {
         where: { id: runId },
       });
 
-      console.log("🧠 RUN BEFORE ACCEPT:", existing);
+      console.log("ðŸ§  RUN BEFORE ACCEPT:", existing);
 
       if (!existing) {
         throw new Error("Run not found");
@@ -581,7 +627,7 @@ router.post("/:runId/accept", auth, async (req, res) => {
         orderBy: { createdAt: "desc" },
       });
 
-      console.log("🔍 Found offer:", offer);
+      console.log("ðŸ” Found offer:", offer);
 
       if (!offer) {
         throw new Error("No valid pending offer found for this runner");
@@ -652,7 +698,7 @@ router.post("/:runId/accept", auth, async (req, res) => {
       });
     }
 
-    console.log(`✅ Run ${runId} accepted by runner ${runnerId}`);
+    console.log(`âœ… Run ${runId} accepted by runner ${runnerId}`);
 
     const io = req.app.get("io");
 
@@ -684,7 +730,7 @@ router.post("/:runId/accept", auth, async (req, res) => {
       run: req.user.role === "runner" ? redactRunForRunner(updatedRun) : updatedRun,
     });
   } catch (err) {
-    console.error("❌ ACCEPT ERROR:", err);
+    console.error("âŒ ACCEPT ERROR:", err);
     return res.status(400).json({
       success: false,
       error: err.message || "Failed to accept run",
@@ -913,7 +959,10 @@ router.post("/:runId/authorize-hold", auth, async (req, res) => {
     const runId = parseRunId(req.params.runId);
 
     if (!runId) {
-      return res.status(400).json({ success: false, error: "Invalid runId" });
+      return res.status(400).json({
+        success: false,
+        error: "Invalid runId",
+      });
     }
 
     const existing = await prisma.run.findUnique({
@@ -929,7 +978,8 @@ router.post("/:runId/authorize-hold", auth, async (req, res) => {
 
     const canAuthorize =
       req.user.role === "admin" ||
-      (req.user.role === "requester" && existing.requesterId === req.user.id);
+      (req.user.role === "requester" &&
+        existing.requesterId === req.user.id);
 
     if (!canAuthorize) {
       return res.status(403).json({
@@ -945,104 +995,87 @@ router.post("/:runId/authorize-hold", auth, async (req, res) => {
       });
     }
 
-    if (existing.authorizationStatus === "placeholder_authorized") {
-      return res.json({
-        success: true,
-        alreadyAuthorized: true,
-        placeholder: true,
-        charged: false,
-        message: "Secure hold placeholder is already authorized. No live charge was made.",
-        run: existing,
-      });
-    }
-
-    const authorizationUpdate = await prisma.run.updateMany({
-      where: {
-        id: runId,
-        authorizationStatus: { not: "placeholder_authorized" },
-      },
-      data: {
-        authorizationStatus: "placeholder_authorized",
-        paymentStatus: "hold_placeholder",
-        riskFlags: addRiskFlag(existing.riskFlags, "payment_hold_placeholder_authorized"),
-      },
-    });
-
-    const updatedRun = await prisma.run.findUnique({ where: { id: runId } });
-
-    if (authorizationUpdate.count !== 1) {
-      if (updatedRun?.authorizationStatus === "placeholder_authorized") {
-        return res.json({
-          success: true,
-          alreadyAuthorized: true,
-          placeholder: true,
-          charged: false,
-          message: "Secure hold placeholder is already authorized. No live charge was made.",
-          run: updatedRun,
-        });
-      }
-
-      return res.status(409).json({
-        success: false,
-        error: "Secure hold could not be authorized because the run state changed",
-      });
-    }
-
     const io = req.app.get("io");
 
-    if (io) {
-      io.to(`run:${runId}`).emit("run.hold_placeholder_authorized", {
-        runId,
-        requesterId: req.user.id,
-      });
-
-      if (updatedRun.assignedRunnerId) {
-        io.to(`runner:${updatedRun.assignedRunnerId}`).emit("run.updated", {
-          run: redactRunForRunner(updatedRun),
-        });
+    const releasePendingOffers = async (authorizedRunId) => {
+      if (!io) {
+        return;
       }
 
-      io.to(`requester:${updatedRun.requesterId}`).emit("run.updated", {
-        run: updatedRun,
+      const authorizedRun = await prisma.run.findUnique({
+        where: { id: authorizedRunId },
       });
 
-      // Dispatch pending offers after secure hold authorization.
       if (
-        !updatedRun.assignedRunnerId &&
-        updatedRun.status === "open" &&
-        !requiresHandoffEligibility(updatedRun)
+        !authorizedRun ||
+        authorizedRun.assignedRunnerId ||
+        authorizedRun.status !== "open" ||
+        requiresHandoffEligibility(authorizedRun)
       ) {
-        const pendingOffers = await prisma.offer.findMany({
-          where: {
-            runId,
-            status: "pending",
-          },
-        });
+        return;
+      }
 
-        pendingOffers.forEach((offer) => {
-          io.to(`runner:${offer.runnerId}`).emit("run.offer", {
-            run: redactRunForRunner({
-              ...updatedRun,
-              offerId: offer.id,
-            }),
-            offer,
-          });
+      const pendingOffers = await prisma.offer.findMany({
+        where: {
+          runId: authorizedRunId,
+          status: "pending",
+        },
+      });
+
+      pendingOffers.forEach((offer) => {
+        io.to(`runner:${offer.runnerId}`).emit("run.offer", {
+          run: redactRunForRunner({
+            ...authorizedRun,
+            offerId: offer.id,
+          }),
+          offer,
+        });
+      });
+    };
+
+    const result = await authorizeSecureHold({
+      run: existing,
+      prisma,
+      paymentService: getSecureHoldPaymentService(),
+      releasePendingOffers,
+    });
+
+    if (io) {
+      io.to(`requester:${result.run.requesterId}`).emit("run.updated", {
+        run: result.run,
+      });
+
+      if (result.run.assignedRunnerId) {
+        io.to(`runner:${result.run.assignedRunnerId}`).emit("run.updated", {
+          run: redactRunForRunner(result.run),
         });
       }
+
+      io.to(`run:${runId}`).emit("run.secure_hold_updated", {
+        runId,
+        authorizationStatus: result.run.authorizationStatus,
+        paymentStatus: result.run.paymentStatus,
+      });
     }
 
     return res.json({
       success: true,
-      placeholder: true,
-      charged: false,
-      message: "Secure hold placeholder authorized. No live charge was made.",
-      run: updatedRun,
+      state: result.state,
+      clientSecret: result.clientSecret,
+      alreadyAuthorized:
+        existing.authorizationStatus === "authorized",
+      message:
+        result.state === "authorized"
+          ? "Secure hold authorized."
+          : "Confirm your payment method to authorize the secure hold.",
+      run: result.run,
     });
   } catch (err) {
-    console.error("AUTHORIZE HOLD PLACEHOLDER ERROR:", err);
+    console.error("AUTHORIZE HOLD ERROR:", err);
+
     return res.status(500).json({
       success: false,
-      error: "Failed to authorize secure hold placeholder",
+      error: "Failed to authorize secure hold",
     });
   }
 });
@@ -1143,7 +1176,7 @@ router.post("/:runId/receipt-proof", auth, async (req, res) => {
     const nextPayoutStatus = exceedsMaxSpend
       ? "manual_review_required"
       : existing.deliveryConfirmedAt
-        ? "ready_for_payout"
+        ? "awaiting_completion"
         : "proof_uploaded";
 
     const receiptUpdate = await prisma.run.updateMany({
@@ -1298,7 +1331,7 @@ router.post("/:runId/confirm-delivery", auth, async (req, res) => {
       ? "manual_review_required"
       : receiptIsRequired && !receiptIsUploaded
         ? "awaiting_receipt"
-        : "ready_for_payout";
+        : "awaiting_completion";
 
     const deliveryUpdate = await prisma.run.updateMany({
       where: {
@@ -1406,7 +1439,7 @@ router.post("/:runId/manual-review/approve", auth, async (req, res) => {
 
     const nextRiskFlags = addRiskFlag(existing.riskFlags, "manual_review_approved");
     const nextPayoutStatus = existing.deliveryConfirmedAt
-      ? "ready_for_payout"
+      ? "awaiting_completion"
       : "proof_uploaded";
 
     const manualReviewUpdate = await prisma.run.updateMany({
@@ -1525,7 +1558,11 @@ async function completeRun(req, res) {
       });
     }
 
-    if (existing.status === "completed") {
+    if (
+      existing.status === "completed" &&
+      existing.paymentStatus === "captured" &&
+      existing.payoutStatus === "ready_for_payout"
+    ) {
       return res.json({
         success: true,
         alreadyCompleted: true,
@@ -1533,7 +1570,7 @@ async function completeRun(req, res) {
       });
     }
 
-    if (!["arrived", "in_progress"].includes(existing.status)) {
+    if (!["arrived", "in_progress", "completed"].includes(existing.status)) {
       return res.status(400).json({
         success: false,
         error: "Run must be arrived before completion",
@@ -1568,14 +1605,23 @@ async function completeRun(req, res) {
       });
     }
 
-    const reviewRequired =
-      Boolean(existing.requiresManualReview) ||
-      existing.receiptStatus === "review_required";
-    const nextPayoutStatus = reviewRequired
-      ? "manual_review_required"
-      : receiptIsRequired && !receiptIsUploaded
-        ? "awaiting_receipt"
-        : "ready_for_payout";
+    const settlement = await captureRunPayment({
+      run: existing,
+      prisma,
+      paymentService: getSecureHoldPaymentService(),
+    });
+
+    const capturedRun = settlement.run;
+
+    if (
+      !capturedRun ||
+      capturedRun.paymentStatus !== "captured" ||
+      capturedRun.payoutStatus !== "ready_for_payout"
+    ) {
+      throw new Error(
+        "Payment capture did not produce canonical captured settlement state"
+      );
+    }
 
     const completionWhere = {
       id: runId,
@@ -1584,7 +1630,8 @@ async function completeRun(req, res) {
       deliveryConfirmedAt: { not: null },
       requiresManualReview: false,
       receiptStatus: receiptIsRequired ? "uploaded" : { not: "review_required" },
-      payoutStatus: { not: "manual_review_required" },
+      paymentStatus: capturedRun.paymentStatus,
+      payoutStatus: capturedRun.payoutStatus,
     };
 
     const updateResult = await prisma.run.updateMany({
@@ -1592,10 +1639,9 @@ async function completeRun(req, res) {
       data: {
         status: "completed",
         purchaseStatus:
-          existing.purchaseStatus === "delivered"
+          capturedRun.purchaseStatus === "delivered"
             ? "completed"
-            : existing.purchaseStatus,
-        payoutStatus: nextPayoutStatus,
+            : capturedRun.purchaseStatus,
       },
     });
 

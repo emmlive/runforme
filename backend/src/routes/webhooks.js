@@ -1,14 +1,28 @@
-const express = require("express");
+﻿const express = require("express");
 const router = express.Router();
+const {
+  assertPaymentRuntimeAuthorized,
+} = require("../services/paymentRuntimeGuard");
+
+assertPaymentRuntimeAuthorized({
+  nodeEnv: process.env.NODE_ENV,
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+  livePaymentsAuthorized:
+    process.env.RUNFORME_LIVE_PAYMENTS_AUTHORIZED,
+});
+
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const pool = require("../config/db");
+const prisma = require("../config/db");
+const {
+  reconcileStripeEvent,
+} = require("../services/stripeWebhookReconciler");
 
 /*
-  STRIPE WEBHOOK — PRODUCTION GRADE
-  - Signature verification
-  - Idempotent dedupe
-  - Financial reconciliation
-  - Safe for retries
+  Stripe webhook boundary:
+  - raw application/json body preserved for signature verification;
+  - invalid signatures fail closed;
+  - financial reconciliation is delegated to the canonical Prisma service;
+  - unsupported valid events are acknowledged without financial mutation.
 */
 
 router.post(
@@ -18,12 +32,8 @@ router.post(
     const sig = req.headers["stripe-signature"];
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-    console.log("🔑 Webhook secret loaded:", !!webhookSecret);
-    console.log("🧾 Stripe signature header present:", !!sig);
-
     let event;
 
-    /* 1️⃣ Verify signature */
     try {
       event = stripe.webhooks.constructEvent(
         req.body,
@@ -31,124 +41,38 @@ router.post(
         webhookSecret
       );
     } catch (err) {
-      console.error("❌ WEBHOOK SIGNATURE FAILED:", err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
-    /* 2️⃣ Deduplicate event */
-    try {
-      await pool.query(
-        `
-        INSERT INTO public.stripe_webhook_events (id, type)
-        VALUES ($1, $2)
-        ON CONFLICT (id) DO NOTHING
-        `,
-        [event.id, event.type]
+      console.error(
+        "Stripe webhook signature verification failed:",
+        err.message
       );
-    } catch (err) {
-      console.error("❌ WEBHOOK DEDUPE ERROR:", err.message);
-      return res.status(500).json({ error: "Webhook DB error" });
+
+      return res
+        .status(400)
+        .send(`Webhook Error: ${err.message}`);
     }
 
-    console.log("✅ Stripe webhook accepted:", event.type);
-
-    /* 3️⃣ Financial Reconciliation Engine */
     try {
-      switch (event.type) {
-        case "payment_intent.succeeded": {
-          const pi = event.data.object;
+      const reconciliation =
+        await reconcileStripeEvent({
+          event,
+          prisma,
+        });
 
-          await pool.query(
-            `
-            UPDATE runs
-            SET payment_status = 'captured'
-            WHERE payment_intent_id = $1
-              AND payment_status = 'authorized'
-            `,
-            [pi.id]
-          );
-
-          console.log("💰 Reconciled payment_intent.succeeded:", pi.id);
-          break;
-        }
-
-        case "charge.succeeded": {
-          const charge = event.data.object;
-
-          await pool.query(
-            `
-            UPDATE runs
-            SET charge_id = $1
-            WHERE payment_intent_id = $2
-              AND charge_id IS NULL
-            `,
-            [charge.id, charge.payment_intent]
-          );
-
-          console.log("💳 Reconciled charge.succeeded:", charge.id);
-          break;
-        }
-
-        case "transfer.created": {
-          const transfer = event.data.object;
-
-          await pool.query(
-            `
-            UPDATE runs
-            SET transfer_id = $1,
-                transfer_status = 'created',
-                payment_status = 'paid'
-            WHERE charge_id = $2
-            `,
-            [transfer.id, transfer.source_transaction]
-          );
-
-          console.log("🚚 Reconciled transfer.created:", transfer.id);
-          break;
-        }
-
-        case "transfer.reversed": {
-          const reversal = event.data.object;
-
-          await pool.query(
-            `
-            UPDATE runs
-            SET transfer_status = 'reversed'
-            WHERE transfer_id = $1
-            `,
-            [reversal.transfer]
-          );
-
-          console.log("↩️ Reconciled transfer.reversed:", reversal.id);
-          break;
-        }
-
-        case "charge.refunded": {
-          const charge = event.data.object;
-
-          await pool.query(
-            `
-            UPDATE runs
-            SET payment_status = 'refunded'
-            WHERE charge_id = $1
-            `,
-            [charge.id]
-          );
-
-          console.log("💸 Reconciled charge.refunded:", charge.id);
-          break;
-        }
-
-        default:
-          console.log("ℹ️ Unhandled Stripe event:", event.type);
-      }
+      return res.json({
+        received: true,
+        deduped: reconciliation.deduped,
+        applied: reconciliation.applied,
+      });
     } catch (err) {
-      console.error("❌ WEBHOOK RECON ERROR:", err.message);
-      return res.status(500).json({ error: "Reconciliation error" });
-    }
+      console.error(
+        "Stripe webhook reconciliation failed:",
+        err.message
+      );
 
-    /* 4️⃣ Always ACK Stripe */
-    res.json({ received: true });
+      return res.status(500).json({
+        error: "Reconciliation error",
+      });
+    }
   }
 );
 
