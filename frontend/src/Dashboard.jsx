@@ -521,8 +521,9 @@ function RunDetailPanel({
           </div>
 
           <p style={{ marginTop: 12, marginBottom: 12, color: "#cbd5e1", lineHeight: 1.5 }}>
-            This prepares RUNFORME for secure pre-authorization. No live charge is made from
-            Secure Hold authorization is completed through the canonical payment flow before runner dispatch.
+            Authorize the estimated Secure Hold before this run becomes available for runner
+            dispatch. The final captured amount is determined by the completed run and remains
+            subject to the authorized hold.
           </p>
 
           <button
@@ -533,7 +534,7 @@ function RunDetailPanel({
               run.authorizationStatus === "authorized"
             }
             aria-busy={authorizingHold}
-            title="This uses the safe placeholder endpoint. No live charge is made."
+            title="Authorize the estimated Secure Hold before runner dispatch."
             style={{
               border: "1px solid rgba(148,163,184,0.45)",
               background:
@@ -790,6 +791,12 @@ export default function Dashboard({ onLogout }) {
         throw new Error(data.error || "Failed to create run");
       }
 
+      const createdRun = data.run;
+
+      if (!createdRun?.id) {
+        throw new Error("Run was created without a canonical run identifier.");
+      }
+
       setNewRun({
         location: "",
         item: "",
@@ -802,8 +809,11 @@ export default function Dashboard({ onLogout }) {
         handoffConfirmed: false,
         handoffInstructions: "",
       });
-      showSuccess("Run created and sent to available runners.");
+
+      setSelectedRunId(createdRun.id);
+      showSuccess("Run created. Secure Hold authorization is required before runner dispatch.");
       await fetchRuns();
+      await authorizeSecureHold(createdRun.id);
     } catch (err) {
       showError(err.message || "Failed to create run");
     } finally {
