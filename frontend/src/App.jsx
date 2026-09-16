@@ -3,6 +3,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import { stripePromise } from "./lib/stripe";
 
 import Login from "./Login";
+import ForgotPassword from "./ForgotPassword";
 import Dashboard from "./Dashboard";
 import RunnerDashboard from "./RunnerDashboard";
 
@@ -67,6 +68,9 @@ export default function App() {
   // ⏳ LOADING STATE
   ////////////////////////////////////////////////////////
 
+  if (window.location.pathname === "/forgot-password") {
+    return <ForgotPassword />;
+  }
   if (loading) {
     return <div style={{ padding: 20 }}>Loading...</div>;
   }
