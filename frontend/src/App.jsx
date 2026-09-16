@@ -4,6 +4,7 @@ import { stripePromise } from "./lib/stripe";
 
 import Login from "./Login";
 import ForgotPassword from "./ForgotPassword";
+import ResetPassword from "./ResetPassword";
 import Dashboard from "./Dashboard";
 import RunnerDashboard from "./RunnerDashboard";
 
@@ -70,6 +71,10 @@ export default function App() {
 
   if (window.location.pathname === "/forgot-password") {
     return <ForgotPassword />;
+  }
+
+  if (window.location.pathname === "/reset-password") {
+    return <ResetPassword />;
   }
   if (loading) {
     return <div style={{ padding: 20 }}>Loading...</div>;
