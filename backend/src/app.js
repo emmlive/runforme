@@ -3,8 +3,6 @@ console.log("✅ RUNNING APP FILE: src/app.js");
 const express = require("express");
 const cors = require("cors");
 const { corsOrigin } = require("./config/cors");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 /* ---------- Prisma ---------- */
@@ -18,14 +16,10 @@ const auth = require("./middleware/auth");
 const webhookRouter = require("./routes/webhooks");
 const runsRouter = require("./routes/runs");
 const runnersRouter = require("./routes/runners");
+const authRouter = require("./routes/auth");
 
 /* ---------- App ---------- */
 const app = express();
-const JWT_SECRET = process.env.JWT_SECRET;
-
-if (process.env.NODE_ENV === "production" && !JWT_SECRET) {
-  throw new Error("JWT_SECRET is required in production");
-}
 
 /* ==========================================================
    CRITICAL ORDER:
@@ -55,74 +49,10 @@ app.get("/health", (req, res) => {
 });
 
 /* ============================
-   AUTH — REGISTER
-============================ */
-app.post("/api/auth/register", async (req, res) => {
-  try {
-    const { email, password, role } = req.body;
-
-    if (!email || !password || !role) {
-      return res.status(400).json({
-        error: "email, password, and role are required",
-      });
-    }
-
-    if (!["requester", "runner"].includes(role)) {
-      return res.status(400).json({ error: "Invalid role" });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await prisma.user.create({
-      data: { email, password: hashedPassword, role },
-      select: { id: true, email: true, role: true },
-    });
-
-    return res.status(201).json(user);
-  } catch (err) {
-    console.error("Register error:", err);
-    if (err.code === "P2002") {
-      return res.status(409).json({ error: "User already exists" });
-    }
-    return res.status(500).json({ error: "Registration failed" });
-  }
-});
-
-/* ============================
-   AUTH — LOGIN
-============================ */
-app.post("/api/auth/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({
-        error: "email and password are required",
-      });
-    }
-
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(401).json({ error: "Invalid credentials" });
-
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.status(401).json({ error: "Invalid credentials" });
-
-    const token = jwt.sign(
-      { userId: user.id, role: user.role },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    return res.json({ token, role: user.role });
-  } catch (err) {
-    console.error("Login error:", err);
-    return res.status(500).json({ error: "Login failed" });
-  }
-});
-
-/* ============================
    AUTH TEST
 ============================ */
+app.use("/api/auth", authRouter);
+
 app.get("/api/me", auth, (req, res) => {
   res.json({ message: "JWT auth working ✅", user: req.user });
 });
