@@ -24,6 +24,7 @@ export default function PaymentPage({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const submitDisabled = !stripe || loading;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -121,14 +122,15 @@ export default function PaymentPage({
 
       <button
         type="submit"
-        disabled={!stripe || loading}
+        disabled={submitDisabled}
         style={{
           width: "100%",
           padding: 12,
           background: "#000",
           color: "#fff",
           border: "none",
-          cursor: "pointer",
+          cursor: submitDisabled ? "not-allowed" : "pointer",
+          opacity: submitDisabled ? 0.55 : 1,
         }}
       >
         {loading
