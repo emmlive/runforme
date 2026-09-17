@@ -91,6 +91,10 @@ export default function Login() {
       <button onClick={handleLogin} disabled={loading}>
         {loading ? "Logging in..." : "Login"}
       </button>
+
+      <p>
+        <a href="/forgot-password">Forgot password?</a>
+      </p>
     </div>
   );
 }

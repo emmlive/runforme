@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import { stripePromise } from "./lib/stripe";
+import { installAuthSession401Handler } from "./lib/authSession";
 
 import Login from "./Login";
+import ForgotPassword from "./ForgotPassword";
+import ResetPassword from "./ResetPassword";
 import Dashboard from "./Dashboard";
 import RunnerDashboard from "./RunnerDashboard";
 
 
 ////////////////////////////////////////////////////////
-// 🔐 TOKEN DECODER (SAFE)
+// ðŸ” TOKEN DECODER (SAFE)
 ////////////////////////////////////////////////////////
 
 function decodeToken(token) {
@@ -26,9 +29,17 @@ function decodeToken(token) {
 
 export default function App() {
   const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    return installAuthSession401Handler({
+      onSessionExpired() {
+        setUser(null);
+      },
+    });
+  }, []);
   const [loading, setLoading] = useState(true);
   ////////////////////////////////////////////////////////
-  // 🔥 INIT SESSION (FIXED)
+  // ðŸ”¥ INIT SESSION (FIXED)
   ////////////////////////////////////////////////////////
 
   useEffect(() => {
@@ -41,16 +52,16 @@ export default function App() {
 
     const decoded = decodeToken(token);
 
-    // 🚨 IMPORTANT FIX: DO NOT instantly delete token
+    // ðŸš¨ IMPORTANT FIX: DO NOT instantly delete token
     if (!decoded || !decoded.userId) {
-      console.warn("⚠️ Invalid token structure");
+      console.warn("âš ï¸ Invalid token structure");
 
       setUser(null);
       setLoading(false);
       return;
     }
 
-    // ✅ Normalize user object (CRITICAL)
+    // âœ… Normalize user object (CRITICAL)
     setUser({
       id: decoded.userId,
       role: decoded.role,
@@ -64,15 +75,22 @@ export default function App() {
   }
 
   ////////////////////////////////////////////////////////
-  // ⏳ LOADING STATE
+  // â³ LOADING STATE
   ////////////////////////////////////////////////////////
 
+  if (window.location.pathname === "/forgot-password") {
+    return <ForgotPassword />;
+  }
+
+  if (window.location.pathname === "/reset-password") {
+    return <ResetPassword />;
+  }
   if (loading) {
     return <div style={{ padding: 20 }}>Loading...</div>;
   }
 
   ////////////////////////////////////////////////////////
-  // 🔐 LOGIN SCREEN
+  // ðŸ” LOGIN SCREEN
   ////////////////////////////////////////////////////////
 
   if (!user) {
