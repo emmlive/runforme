@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { apiRequest } from "./api/client";
+import { classifyTransientFailure } from "./lib/transientFailure.js";
 import { socket } from "./lib/socket"; // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ shared socket (FIX)
 import LiveMap from "./components/LiveMap";
 import { RunnerCommandCenter, deriveRunnerCommandData } from "./components/runner";
@@ -240,11 +241,12 @@ export default function RunnerDashboard({ user, onLogout }) {
         });
         setRunsError(null);
       } else {
-        setRunsError(res.error || "Could not load available runs.");
+        setRunsError("Something went wrong.");
       }
     } catch (err) {
       console.error("Fetch runs error:", err);
-      setRunsError(err.message || "Could not load available runs.");
+      const failure = classifyTransientFailure(err);
+      setRunsError(failure.message);
     } finally {
       setRunsLoading(false);
     }
