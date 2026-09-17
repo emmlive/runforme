@@ -6,6 +6,7 @@ import { RequesterMobileShell, RequesterRunOverview } from "./components/request
 import "./components/requester/RequesterDashboardPolish.css";
 import { Button, Card } from "./components/ui";
 import PaymentPage from "./pages/PaymentPage";
+import { classifyTransientFailure } from "./lib/transientFailure.js";
 import "./requester-run-form.css";
 // RUN-UI-1G-CHECKPOINT-4: requester dashboard visual polish only.
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5050";
@@ -676,12 +677,15 @@ export default function Dashboard({ onLogout }) {
       const data = await response.json();
 
       if (!response.ok || data.success === false) {
-        throw new Error(data.error || "Failed to load runs");
+        const error = new Error(data.error || "Failed to load runs");
+        error.response = { status: response.status };
+        throw error;
       }
 
       setRuns(data.runs || []);
     } catch (err) {
-      showError(err.message || "Failed to load runs");
+      const failure = classifyTransientFailure(err);
+      showError(failure.message);
     } finally {
       setLoading(false);
     }

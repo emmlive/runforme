@@ -44,7 +44,9 @@ export async function apiRequest(endpoint, options = {}) {
 
   if (!res.ok) {
     console.error("❌ API ERROR:", data);
-    throw new Error(data?.error || "Request failed");
+    const error = new Error(data?.error || "Request failed");
+    error.response = { status: res.status };
+    throw error;
   }
 
   return data;
