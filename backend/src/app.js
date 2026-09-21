@@ -20,6 +20,7 @@ const authRouter = require("./routes/auth");
 
 /* ---------- App ---------- */
 const app = express();
+app.set("trust proxy", 2);
 
 /* ==========================================================
    CRITICAL ORDER:

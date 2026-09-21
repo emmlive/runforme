@@ -49,7 +49,7 @@ function createPasswordRecoveryService({
       },
     });
 
-    await prisma.passwordResetToken.create({
+    const issuedToken = await prisma.passwordResetToken.create({
       data: {
         userId,
         tokenHash,
@@ -60,11 +60,26 @@ function createPasswordRecoveryService({
     const resetUrl = new URL(resetUrlBase);
     resetUrl.searchParams.set("token", rawToken);
 
-    await delivery.deliverPasswordReset({
-      email,
-      resetUrl: resetUrl.toString(),
-      expiresAt,
-    });
+    try {
+      await delivery.deliverPasswordReset({
+        email,
+        resetUrl: resetUrl.toString(),
+        expiresAt,
+      });
+    } catch (error) {
+      await prisma.passwordResetToken.updateMany({
+        where: {
+          id: issuedToken.id,
+          consumedAt: null,
+          revokedAt: null,
+        },
+        data: {
+          revokedAt: issuedAt,
+        },
+      });
+
+      throw error;
+    }
 
     return { issued: true };
   }
