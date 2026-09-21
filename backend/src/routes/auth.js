@@ -6,6 +6,9 @@ const prisma = require("../config/db");
 const { validatePassword } = require("../services/passwordPolicy");
 const { createPasswordRecoveryService } = require("../services/passwordRecovery");
 const { recoveryDelivery } = require("../services/recoveryDelivery");
+const {
+  recoveryRequestLimiter,
+} = require("../services/recoveryRequestLimiter");
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -100,19 +103,42 @@ router.post("/forgot-password", async (req, res) => {
       return res.json({ message: FORGOT_PASSWORD_RESPONSE });
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const ipRecoveryRequest =
+      recoveryRequestLimiter.checkRecoveryRequest(
+        `ip:${req.ip || "unknown"}`
+      );
+
+    const emailRecoveryRequest =
+      recoveryRequestLimiter.checkRecoveryRequest(
+        `email:${normalizedEmail}`
+      );
+
+    if (
+      !ipRecoveryRequest.allowed ||
+      !emailRecoveryRequest.allowed
+    ) {
+      return res.json({ message: FORGOT_PASSWORD_RESPONSE });
+    }
+
     if (!recoveryDelivery.isEnabled()) {
       return res.json({ message: FORGOT_PASSWORD_RESPONSE });
     }
 
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
       select: { id: true, email: true },
     });
 
     if (user) {
+      if (!process.env.FRONTEND_URL) {
+        return res.json({ message: FORGOT_PASSWORD_RESPONSE });
+      }
+
       const resetUrlBase = new URL(
         "/reset-password",
-        `${req.protocol}://${req.get("host")}`
+        process.env.FRONTEND_URL
       ).toString();
 
       await passwordRecovery.issuePasswordReset({
@@ -124,7 +150,7 @@ router.post("/forgot-password", async (req, res) => {
 
     return res.json({ message: FORGOT_PASSWORD_RESPONSE });
   } catch (err) {
-    console.error("Forgot password error:", err);
+    console.error("Forgot password error");
     return res.json({ message: FORGOT_PASSWORD_RESPONSE });
   }
 });
@@ -156,7 +182,7 @@ router.post("/reset-password", async (req, res) => {
       message: "Password reset successfully. Please sign in again.",
     });
   } catch (err) {
-    console.error("Reset password error:", err);
+    console.error("Reset password error");
     return res.status(400).json({ error: INVALID_RESET_RESPONSE });
   }
 });
