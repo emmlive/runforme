@@ -579,3 +579,55 @@ test("concurrent reset attempts allow exactly one password and session transitio
   assert.equal(sessionVersionIncrements, 1);
   assert.equal(siblingRevocations, 1);
 });
+test("delivery failure revokes the newly persisted reset token before propagating failure", async () => {
+  const { createPasswordRecoveryService } = loadRecoveryModule();
+  const harness = createHarness();
+
+  harness.delivery.deliverPasswordReset = async (message) => {
+    harness.deliveries.push(message);
+    throw new Error("synthetic provider failure");
+  };
+
+  const service = createPasswordRecoveryService({
+    prisma: harness.prisma,
+    delivery: harness.delivery,
+    now: () => harness.now,
+    randomBytes: harness.randomBytes,
+  });
+
+  await assert.rejects(
+    () =>
+      service.issuePasswordReset({
+        userId: 42,
+        email: "person@example.test",
+        resetUrlBase: "https://example.test/reset-password",
+      }),
+    /synthetic provider failure/
+  );
+
+  assert.equal(
+    harness.persistenceCalls.created.length,
+    1,
+    "the reset token should have been persisted before delivery was attempted"
+  );
+
+  assert.equal(
+    harness.persistenceCalls.revoked.length,
+    2,
+    "delivery failure must add a second revocation mutation for the newly created token"
+  );
+
+  const cleanup =
+    harness.persistenceCalls.revoked[
+      harness.persistenceCalls.revoked.length - 1
+    ];
+
+  assert.equal(cleanup.where.id, 1);
+  assert.equal(cleanup.where.consumedAt, null);
+  assert.equal(cleanup.where.revokedAt, null);
+  assert.ok(cleanup.data.revokedAt instanceof Date);
+  assert.equal(
+    cleanup.data.revokedAt.getTime(),
+    harness.now.getTime()
+  );
+});
