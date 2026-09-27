@@ -4,6 +4,7 @@ import { stripePromise } from "./lib/stripe";
 import { installAuthSession401Handler } from "./lib/authSession";
 
 import Login from "./Login";
+import SignUp from "./SignUp";
 import ForgotPassword from "./ForgotPassword";
 import ResetPassword from "./ResetPassword";
 import Dashboard from "./Dashboard";
@@ -77,6 +78,10 @@ export default function App() {
   ////////////////////////////////////////////////////////
   // â³ LOADING STATE
   ////////////////////////////////////////////////////////
+
+  if (window.location.pathname === "/signup") {
+    return <SignUp />;
+  }
 
   if (window.location.pathname === "/forgot-password") {
     return <ForgotPassword />;

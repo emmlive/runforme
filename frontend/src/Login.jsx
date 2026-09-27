@@ -93,6 +93,13 @@ export default function Login() {
       </button>
 
       <p>
+
+        New to RUNFORME? <a href="/signup">Sign up</a>
+
+      </p>
+
+
+      <p>
         <a href="/forgot-password">Forgot password?</a>
       </p>
     </div>
