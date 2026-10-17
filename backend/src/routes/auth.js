@@ -155,6 +155,36 @@ router.post("/forgot-password", async (req, res) => {
   }
 });
 
+router.get("/recovery-runtime-diagnostic", (req, res) => {
+  const isNonblank = (value) =>
+    typeof value === "string" && value.trim().length > 0;
+
+  const isExplicitlyTrue = (value) =>
+    value === true ||
+    (
+      typeof value === "string" &&
+      value.trim().toLowerCase() === "true"
+    );
+
+  return res.json({
+    recoveryEnabledFlagTrue: isExplicitlyTrue(
+      process.env.RUNFORME_RECOVERY_DELIVERY_ENABLED
+    ),
+    resendApiKeyPresentNonblank: isNonblank(
+      process.env.RESEND_API_KEY
+    ),
+    recoveryFromEmailPresentNonblank: isNonblank(
+      process.env.RECOVERY_FROM_EMAIL
+    ),
+    frontendUrlPresentNonblank: isNonblank(
+      process.env.FRONTEND_URL
+    ),
+    globalFetchPresent:
+      typeof globalThis.fetch === "function",
+    recoveryDeliveryEnabled:
+      recoveryDelivery.isEnabled(),
+  });
+});
 router.post("/reset-password", async (req, res) => {
   try {
     const { token, newPassword } = req.body;
