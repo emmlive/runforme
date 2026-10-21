@@ -185,59 +185,6 @@ router.get("/recovery-runtime-diagnostic", (req, res) => {
       recoveryDelivery.isEnabled(),
   });
 });
-router.get("/database-target-diagnostic", async (req, res) => {
-  const databaseUrl = process.env.DATABASE_URL;
-  const databaseUrlPresent =
-    typeof databaseUrl === "string" &&
-    databaseUrl.trim().length > 0;
-
-  let expectedHostMatch = false;
-  let configuredDatabaseName = null;
-
-  if (databaseUrlPresent) {
-    try {
-      const dbUrl = new URL(databaseUrl);
-
-      expectedHostMatch =
-        dbUrl.hostname === "dpg-da3sn13bc2fs73beib2g-a" ||
-        dbUrl.hostname.startsWith(
-          "dpg-da3sn13bc2fs73beib2g-a."
-        );
-
-      configuredDatabaseName =
-        decodeURIComponent(dbUrl.pathname.replace(/^\/+/, "")) ||
-        null;
-    } catch {
-      expectedHostMatch = false;
-      configuredDatabaseName = null;
-    }
-  }
-
-  let currentDatabase = null;
-
-  try {
-    const rows = await prisma.$queryRaw`
-      SELECT current_database() AS "currentDatabase"
-    `;
-
-    if (
-      Array.isArray(rows) &&
-      rows.length === 1 &&
-      typeof rows[0]?.currentDatabase === "string"
-    ) {
-      currentDatabase = rows[0].currentDatabase;
-    }
-  } catch {
-    currentDatabase = null;
-  }
-
-  return res.json({
-    databaseUrlPresent,
-    expectedHostMatch,
-    configuredDatabaseName,
-    currentDatabase,
-  });
-});
 router.post("/reset-password", async (req, res) => {
   try {
     const { token, newPassword } = req.body;
