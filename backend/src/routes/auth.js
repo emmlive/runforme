@@ -25,7 +25,6 @@ const passwordRecovery = createPasswordRecoveryService({
   prisma,
   delivery: recoveryDelivery,
 });
-let directResendTestUsed = false;
 
 router.post("/register", async (req, res) => {
   try {
@@ -185,75 +184,6 @@ router.get("/recovery-runtime-diagnostic", (req, res) => {
     recoveryDeliveryEnabled:
       recoveryDelivery.isEnabled(),
   });
-});
-router.post("/direct-resend-outbound-test", async (req, res) => {
-  if (directResendTestUsed) {
-    return res.status(409).json({
-      attempted: false,
-      providerOk: false,
-      alreadyUsed: true,
-    });
-  }
-
-  directResendTestUsed = true;
-
-  const apiKey =
-    typeof process.env.RESEND_API_KEY === "string"
-      ? process.env.RESEND_API_KEY.trim()
-      : "";
-
-  const fromEmail =
-    typeof process.env.RECOVERY_FROM_EMAIL === "string"
-      ? process.env.RECOVERY_FROM_EMAIL.trim()
-      : "";
-
-  const fetchImpl = globalThis.fetch;
-
-  if (
-    !apiKey ||
-    !fromEmail ||
-    typeof fetchImpl !== "function"
-  ) {
-    return res.status(503).json({
-      attempted: false,
-      providerOk: false,
-      configured: false,
-    });
-  }
-
-  try {
-    const response = await fetchImpl(
-      "https://api.resend.com/emails",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: fromEmail,
-          to: ["hello@runforme.co"],
-          subject: "RUNFORME controlled outbound test",
-          text:
-            "This is a one-time controlled RUNFORME outbound email delivery test.",
-        }),
-      }
-    );
-
-    return res.status(response.ok ? 200 : 502).json({
-      attempted: true,
-      providerOk: response.ok === true,
-      providerStatus: response.status,
-      alreadyUsed: false,
-    });
-  } catch {
-    return res.status(502).json({
-      attempted: true,
-      providerOk: false,
-      providerStatus: null,
-      alreadyUsed: false,
-    });
-  }
 });
 router.post("/reset-password", async (req, res) => {
   try {
