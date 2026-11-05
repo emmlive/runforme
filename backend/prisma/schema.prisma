@@ -31,6 +31,11 @@ model User {
   ratingsReceived      Rating[]             @relation("RatingsReceived")
   passwordResetTokens  PasswordResetToken[]
 
+  /* RUNNER PAYOUT / CONNECT FOUNDATION */
+  stripeConnectedAccountId String? @unique
+  payoutOnboardingStatus   String  @default("not_started")
+  runnerPayouts            RunnerPayout[]
+
   @@index([role])
 }
 
@@ -88,6 +93,7 @@ model Run {
   requester         User    @relation("RequesterRuns", fields: [requesterId], references: [id])
   offers            Offer[] @relation("RunOffers")
   ratings           Rating[]
+  runnerPayoutRecord RunnerPayout?
 
   @@index([requesterId])
   @@index([assignedRunnerId])
@@ -166,4 +172,27 @@ model StripeWebhookEvent {
 
   @@index([applied])
   @@index([runId])
+}
+
+/* ============================
+   RUNNER PAYOUT LEDGER
+============================ */
+model RunnerPayout {
+  id                 Int      @id @default(autoincrement())
+  runnerId           Int
+  runId              Int      @unique
+  amount             Int
+  currency           String
+  status             String   @default("prepared")
+  idempotencyKey     String   @unique
+  providerTransferId String?  @unique
+  failureCode        String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  runner User @relation(fields: [runnerId], references: [id])
+  run    Run  @relation(fields: [runId], references: [id])
+
+  @@index([runnerId])
+  @@index([status])
 }
