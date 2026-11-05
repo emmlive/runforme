@@ -207,11 +207,85 @@ export default function RunnerDashboard({ user, onLogout }) {
   const [acceptingRunId, setAcceptingRunId] = useState(null);
   const [activeAction, setActiveAction] = useState(null);
   const [mobileSection, setMobileSection] = useState("home");
+  const [payoutOnboarding, setPayoutOnboarding] = useState({
+    connected: false,
+    status: "not_started",
+    transfersEnabled: false,
+    detailsSubmitted: false,
+  });
+  const [payoutOnboardingLoading, setPayoutOnboardingLoading] = useState(false);
+  const [payoutOnboardingError, setPayoutOnboardingError] = useState(null);
 
   const watchIdRef = useRef(null);
   const lastSentRef = useRef(0);
   const acceptingRunIdRef = useRef(null);
   const activeActionRef = useRef(null);
+
+  async function fetchPayoutOnboardingStatus() {
+    setPayoutOnboardingLoading(true);
+
+    try {
+      const res = await apiRequest("/api/runners/payouts/onboarding/status");
+
+      if (res?.success && res.onboarding) {
+        setPayoutOnboarding(res.onboarding);
+        setPayoutOnboardingError(null);
+      } else {
+        setPayoutOnboardingError("Could not load payout setup status.");
+      }
+    } catch (err) {
+      console.error("Payout onboarding status failed:", err);
+      setPayoutOnboardingError(
+        err.message || "Could not load payout setup status."
+      );
+    } finally {
+      setPayoutOnboardingLoading(false);
+    }
+  }
+
+  async function startPayoutOnboarding() {
+    if (payoutOnboardingLoading) return;
+
+    setPayoutOnboardingLoading(true);
+    setPayoutOnboardingError(null);
+
+    try {
+      const res = await apiRequest(
+        "/api/runners/payouts/onboarding/start",
+        { method: "POST" }
+      );
+
+      if (!res?.success || !res.onboardingUrl) {
+        throw new Error("Could not start payout setup.");
+      }
+
+      window.location.assign(res.onboardingUrl);
+    } catch (err) {
+      console.error("Payout onboarding start failed:", err);
+      setPayoutOnboardingError(
+        err.message || "Could not start payout setup."
+      );
+      setPayoutOnboardingLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const payoutReturn = params.get("payout_onboarding");
+
+    if (payoutReturn === "return" || payoutReturn === "refresh") {
+      setMobileSection("earnings");
+      fetchPayoutOnboardingStatus();
+
+      params.delete("payout_onboarding");
+      const query = params.toString();
+      const nextUrl = query
+        ? `${window.location.pathname}?${query}`
+        : window.location.pathname;
+
+      window.history.replaceState({}, "", nextUrl);
+    }
+  }, []);
 
   ////////////////////////////////////////////////////////
   // FETCH RUNS
@@ -899,6 +973,94 @@ export default function RunnerDashboard({ user, onLogout }) {
             </>
           ) : mobileSection === "earnings" ? (
             <>
+              <div
+                className="runner-payout-onboarding-card"
+                style={{
+                  marginTop: 10,
+                  marginBottom: 12,
+                  padding: 14,
+                  borderRadius: 14,
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  background: "rgba(255,255,255,0.05)",
+                }}
+              >
+                <div style={{ opacity: 0.72, fontSize: 12 }}>
+                  Payout setup
+                </div>
+
+                <strong style={{ display: "block", marginTop: 4 }}>
+                  {payoutOnboarding.status === "ready"
+                    ? "Ready to receive payouts"
+                    : payoutOnboarding.status === "restricted"
+                      ? "Action required"
+                      : payoutOnboarding.connected
+                        ? "Finish payout setup"
+                        : "Set up payouts"}
+                </strong>
+
+                <p style={{ marginTop: 8, marginBottom: 10, opacity: 0.78 }}>
+                  Stripe securely collects and verifies your payout details. RUNFORME does not store your bank account information.
+                </p>
+
+                {payoutOnboardingError && (
+                  <p role="alert" style={{ marginTop: 0, color: "#fecaca" }}>
+                    {payoutOnboardingError}
+                  </p>
+                )}
+
+                {payoutOnboarding.status === "ready" ? (
+                  <div style={{ fontSize: 13, color: "#86efac" }}>
+                    Transfers enabled · payout account ready
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={startPayoutOnboarding}
+                    disabled={payoutOnboardingLoading}
+                    aria-busy={payoutOnboardingLoading}
+                    style={{
+                      minHeight: 42,
+                      padding: "10px 14px",
+                      borderRadius: 12,
+                      border: "1px solid rgba(255,255,255,0.24)",
+                      background: "#ffffff",
+                      color: "#111111",
+                      fontWeight: 800,
+                      cursor: payoutOnboardingLoading ? "not-allowed" : "pointer",
+                      opacity: payoutOnboardingLoading ? 0.6 : 1,
+                    }}
+                  >
+                    {payoutOnboardingLoading
+                      ? "Opening Stripe..."
+                      : payoutOnboarding.connected
+                        ? "Continue payout setup"
+                        : "Set up payouts"}
+                  </button>
+                )}
+
+                {payoutOnboarding.connected &&
+                  payoutOnboarding.status !== "ready" && (
+                    <button
+                      type="button"
+                      onClick={fetchPayoutOnboardingStatus}
+                      disabled={payoutOnboardingLoading}
+                      style={{
+                        marginLeft: 8,
+                        minHeight: 42,
+                        padding: "10px 14px",
+                        borderRadius: 12,
+                        border: "1px solid rgba(255,255,255,0.18)",
+                        background: "transparent",
+                        color: "#ffffff",
+                        fontWeight: 700,
+                        cursor: payoutOnboardingLoading ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      Refresh status
+                    </button>
+                  )}
+              </div>
+
               <div
                 className="runner-earnings-summary"
                 style={{
