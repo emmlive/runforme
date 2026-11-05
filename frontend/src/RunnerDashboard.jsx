@@ -766,6 +766,18 @@ export default function RunnerDashboard({ user, onLogout }) {
     (r) => r.status === "completed"
   );
 
+  const completedEarnings = completedRuns.reduce(
+    (total, run) => total + Number(run.runnerPayout ?? run.payout ?? 0),
+    0
+  );
+
+  const readyForPayoutEarnings = completedRuns
+    .filter((run) => run.payoutStatus === "ready_for_payout")
+    .reduce(
+      (total, run) => total + Number(run.runnerPayout ?? run.payout ?? 0),
+      0
+    );
+
   ////////////////////////////////////////////////////////
   // UI
   ////////////////////////////////////////////////////////
@@ -885,11 +897,72 @@ export default function RunnerDashboard({ user, onLogout }) {
                 </div>
               ))}
             </>
+          ) : mobileSection === "earnings" ? (
+            <>
+              <div
+                className="runner-earnings-summary"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                  gap: 10,
+                  marginTop: 10,
+                }}
+              >
+                <div
+                  style={{
+                    padding: 12,
+                    borderRadius: 12,
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    background: "rgba(255,255,255,0.05)",
+                  }}
+                >
+                  <div style={{ opacity: 0.72, fontSize: 12 }}>Completed earnings</div>
+                  <strong style={{ display: "block", marginTop: 4, fontSize: 22 }}>
+                    ${completedEarnings}
+                  </strong>
+                </div>
+
+                <div
+                  style={{
+                    padding: 12,
+                    borderRadius: 12,
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    background: "rgba(255,255,255,0.05)",
+                  }}
+                >
+                  <div style={{ opacity: 0.72, fontSize: 12 }}>Ready for payout</div>
+                  <strong style={{ display: "block", marginTop: 4, fontSize: 22 }}>
+                    ${readyForPayoutEarnings}
+                  </strong>
+                </div>
+              </div>
+
+              <p style={{ marginTop: 12, opacity: 0.78 }}>
+                Ready for payout means the run payment was captured and the runner payout is eligible for the payout step. It does not mean a payout transfer has been sent yet.
+              </p>
+
+              {completedRuns.slice(0, 5).map((run) => (
+                <div
+                  key={run.id}
+                  className="runner-earnings-history-card"
+                  style={{
+                    marginTop: 10,
+                    padding: 12,
+                    borderRadius: 12,
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    background: "rgba(255,255,255,0.05)",
+                  }}
+                >
+                  <strong>{run.item || "Completed run"}</strong>
+                  <div style={{ marginTop: 6, opacity: 0.75 }}>
+                    Earned ${Number(run.runnerPayout ?? run.payout ?? 0)} · {String(run.payoutStatus || "not_started").replaceAll("_", " ")}
+                  </div>
+                </div>
+              ))}
+            </>
           ) : (
             <p>
-              {mobileSection === "earnings"
-                ? "Earnings details are not available in this checkpoint. Your run payout will continue to appear on available offers."
-                : "Menu settings are not available in this checkpoint. Use Home to return to your run dashboard."}
+              Menu settings are not available in this checkpoint. Use Home to return to your run dashboard.
             </p>
           )}
 
