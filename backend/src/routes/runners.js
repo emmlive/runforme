@@ -1,9 +1,21 @@
 const express = require("express");
+const prisma = require("../config/db");
 const auth = require("../middleware/auth");
+const {
+  ensurePendingOffersForRunner,
+} = require("../services/runnerDispatchService");
 
 const router = express.Router();
 
 console.log("📍 ACTIVE JS RUNNERS ROUTE LOADED");
+
+function redactRunForRunner(run) {
+  if (!run) return run;
+
+  const safeRun = { ...run };
+  delete safeRun.deliveryPin;
+  return safeRun;
+}
 
 /* ============================
    RUNNER STATUS
@@ -29,6 +41,13 @@ router.post("/status", auth, async (req, res) => {
       });
     }
 
+    const releasedOffers = isOnline
+      ? await ensurePendingOffersForRunner({
+          prisma,
+          runnerId: req.user.id,
+        })
+      : [];
+
     const payload = {
       runnerId: req.user.id,
       online: isOnline,
@@ -41,11 +60,22 @@ router.post("/status", auth, async (req, res) => {
     if (io) {
       io.emit("runner.status", payload);
       io.to(`runner:${req.user.id}`).emit("runner.status.updated", payload);
+
+      releasedOffers.forEach(({ run, offer }) => {
+        io.to(`runner:${req.user.id}`).emit("run.offer", {
+          run: {
+            ...redactRunForRunner(run),
+            offerId: offer.id,
+          },
+          offer,
+        });
+      });
     }
 
     return res.json({
       success: true,
       runner: payload,
+      offersCreated: releasedOffers.length,
     });
   } catch (err) {
     console.error("Runner status update error:", err);
