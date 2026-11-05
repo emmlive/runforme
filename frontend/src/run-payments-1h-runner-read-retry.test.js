@@ -119,3 +119,31 @@ test("runner logical application failures use safe generic API copy", () => {
     "runner success:false application failures must not expose raw backend error text"
   );
 });
+
+test("going online refreshes available runs from the canonical read path", () => {
+  const startMarker = "async function toggleOnline() {";
+  const endMarker = "////////////////////////////////////////////////////////";
+
+  const start = runnerSource.indexOf(startMarker);
+  assert.notEqual(start, -1, "RunnerDashboard must retain toggleOnline");
+
+  const end = runnerSource.indexOf(
+    endMarker,
+    start + startMarker.length
+  );
+  assert.notEqual(end, -1, "toggleOnline must retain its section boundary");
+
+  const toggleOnline = runnerSource.slice(start, end);
+
+  assert.match(
+    toggleOnline,
+    /if\s*\(nextOnline\)\s*\{[\s\S]*?await\s+fetchRuns\(\)/,
+    "successful Online transition must refresh /api/runs so missed socket offers are recovered"
+  );
+
+  assert.doesNotMatch(
+    toggleOnline,
+    /else\s*\{[\s\S]*?await\s+fetchRuns\(\)/,
+    "going Offline must not trigger an unnecessary available-runs refresh"
+  );
+});
