@@ -231,7 +231,8 @@ export default function RunnerDashboard({ user, onLogout }) {
               r.status === "open" ||
               r.status === "assigned" ||
               r.status === "arrived" ||
-              r.status === "in_progress"
+              r.status === "in_progress" ||
+              r.status === "completed"
             ) {
               map.set(r.id, r);
             }
@@ -719,6 +720,7 @@ export default function RunnerDashboard({ user, onLogout }) {
 
       if (res.success) {
         setActionMessage({ type: "success", text: "Run completed." });
+        setAcceptMessage(null);
         setRuns((prev) =>
           prev.map((r) =>
             r.id === id ? { ...r, ...res.run, status: "completed" } : r
@@ -759,6 +761,10 @@ export default function RunnerDashboard({ user, onLogout }) {
 
   const availableRuns = runs.filter(
     (r) => r.status === "open" && r.offerId
+  );
+
+  const completedRuns = runs.filter(
+    (r) => r.status === "completed"
   );
 
   ////////////////////////////////////////////////////////
@@ -852,13 +858,42 @@ export default function RunnerDashboard({ user, onLogout }) {
       {mobileSection !== "home" && (
         <section className="runner-mobile-section-sheet" aria-live="polite">
           <div className="runner-mobile-section-sheet__eyebrow">RUNFORME / {mobileSection}</div>
-          <p>
-            {mobileSection === "earnings"
-              ? "Earnings details are not available in this checkpoint. Your run payout will continue to appear on available offers."
-              : mobileSection === "activity"
-                ? "Activity history is not available in this checkpoint. Your current run status remains on Home."
+
+          {mobileSection === "activity" ? (
+            <>
+              <p>
+                {completedRuns.length > 0
+                  ? `${completedRuns.length} completed run${completedRuns.length === 1 ? "" : "s"}.`
+                  : "No completed runs yet."}
+              </p>
+
+              {completedRuns.slice(0, 5).map((run) => (
+                <div
+                  key={run.id}
+                  className="runner-activity-history-card"
+                  style={{
+                    marginTop: 10,
+                    padding: 12,
+                    borderRadius: 12,
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    background: "rgba(255,255,255,0.05)",
+                  }}
+                >
+                  <strong>{run.item || "Completed run"}</strong>
+                  <div style={{ marginTop: 6, opacity: 0.75 }}>
+                    Completed · Earned ${Number(run.runnerPayout ?? run.payout ?? 0)}
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : (
+            <p>
+              {mobileSection === "earnings"
+                ? "Earnings details are not available in this checkpoint. Your run payout will continue to appear on available offers."
                 : "Menu settings are not available in this checkpoint. Use Home to return to your run dashboard."}
-          </p>
+            </p>
+          )}
+
           <button type="button" onClick={() => setMobileSection("home")}>Return to Home</button>
         </section>
       )}
@@ -1230,7 +1265,7 @@ export default function RunnerDashboard({ user, onLogout }) {
     checklistItems: runnerCommandChecklistItems,
   } = deriveRunnerCommandData({
     availableRuns: Array.isArray(availableRuns) ? availableRuns : [],
-    completedRuns: [],
+    completedRuns,
     focusedRun: activeRun,
     statusLabel: online ? "Online" : "Offline",
   });
@@ -1330,7 +1365,7 @@ return (
           checklistItems: runnerCommandChecklistItems,
         } = deriveRunnerCommandData({
           availableRuns: Array.isArray(availableRuns) ? availableRuns : [],
-          completedRuns: [],
+          completedRuns,
           focusedRun: null,
           statusLabel: online ? "Online" : "Offline",
         });
