@@ -1,5 +1,6 @@
 const express = require("express");
 const prisma = require("../config/db");
+const { getAllowedOrigins } = require("../config/cors");
 const auth = require("../middleware/auth");
 const {
   ensurePendingOffersForRunner,
@@ -161,9 +162,22 @@ router.post("/payouts/onboarding/start", auth, async (req, res) => {
       });
     }
 
-    const frontendUrl = String(process.env.FRONTEND_URL || "")
+    const configuredFrontendUrl = String(process.env.FRONTEND_URL || "")
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean)[0]
+      ?.replace(/\/$/, "");
+
+    const requestOrigin = String(req.get("origin") || "")
       .trim()
       .replace(/\/$/, "");
+
+    const allowedOrigins = getAllowedOrigins();
+
+    const frontendUrl =
+      requestOrigin && allowedOrigins.has(requestOrigin)
+        ? requestOrigin
+        : configuredFrontendUrl;
 
     if (!frontendUrl) {
       throw new Error("Frontend URL is not configured");
