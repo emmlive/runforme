@@ -44,3 +44,10 @@ test("ready onboarding requires active transfer capability", () => {
   assert.match(onboarding, /account\.capabilities\?\.transfers\s*===\s*"active"/);
   assert.match(onboarding, /account\.details_submitted\s*===\s*true/);
 });
+
+test("onboarding return origin must be allowlisted before reuse", () => {
+  assert.match(runners, /getAllowedOrigins/);
+  assert.match(runners, /req\.get\("origin"\)/);
+  assert.match(runners, /allowedOrigins\.has\(requestOrigin\)/);
+  assert.doesNotMatch(runners, /req\.body\.origin|req\.query\.origin/);
+});
