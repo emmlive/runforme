@@ -405,6 +405,7 @@ export default function RunnerDashboard({ user, onLogout }) {
         setStatusMessage(
           navigator.geolocation ? "Online" : "Online - GPS unavailable"
         );
+        await fetchRuns();
       } else {
         setStatusMessage("Offline");
         stopGpsStreaming();
