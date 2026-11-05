@@ -308,7 +308,7 @@ router.get("/", auth, async (req, res) => {
       const assignedRuns = await prisma.run.findMany({
         where: {
           assignedRunnerId: userId,
-          status: { in: ["assigned", "arrived", "in_progress"] },
+          status: { in: ["assigned", "arrived", "in_progress", "completed"] },
         },
         orderBy: { createdAt: "desc" },
       });
