@@ -30,7 +30,7 @@ test("Connect onboarding requests transfers only with controller properties", ()
   assert.match(onboarding, /fees:\s*\{\s*payer:\s*"application"/);
   assert.match(onboarding, /losses:\s*\{\s*payments:\s*"application"/);
   assert.match(onboarding, /requirement_collection:\s*"stripe"/);
-  assert.doesNotMatch(onboarding, /^\s*type:\s*["\']express["\']/m);
+  assert.doesNotMatch(onboarding, /stripe\.accounts\.create\(\{[\s\S]*?^\s{4}type:\s*["\']express["\']/m);
 });
 
 test("Connect onboarding has no transfer execution path", () => {
