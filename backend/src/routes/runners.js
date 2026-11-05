@@ -7,6 +7,10 @@ const {
 const {
   prepareRunnerPayout,
 } = require("../services/runnerPayoutFoundation");
+const {
+  createRunnerOnboardingLink,
+  refreshRunnerOnboardingStatus,
+} = require("../services/runnerConnectOnboarding");
 
 const router = express.Router();
 
@@ -141,6 +145,99 @@ router.post("/location", auth, async (req, res) => {
     return res.status(500).json({
       success: false,
       error: "Failed to update runner location",
+    });
+  }
+});
+
+/* ============================
+   RUNNER STRIPE CONNECT ONBOARDING
+============================ */
+router.post("/payouts/onboarding/start", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "runner") {
+      return res.status(403).json({
+        success: false,
+        error: "Only runners can set up payouts",
+      });
+    }
+
+    const frontendUrl = String(process.env.FRONTEND_URL || "")
+      .trim()
+      .replace(/\/$/, "");
+
+    if (!frontendUrl) {
+      throw new Error("Frontend URL is not configured");
+    }
+
+    const runner = await prisma.user.findUnique({
+      where: { id: req.user.id },
+    });
+
+    if (!runner) {
+      return res.status(404).json({
+        success: false,
+        error: "Runner not found",
+      });
+    }
+
+    const result = await createRunnerOnboardingLink({
+      runner,
+      prisma,
+      returnUrl: `${frontendUrl}/?payout_onboarding=return`,
+      refreshUrl: `${frontendUrl}/?payout_onboarding=refresh`,
+    });
+
+    return res.json({
+      success: true,
+      onboardingUrl: result.url,
+      onboarding: {
+        connected: true,
+        status: result.status,
+      },
+    });
+  } catch (err) {
+    console.error("Runner payout onboarding start error:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to start payout onboarding",
+    });
+  }
+});
+
+router.get("/payouts/onboarding/status", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "runner") {
+      return res.status(403).json({
+        success: false,
+        error: "Only runners can view payout onboarding status",
+      });
+    }
+
+    const runner = await prisma.user.findUnique({
+      where: { id: req.user.id },
+    });
+
+    if (!runner) {
+      return res.status(404).json({
+        success: false,
+        error: "Runner not found",
+      });
+    }
+
+    const onboarding = await refreshRunnerOnboardingStatus({
+      runner,
+      prisma,
+    });
+
+    return res.json({
+      success: true,
+      onboarding,
+    });
+  } catch (err) {
+    console.error("Runner payout onboarding status error:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to refresh payout onboarding status",
     });
   }
 });
