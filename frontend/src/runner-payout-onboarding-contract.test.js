@@ -27,3 +27,14 @@ test("RUN-PAYOUTS-1B does not expose cash-out execution", () => {
   assert.doesNotMatch(source, /\/payouts\/.*\/execute/);
   assert.doesNotMatch(source, /\/payouts\/.*\/cash/);
 });
+
+test("runner Earnings refreshes payout onboarding status when opened", () => {
+  assert.match(
+    source,
+    /if \(id === "earnings"\) \{\s*fetchPayoutOnboardingStatus\(\);\s*\}/
+  );
+  assert.match(
+    source,
+    /if \(mobileSection === "earnings"\) \{\s*fetchPayoutOnboardingStatus\(\);\s*\}/
+  );
+});
