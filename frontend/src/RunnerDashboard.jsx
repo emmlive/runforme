@@ -342,7 +342,6 @@ export default function RunnerDashboard({ user, onLogout }) {
       setRuns((prev) =>
         prev.filter(
           (r) =>
-            r.status !== "completed" &&
             r.status !== "cancelled"
         )
       );
