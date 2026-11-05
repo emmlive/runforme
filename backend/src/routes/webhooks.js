@@ -21,12 +21,23 @@ router.post(
   "/stripe",
   express.raw({ type: "application/json" }),
   async (req, res) => {
-    assertPaymentRuntimeAuthorized({
-      nodeEnv: process.env.NODE_ENV,
-      stripeSecretKey: process.env.STRIPE_SECRET_KEY,
-      livePaymentsAuthorized:
-        process.env.RUNFORME_LIVE_PAYMENTS_AUTHORIZED,
-    });
+    try {
+      assertPaymentRuntimeAuthorized({
+        nodeEnv: process.env.NODE_ENV,
+        stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+        livePaymentsAuthorized:
+          process.env.RUNFORME_LIVE_PAYMENTS_AUTHORIZED,
+      });
+    } catch (err) {
+      console.error(
+        "Stripe webhook payment runtime authorization failed:",
+        err.message
+      );
+
+      return res.status(503).json({
+        error: "Payment runtime unavailable",
+      });
+    }
 
     const stripe = require("stripe")(
       process.env.STRIPE_SECRET_KEY
