@@ -270,6 +270,12 @@ export default function RunnerDashboard({ user, onLogout }) {
   }
 
   useEffect(() => {
+    if (mobileSection === "earnings") {
+      fetchPayoutOnboardingStatus();
+    }
+  }, [mobileSection]);
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const payoutReturn = params.get("payout_onboarding");
 
@@ -932,7 +938,13 @@ export default function RunnerDashboard({ user, onLogout }) {
             type="button"
             className={mobileSection === id ? "runner-mobile-nav__item runner-mobile-nav__item--selected" : "runner-mobile-nav__item"}
             aria-current={mobileSection === id ? "page" : undefined}
-            onClick={() => setMobileSection(id)}
+            onClick={() => {
+              setMobileSection(id);
+
+              if (id === "earnings") {
+                fetchPayoutOnboardingStatus();
+              }
+            }}
           >
             <RunnerMobileNavIcon name={id} />
             <span>{label}</span>
