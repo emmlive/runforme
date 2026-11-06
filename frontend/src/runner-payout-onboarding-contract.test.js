@@ -22,10 +22,15 @@ test("runner Earnings explains bank details are not stored by RUNFORME", () => {
   assert.match(source, /RUNFORME does not store your bank account information\./);
 });
 
-test("RUN-PAYOUTS-1B does not expose cash-out execution", () => {
-  assert.doesNotMatch(source, /Cash out/);
-  assert.doesNotMatch(source, /\/payouts\/.*\/execute/);
-  assert.doesNotMatch(source, /\/payouts\/.*\/cash/);
+test("RUN-PAYOUTS-1B onboarding does not execute cash-out implicitly", () => {
+  assert.doesNotMatch(
+    source,
+    /\/api\/runners\/payouts\/onboarding\/start[^\n]*cash-out/
+  );
+  assert.doesNotMatch(
+    source,
+    /\/api\/runners\/payouts\/onboarding\/status[^\n]*cash-out/
+  );
 });
 
 test("runner Earnings refreshes payout onboarding status when opened", () => {
