@@ -126,17 +126,64 @@ async function reconcileTransferEvent({
     };
   }
 
-  const payout = await prisma.runnerPayout.findUnique({
+  let payout = await prisma.runnerPayout.findUnique({
     where: {
       providerTransferId: transferId,
     },
   });
 
   if (!payout) {
+    const runnerPayoutId = Number(
+      event?.data?.object?.metadata?.runnerPayoutId
+    );
+
+    if (Number.isInteger(runnerPayoutId) && runnerPayoutId > 0) {
+      payout = await prisma.runnerPayout.findUnique({
+        where: {
+          id: runnerPayoutId,
+        },
+      });
+    }
+  }
+
+  if (!payout) {
     return {
       deduped: false,
       applied: false,
       reason: "Runner payout mapping not found for Transfer",
+    };
+  }
+
+  const metadataRunId = Number(
+    event?.data?.object?.metadata?.runId
+  );
+  const metadataRunnerId = Number(
+    event?.data?.object?.metadata?.runnerId
+  );
+
+  if (
+    (Number.isInteger(metadataRunId) &&
+      metadataRunId > 0 &&
+      metadataRunId !== payout.runId) ||
+    (Number.isInteger(metadataRunnerId) &&
+      metadataRunnerId > 0 &&
+      metadataRunnerId !== payout.runnerId)
+  ) {
+    return {
+      deduped: false,
+      applied: false,
+      reason: "Transfer metadata does not match canonical runner payout",
+    };
+  }
+
+  if (
+    payout.providerTransferId &&
+    payout.providerTransferId !== transferId
+  ) {
+    return {
+      deduped: false,
+      applied: false,
+      reason: "Transfer id does not match canonical runner payout",
     };
   }
 
@@ -191,6 +238,7 @@ async function reconcileTransferEvent({
     data: {
       status: state.payoutStatus,
       failureCode: state.failureCode,
+      providerTransferId: payout.providerTransferId || transferId,
     },
   });
 
