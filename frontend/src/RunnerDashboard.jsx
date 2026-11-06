@@ -215,6 +215,8 @@ export default function RunnerDashboard({ user, onLogout }) {
   });
   const [payoutOnboardingLoading, setPayoutOnboardingLoading] = useState(false);
   const [payoutOnboardingError, setPayoutOnboardingError] = useState(null);
+  const [cashOutRunId, setCashOutRunId] = useState(null);
+  const [cashOutMessage, setCashOutMessage] = useState(null);
 
   const watchIdRef = useRef(null);
   const lastSentRef = useRef(0);
@@ -266,6 +268,54 @@ export default function RunnerDashboard({ user, onLogout }) {
         err.message || "Could not start payout setup."
       );
       setPayoutOnboardingLoading(false);
+    }
+  }
+
+  async function cashOutRun(run) {
+    if (
+      !run?.id ||
+      cashOutRunId ||
+      payoutOnboarding.status !== "ready" ||
+      run.payoutStatus !== "ready_for_payout"
+    ) {
+      return;
+    }
+
+    setCashOutRunId(run.id);
+    setCashOutMessage(null);
+
+    try {
+      const res = await apiRequest(
+        `/api/runners/payouts/${run.id}/cash-out`,
+        { method: "POST" }
+      );
+
+      if (!res?.success || res.payout?.status !== "transferred") {
+        throw new Error("Cash out did not complete.");
+      }
+
+      setRuns((prev) =>
+        prev.map((currentRun) =>
+          currentRun.id === run.id
+            ? { ...currentRun, payoutStatus: "transferred" }
+            : currentRun
+        )
+      );
+
+      setCashOutMessage({
+        type: "success",
+        text: res.alreadyTransferred
+          ? "Payout was already transferred."
+          : `Cash out sent: ${Number(res.payout.amount || 0)}.`,
+      });
+    } catch (err) {
+      console.error("Runner cash out failed:", err);
+      setCashOutMessage({
+        type: "error",
+        text: err.message || "Could not cash out this payout.",
+      });
+    } finally {
+      setCashOutRunId(null);
     }
   }
 
@@ -1115,6 +1165,21 @@ export default function RunnerDashboard({ user, onLogout }) {
                 Ready for payout means the run payment was captured and the runner payout is eligible for the payout step. It does not mean a payout transfer has been sent yet.
               </p>
 
+              {cashOutMessage && (
+                <p
+                  role="status"
+                  style={{
+                    marginTop: 10,
+                    color:
+                      cashOutMessage.type === "success"
+                        ? "#86efac"
+                        : "#fecaca",
+                  }}
+                >
+                  {cashOutMessage.text}
+                </p>
+              )}
+
               {completedRuns.slice(0, 5).map((run) => (
                 <div
                   key={run.id}
@@ -1131,6 +1196,48 @@ export default function RunnerDashboard({ user, onLogout }) {
                   <div style={{ marginTop: 6, opacity: 0.75 }}>
                     Earned ${Number(run.runnerPayout ?? run.payout ?? 0)} · {String(run.payoutStatus || "not_started").replaceAll("_", " ")}
                   </div>
+
+                  {payoutOnboarding.status === "ready" &&
+                    run.payoutStatus === "ready_for_payout" && (
+                      <button
+                        type="button"
+                        onClick={() => cashOutRun(run)}
+                        disabled={cashOutRunId === run.id}
+                        aria-busy={cashOutRunId === run.id}
+                        style={{
+                          marginTop: 10,
+                          minHeight: 40,
+                          padding: "9px 14px",
+                          borderRadius: 12,
+                          border: "none",
+                          background: "#ffffff",
+                          color: "#111111",
+                          fontWeight: 800,
+                          cursor:
+                            cashOutRunId === run.id
+                              ? "not-allowed"
+                              : "pointer",
+                          opacity: cashOutRunId === run.id ? 0.6 : 1,
+                        }}
+                      >
+                        {cashOutRunId === run.id
+                          ? "Cashing out..."
+                          : `Cash out ${Number(run.runnerPayout ?? run.payout ?? 0)}`}
+                      </button>
+                    )}
+
+                  {run.payoutStatus === "transferred" && (
+                    <div
+                      style={{
+                        marginTop: 8,
+                        color: "#86efac",
+                        fontSize: 13,
+                        fontWeight: 700,
+                      }}
+                    >
+                      Transfer sent
+                    </div>
+                  )}
                 </div>
               ))}
             </>
