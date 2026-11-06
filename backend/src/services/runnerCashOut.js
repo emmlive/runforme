@@ -43,10 +43,44 @@ async function executeRunnerCashOut({
   currency,
   stripe = getStripeClient(),
 }) {
+  requireDependency(prisma?.runnerPayout?.findUnique, "prisma.runnerPayout.findUnique");
   requireDependency(prisma?.runnerPayout?.update, "prisma.runnerPayout.update");
   requireDependency(prisma?.run?.update, "prisma.run.update");
   requireDependency(stripe?.paymentIntents?.retrieve, "stripe.paymentIntents.retrieve");
   requireDependency(stripe?.transfers?.create, "stripe.transfers.create");
+
+  const existing = await prisma.runnerPayout.findUnique({
+    where: { runId: run.id },
+  });
+
+  if (
+    existing?.status === "transferred" &&
+    existing.providerTransferId
+  ) {
+    if (
+      existing.runnerId !== runner.id ||
+      existing.amount !== run.runnerPayout ||
+      existing.currency !== String(currency || "").trim().toLowerCase()
+    ) {
+      throw new Error("Existing transferred payout does not match canonical run payout");
+    }
+
+    if (run.assignedRunnerId !== runner.id || run.status !== "completed") {
+      throw new Error("Transferred payout does not belong to this completed runner run");
+    }
+
+    if (run.payoutStatus !== "transferred") {
+      await prisma.run.update({
+        where: { id: run.id },
+        data: { payoutStatus: "transferred" },
+      });
+    }
+
+    return {
+      payout: existing,
+      alreadyTransferred: true,
+    };
+  }
 
   const prepared = await prepareRunnerPayout({
     prisma,
@@ -56,23 +90,6 @@ async function executeRunnerCashOut({
   });
 
   let payout = prepared.payout;
-
-  if (
-    payout.status === "transferred" &&
-    payout.providerTransferId
-  ) {
-    if (run.payoutStatus !== "transferred") {
-      await prisma.run.update({
-        where: { id: run.id },
-        data: { payoutStatus: "transferred" },
-      });
-    }
-
-    return {
-      payout,
-      alreadyTransferred: true,
-    };
-  }
 
   if (!run.paymentIntentId) {
     throw new Error("Captured PaymentIntent is required for runner payout");
