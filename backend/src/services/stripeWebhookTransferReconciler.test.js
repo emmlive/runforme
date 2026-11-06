@@ -12,6 +12,7 @@ function transferEvent({
   amount = 500,
   amountReversed = 0,
   reversed = false,
+  metadata = {},
 } = {}) {
   return {
     id,
@@ -22,6 +23,7 @@ function transferEvent({
         amount,
         amount_reversed: amountReversed,
         reversed,
+        metadata,
       },
     },
   };
@@ -86,10 +88,21 @@ function createTransferHarness({
       async findUnique(args) {
         calls.payoutFindUnique.push(args);
 
+        if (!storedPayout) {
+          return null;
+        }
+
         if (
-          storedPayout &&
-          args?.where?.providerTransferId ===
+          args?.where?.providerTransferId &&
+          args.where.providerTransferId ===
             storedPayout.providerTransferId
+        ) {
+          return { ...storedPayout };
+        }
+
+        if (
+          args?.where?.id &&
+          args.where.id === storedPayout.id
         ) {
           return { ...storedPayout };
         }
@@ -290,6 +303,100 @@ test("unmapped transfer event cannot mutate unrelated payout", async () => {
 
   assert.equal(result.applied, false);
   assert.match(result.reason, /mapping|not found/i);
+  assert.equal(harness.calls.payoutUpdate.length, 0);
+  assert.equal(harness.calls.runUpdate.length, 0);
+});
+
+test("transfer.created race falls back to canonical runnerPayoutId metadata", async () => {
+  const event = transferEvent({
+    id: "evt_transfer_race",
+    type: "transfer.created",
+    transferId: "tr_race",
+    metadata: {
+      runnerPayoutId: "1",
+      runId: "3",
+      runnerId: "12",
+    },
+  });
+
+  const harness = createTransferHarness({
+    payout: {
+      id: 1,
+      runnerId: 12,
+      runId: 3,
+      amount: 5,
+      currency: "usd",
+      status: "prepared",
+      providerTransferId: null,
+      failureCode: null,
+    },
+    run: {
+      id: 3,
+      payoutStatus: "ready_for_payout",
+    },
+  });
+
+  const result = await reconcileStripeEvent({
+    event,
+    prisma: harness.prisma,
+  });
+
+  assert.equal(result.applied, true);
+  assert.equal(
+    harness.getPayout().providerTransferId,
+    "tr_race"
+  );
+  assert.equal(
+    harness.getPayout().status,
+    "transferred"
+  );
+  assert.equal(
+    harness.getRun().payoutStatus,
+    "transferred"
+  );
+  assert.equal(
+    harness.calls.payoutFindUnique.length,
+    2,
+    "reconciler should try providerTransferId first, then canonical payout id"
+  );
+});
+
+test("transfer metadata mismatch fails closed without payout mutation", async () => {
+  const event = transferEvent({
+    id: "evt_transfer_bad_metadata",
+    type: "transfer.created",
+    transferId: "tr_bad_metadata",
+    metadata: {
+      runnerPayoutId: "1",
+      runId: "999",
+      runnerId: "12",
+    },
+  });
+
+  const harness = createTransferHarness({
+    payout: {
+      id: 1,
+      runnerId: 12,
+      runId: 3,
+      amount: 5,
+      currency: "usd",
+      status: "prepared",
+      providerTransferId: null,
+      failureCode: null,
+    },
+    run: {
+      id: 3,
+      payoutStatus: "ready_for_payout",
+    },
+  });
+
+  const result = await reconcileStripeEvent({
+    event,
+    prisma: harness.prisma,
+  });
+
+  assert.equal(result.applied, false);
+  assert.match(result.reason, /metadata.*match/i);
   assert.equal(harness.calls.payoutUpdate.length, 0);
   assert.equal(harness.calls.runUpdate.length, 0);
 });
