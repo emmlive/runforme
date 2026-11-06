@@ -4,6 +4,12 @@
   "payment_intent.canceled",
 ]);
 
+const SUPPORTED_TRANSFER_EVENTS = new Set([
+  "transfer.created",
+  "transfer.updated",
+  "transfer.reversed",
+]);
+
 function requireDependency(value, name) {
   if (typeof value !== "function") {
     throw new Error(`${name} is required`);
@@ -66,6 +72,115 @@ async function markEventApplied({
       applied: true,
     },
   });
+}
+
+
+function transferStateForEvent({ event, payout }) {
+  const transfer = event?.data?.object || {};
+
+  if (event.type === "transfer.reversed") {
+    const amountReversed = Number(transfer.amount_reversed || 0);
+    const payoutMinorUnits = Number(payout.amount || 0) * 100;
+    const fullyReversed =
+      transfer.reversed === true ||
+      (payoutMinorUnits > 0 && amountReversed >= payoutMinorUnits);
+
+    return fullyReversed
+      ? {
+          payoutStatus: "reversed",
+          failureCode: "stripe_transfer_reversed",
+        }
+      : {
+          payoutStatus: "partially_reversed",
+          failureCode: "stripe_transfer_partially_reversed",
+        };
+  }
+
+  return {
+    payoutStatus: "transferred",
+    failureCode: null,
+  };
+}
+
+async function reconcileTransferEvent({
+  event,
+  prisma,
+}) {
+  requireDependency(
+    prisma?.runnerPayout?.findUnique,
+    "prisma.runnerPayout.findUnique"
+  );
+
+  requireDependency(
+    prisma?.runnerPayout?.update,
+    "prisma.runnerPayout.update"
+  );
+
+  const transferId = event?.data?.object?.id;
+
+  if (!transferId) {
+    return {
+      deduped: false,
+      applied: false,
+      reason: "Transfer mapping not found",
+    };
+  }
+
+  const payout = await prisma.runnerPayout.findUnique({
+    where: {
+      providerTransferId: transferId,
+    },
+  });
+
+  if (!payout) {
+    return {
+      deduped: false,
+      applied: false,
+      reason: "Runner payout mapping not found for Transfer",
+    };
+  }
+
+  const state = transferStateForEvent({
+    event,
+    payout,
+  });
+
+  const updatedPayout = await prisma.runnerPayout.update({
+    where: {
+      id: payout.id,
+    },
+    data: {
+      status: state.payoutStatus,
+      failureCode: state.failureCode,
+    },
+  });
+
+  if (
+    event.type === "transfer.reversed" ||
+    payout.status !== "reversed"
+  ) {
+    await prisma.run.update({
+      where: {
+        id: payout.runId,
+      },
+      data: {
+        payoutStatus: state.payoutStatus,
+      },
+    });
+  }
+
+  await markEventApplied({
+    prisma,
+    eventId: event.id,
+    runId: payout.runId,
+  });
+
+  return {
+    deduped: false,
+    applied: true,
+    reason: "Stripe Transfer event reconciled",
+    payout: updatedPayout,
+  };
 }
 
 async function reconcileStripeEvent({
@@ -139,6 +254,13 @@ async function reconcileStripeEvent({
 
       return duplicateResult();
     }
+  }
+
+  if (SUPPORTED_TRANSFER_EVENTS.has(event.type)) {
+    return reconcileTransferEvent({
+      event,
+      prisma,
+    });
   }
 
   if (!SUPPORTED_PAYMENT_INTENT_EVENTS.has(event.type)) {
