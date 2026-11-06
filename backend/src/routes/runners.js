@@ -9,6 +9,9 @@ const {
   prepareRunnerPayout,
 } = require("../services/runnerPayoutFoundation");
 const {
+  executeRunnerCashOut,
+} = require("../services/runnerCashOut");
+const {
   createRunnerOnboardingLink,
   refreshRunnerOnboardingStatus,
 } = require("../services/runnerConnectOnboarding");
@@ -443,6 +446,97 @@ router.post("/payouts/:runId/prepare", auth, async (req, res) => {
     return res.status(500).json({
       success: false,
       error: "Failed to prepare runner payout",
+    });
+  }
+});
+
+
+router.post("/payouts/:runId/cash-out", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "runner") {
+      return res.status(403).json({
+        success: false,
+        error: "Only runners can cash out payouts",
+      });
+    }
+
+    const runId = Number(req.params.runId);
+
+    if (!Number.isInteger(runId) || runId <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid run id",
+      });
+    }
+
+    const [runner, run] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: req.user.id },
+      }),
+      prisma.run.findUnique({
+        where: { id: runId },
+      }),
+    ]);
+
+    if (!runner || !run) {
+      return res.status(404).json({
+        success: false,
+        error: "Runner or run not found",
+      });
+    }
+
+    const result = await executeRunnerCashOut({
+      prisma,
+      runner,
+      run,
+      currency: process.env.STRIPE_CURRENCY,
+    });
+
+    return res.json({
+      success: true,
+      alreadyTransferred: result.alreadyTransferred,
+      transferExecuted: !result.alreadyTransferred,
+      payout: {
+        id: result.payout.id,
+        runId: result.payout.runId,
+        amount: result.payout.amount,
+        currency: result.payout.currency,
+        status: result.payout.status,
+        providerTransferId: result.payout.providerTransferId,
+      },
+    });
+  } catch (err) {
+    const message = String(err?.message || "");
+
+    if (
+      message.includes("not assigned") ||
+      message.includes("Only runner accounts") ||
+      message.includes("does not belong")
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: "Cash out is not available for this runner",
+      });
+    }
+
+    if (
+      message.includes("onboarding") ||
+      message.includes("not ready") ||
+      message.includes("must be completed") ||
+      message.includes("must be captured") ||
+      message.includes("not ready for payout") ||
+      message.includes("PaymentIntent")
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: message,
+      });
+    }
+
+    console.error("Runner cash-out error:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to cash out runner payout",
     });
   }
 });
