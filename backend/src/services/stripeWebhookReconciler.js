@@ -140,10 +140,49 @@ async function reconcileTransferEvent({
     };
   }
 
+  if (
+    event.type !== "transfer.reversed" &&
+    (
+      payout.status === "reversed" ||
+      payout.status === "partially_reversed"
+    )
+  ) {
+    await markEventApplied({
+      prisma,
+      eventId: event.id,
+      runId: payout.runId,
+    });
+
+    return {
+      deduped: false,
+      applied: true,
+      reason: "Stripe Transfer event recorded without regressing reversal state",
+      payout,
+    };
+  }
+
   const state = transferStateForEvent({
     event,
     payout,
   });
+
+  if (
+    event.type === "transfer.reversed" &&
+    payout.status === "reversed"
+  ) {
+    await markEventApplied({
+      prisma,
+      eventId: event.id,
+      runId: payout.runId,
+    });
+
+    return {
+      deduped: false,
+      applied: true,
+      reason: "Stripe Transfer reversal recorded without regressing terminal reversal state",
+      payout,
+    };
+  }
 
   const updatedPayout = await prisma.runnerPayout.update({
     where: {
@@ -155,19 +194,14 @@ async function reconcileTransferEvent({
     },
   });
 
-  if (
-    event.type === "transfer.reversed" ||
-    payout.status !== "reversed"
-  ) {
-    await prisma.run.update({
-      where: {
-        id: payout.runId,
-      },
-      data: {
-        payoutStatus: state.payoutStatus,
-      },
-    });
-  }
+  await prisma.run.update({
+    where: {
+      id: payout.runId,
+    },
+    data: {
+      payoutStatus: state.payoutStatus,
+    },
+  });
 
   await markEventApplied({
     prisma,
