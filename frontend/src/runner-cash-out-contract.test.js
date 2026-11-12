@@ -15,7 +15,7 @@ test("runner Earnings exposes guarded cash-out action", () => {
 test("cash-out updates local run to transferred and hides repeat action", () => {
   assert.match(source, /payoutStatus:\s*"transferred"/);
   assert.match(source, /run\.payoutStatus === "transferred"/);
-  assert.match(source, /Transfer sent/);
+  assert.match(source, /Transferred to Stripe account/);
 });
 
 test("cash-out button disables while transfer request is active", () => {
