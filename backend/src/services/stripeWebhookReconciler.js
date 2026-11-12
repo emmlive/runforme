@@ -384,8 +384,14 @@ async function reconcileBankPayoutEvent({
       existingBankPayout.status === "paid" ||
       existingBankPayout.status === "failed"
     ) &&
-    event.type !== "payout.paid" &&
-    event.type !== "payout.failed"
+    (
+      (event.type !== "payout.paid" &&
+        event.type !== "payout.failed") ||
+      (event.type === "payout.paid" &&
+        existingBankPayout.status !== "paid") ||
+      (event.type === "payout.failed" &&
+        existingBankPayout.status !== "failed")
+    )
   ) {
     await markEventApplied({
       prisma,
@@ -396,7 +402,7 @@ async function reconcileBankPayoutEvent({
     return {
       deduped: false,
       applied: true,
-      reason: "Connected account payout event recorded without regressing terminal state",
+      reason: "Connected account payout event recorded without changing terminal state",
       bankPayout: existingBankPayout,
     };
   }
