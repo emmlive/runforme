@@ -271,7 +271,7 @@ router.get("/payouts/summary", auth, async (req, res) => {
       });
     }
 
-    const [runner, completedRuns, payoutLedger] = await Promise.all([
+    const [runner, completedRuns, payoutLedger, bankPayoutLedger] = await Promise.all([
       prisma.user.findUnique({
         where: { id: req.user.id },
         select: {
@@ -308,6 +308,22 @@ router.get("/payouts/summary", auth, async (req, res) => {
           updatedAt: true,
         },
         orderBy: { createdAt: "desc" },
+      }),
+      prisma.runnerBankPayout.findMany({
+        where: { runnerId: req.user.id },
+        select: {
+          id: true,
+          providerPayoutId: true,
+          amountMinor: true,
+          currency: true,
+          status: true,
+          arrivalDate: true,
+          failureCode: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 10,
       }),
     ]);
 
@@ -353,6 +369,7 @@ router.get("/payouts/summary", auth, async (req, res) => {
         preparedAmount,
       },
       payouts: payoutLedger,
+      bankPayouts: bankPayoutLedger,
     });
   } catch (err) {
     console.error("Runner payout summary error:", err);
