@@ -206,7 +206,7 @@ model RunnerBankPayout {
   id               Int      @id @default(autoincrement())
   runnerId         Int
   providerPayoutId String   @unique
-  amount           Int
+  amountMinor      Int
   currency         String
   status           String
   arrivalDate      DateTime?
