@@ -57,3 +57,33 @@ test("Earnings handles absence of bank payout events without claiming bank payme
     /No bank payout activity has been reported by Stripe yet\./
   );
 });
+
+test("Earnings shows explicit transfer reversal states", () => {
+  assert.match(
+    source,
+    /Transfer partially reversed/
+  );
+
+  assert.match(
+    source,
+    /Transfer reversed/
+  );
+
+  assert.match(
+    source,
+    /runnerTransferStatus\(/
+  );
+});
+
+test("failed bank payout shows recovery guidance and hides estimated arrival", () => {
+  assert.match(
+    source,
+    /Stripe reported this bank payout as failed\./
+  );
+
+  assert.match(
+    source,
+    /payout\.arrivalDate && payout\.status !== "failed"/
+  );
+});
+
