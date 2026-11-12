@@ -309,6 +309,11 @@ async function reconcileBankPayoutEvent({
   );
 
   requireDependency(
+    prisma?.runnerBankPayout?.findUnique,
+    "prisma.runnerBankPayout.findUnique"
+  );
+
+  requireDependency(
     prisma?.runnerBankPayout?.upsert,
     "prisma.runnerBankPayout.upsert"
   );
@@ -352,6 +357,47 @@ async function reconcileBankPayoutEvent({
       deduped: false,
       applied: false,
       reason: "Connected account payout payload is invalid",
+    };
+  }
+
+  const existingBankPayout =
+    await prisma.runnerBankPayout.findUnique({
+      where: {
+        providerPayoutId,
+      },
+    });
+
+  if (
+    existingBankPayout &&
+    existingBankPayout.runnerId !== runner.id
+  ) {
+    return {
+      deduped: false,
+      applied: false,
+      reason: "Connected account payout does not match canonical runner",
+    };
+  }
+
+  if (
+    existingBankPayout &&
+    (
+      existingBankPayout.status === "paid" ||
+      existingBankPayout.status === "failed"
+    ) &&
+    event.type !== "payout.paid" &&
+    event.type !== "payout.failed"
+  ) {
+    await markEventApplied({
+      prisma,
+      eventId: event.id,
+      runId: null,
+    });
+
+    return {
+      deduped: false,
+      applied: true,
+      reason: "Connected account payout event recorded without regressing terminal state",
+      bankPayout: existingBankPayout,
     };
   }
 
