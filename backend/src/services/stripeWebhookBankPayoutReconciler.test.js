@@ -215,6 +215,70 @@ test("late payout.updated cannot regress terminal paid state", async () => {
   assert.equal(harness.getBankPayout().status, "paid");
 });
 
+test("late payout.failed cannot overwrite terminal paid state", async () => {
+  const event = payoutEvent({
+    id: "evt_payout_failed_after_paid",
+    type: "payout.failed",
+    status: "failed",
+    failureCode: "account_closed",
+  });
+  const harness = createHarness({
+    bankPayout: {
+      id: 1,
+      runnerId: 12,
+      providerPayoutId: "po_test_1",
+      amountMinor: 500,
+      currency: "usd",
+      status: "paid",
+      arrivalDate: null,
+      failureCode: null,
+    },
+  });
+
+  const result = await reconcileStripeEvent({
+    event,
+    prisma: harness.prisma,
+  });
+
+  assert.equal(result.applied, true);
+  assert.equal(harness.calls.bankUpsert.length, 0);
+  assert.equal(harness.getBankPayout().status, "paid");
+  assert.equal(harness.getBankPayout().failureCode, null);
+});
+
+test("late payout.paid cannot overwrite terminal failed state", async () => {
+  const event = payoutEvent({
+    id: "evt_payout_paid_after_failed",
+    type: "payout.paid",
+    status: "paid",
+  });
+  const harness = createHarness({
+    bankPayout: {
+      id: 1,
+      runnerId: 12,
+      providerPayoutId: "po_test_1",
+      amountMinor: 500,
+      currency: "usd",
+      status: "failed",
+      arrivalDate: null,
+      failureCode: "account_closed",
+    },
+  });
+
+  const result = await reconcileStripeEvent({
+    event,
+    prisma: harness.prisma,
+  });
+
+  assert.equal(result.applied, true);
+  assert.equal(harness.calls.bankUpsert.length, 0);
+  assert.equal(harness.getBankPayout().status, "failed");
+  assert.equal(
+    harness.getBankPayout().failureCode,
+    "account_closed"
+  );
+});
+
 test("unmapped connected account payout fails closed", async () => {
   const event = payoutEvent({
     id: "evt_payout_unmapped",
