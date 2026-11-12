@@ -194,6 +194,23 @@ function RunnerMobileNavIcon({ name }) {
   );
 }
 
+function bankPayoutStatusLabel(status) {
+  switch (status) {
+    case "pending":
+      return "Processing at Stripe";
+    case "in_transit":
+      return "On the way to bank";
+    case "paid":
+      return "Paid to bank";
+    case "failed":
+      return "Payout failed";
+    case "canceled":
+      return "Payout canceled";
+    default:
+      return String(status || "processing").replaceAll("_", " ");
+  }
+}
+
 export default function RunnerDashboard({ user, onLogout }) {
   const [online, setOnline] = useState(false);
   const [runs, setRuns] = useState([]);
@@ -217,6 +234,9 @@ export default function RunnerDashboard({ user, onLogout }) {
   const [payoutOnboardingError, setPayoutOnboardingError] = useState(null);
   const [cashOutRunId, setCashOutRunId] = useState(null);
   const [cashOutMessage, setCashOutMessage] = useState(null);
+  const [bankPayouts, setBankPayouts] = useState([]);
+  const [payoutSummaryLoading, setPayoutSummaryLoading] = useState(false);
+  const [payoutSummaryError, setPayoutSummaryError] = useState(null);
 
   const watchIdRef = useRef(null);
   const lastSentRef = useRef(0);
@@ -242,6 +262,32 @@ export default function RunnerDashboard({ user, onLogout }) {
       );
     } finally {
       setPayoutOnboardingLoading(false);
+    }
+  }
+
+  async function fetchPayoutSummary() {
+    setPayoutSummaryLoading(true);
+
+    try {
+      const res = await apiRequest("/api/runners/payouts/summary");
+
+      if (!res?.success) {
+        throw new Error("Could not load payout activity.");
+      }
+
+      setBankPayouts(
+        Array.isArray(res.bankPayouts)
+          ? res.bankPayouts
+          : []
+      );
+      setPayoutSummaryError(null);
+    } catch (err) {
+      console.error("Runner payout summary failed:", err);
+      setPayoutSummaryError(
+        err.message || "Could not load payout activity."
+      );
+    } finally {
+      setPayoutSummaryLoading(false);
     }
   }
 
@@ -308,6 +354,8 @@ export default function RunnerDashboard({ user, onLogout }) {
           ? "Payout was already transferred."
           : `Cash out sent: ${Number(res.payout.amount || 0)}.`,
       });
+
+      fetchPayoutSummary();
     } catch (err) {
       console.error("Runner cash out failed:", err);
       setCashOutMessage({
@@ -322,6 +370,7 @@ export default function RunnerDashboard({ user, onLogout }) {
   useEffect(() => {
     if (mobileSection === "earnings") {
       fetchPayoutOnboardingStatus();
+      fetchPayoutSummary();
     }
   }, [mobileSection]);
 
@@ -332,6 +381,7 @@ export default function RunnerDashboard({ user, onLogout }) {
     if (payoutReturn === "return" || payoutReturn === "refresh") {
       setMobileSection("earnings");
       fetchPayoutOnboardingStatus();
+      fetchPayoutSummary();
 
       params.delete("payout_onboarding");
       const query = params.toString();
@@ -1165,6 +1215,82 @@ export default function RunnerDashboard({ user, onLogout }) {
                 Ready for payout means the run payment was captured and the runner payout is eligible for the payout step. It does not mean a payout transfer has been sent yet.
               </p>
 
+              <div
+                className="runner-bank-payout-status"
+                style={{
+                  marginTop: 12,
+                  padding: 12,
+                  borderRadius: 12,
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  background: "rgba(255,255,255,0.04)",
+                }}
+              >
+                <strong style={{ display: "block" }}>Bank payout status</strong>
+
+                <p style={{ marginTop: 6, marginBottom: 8, opacity: 0.75 }}>
+                  Stripe bank payouts are tracked separately from RUNFORME transfers. A transfer can be complete before funds reach your bank.
+                </p>
+
+                {payoutSummaryLoading ? (
+                  <div style={{ opacity: 0.72, fontSize: 13 }}>
+                    Loading bank payout activity...
+                  </div>
+                ) : payoutSummaryError ? (
+                  <div role="alert" style={{ color: "#fecaca", fontSize: 13 }}>
+                    {payoutSummaryError}
+                  </div>
+                ) : bankPayouts.length === 0 ? (
+                  <div style={{ opacity: 0.72, fontSize: 13 }}>
+                    No bank payout activity has been reported by Stripe yet.
+                  </div>
+                ) : (
+                  bankPayouts.slice(0, 3).map((payout) => (
+                    <div
+                      key={payout.id}
+                      style={{
+                        marginTop: 10,
+                        paddingTop: 10,
+                        borderTop: "1px solid rgba(255,255,255,0.10)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 12,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <span>
+                          {new Intl.NumberFormat("en-US", {
+                            style: "currency",
+                            currency: String(payout.currency || "usd").toUpperCase(),
+                          }).format(Number(payout.amountMinor || 0) / 100)}
+                        </span>
+                        <strong
+                          style={{
+                            color:
+                              payout.status === "paid"
+                                ? "#86efac"
+                                : payout.status === "failed"
+                                  ? "#fecaca"
+                                  : "#bfdbfe",
+                          }}
+                        >
+                          {bankPayoutStatusLabel(payout.status)}
+                        </strong>
+                      </div>
+
+                      {payout.arrivalDate && (
+                        <div style={{ marginTop: 5, opacity: 0.68, fontSize: 12 }}>
+                          Estimated arrival: {new Date(payout.arrivalDate).toLocaleDateString()}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+
               {cashOutMessage && (
                 <p
                   role="status"
@@ -1235,7 +1361,7 @@ export default function RunnerDashboard({ user, onLogout }) {
                         fontWeight: 700,
                       }}
                     >
-                      Transfer sent
+                      Transferred to Stripe account
                     </div>
                   )}
                 </div>
