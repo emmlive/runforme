@@ -10,6 +10,13 @@ const SUPPORTED_TRANSFER_EVENTS = new Set([
   "transfer.reversed",
 ]);
 
+const SUPPORTED_BANK_PAYOUT_EVENTS = new Set([
+  "payout.created",
+  "payout.updated",
+  "payout.paid",
+  "payout.failed",
+]);
+
 function requireDependency(value, name) {
   if (typeof value !== "function") {
     throw new Error(`${name} is required`);
@@ -265,6 +272,132 @@ async function reconcileTransferEvent({
   };
 }
 
+
+function payoutStatusForEvent(event) {
+  const payout = event?.data?.object || {};
+
+  if (event.type === "payout.paid") {
+    return "paid";
+  }
+
+  if (event.type === "payout.failed") {
+    return "failed";
+  }
+
+  return payout.status || "pending";
+}
+
+function payoutArrivalDate(event) {
+  const arrivalDate = Number(
+    event?.data?.object?.arrival_date
+  );
+
+  if (!Number.isInteger(arrivalDate) || arrivalDate <= 0) {
+    return null;
+  }
+
+  return new Date(arrivalDate * 1000);
+}
+
+async function reconcileBankPayoutEvent({
+  event,
+  prisma,
+}) {
+  requireDependency(
+    prisma?.user?.findUnique,
+    "prisma.user.findUnique"
+  );
+
+  requireDependency(
+    prisma?.runnerBankPayout?.upsert,
+    "prisma.runnerBankPayout.upsert"
+  );
+
+  const connectedAccountId = event?.account;
+  const providerPayoutId = event?.data?.object?.id;
+
+  if (!connectedAccountId || !providerPayoutId) {
+    return {
+      deduped: false,
+      applied: false,
+      reason: "Connected account payout mapping not found",
+    };
+  }
+
+  const runner = await prisma.user.findUnique({
+    where: {
+      stripeConnectedAccountId: connectedAccountId,
+    },
+  });
+
+  if (!runner || runner.role !== "runner") {
+    return {
+      deduped: false,
+      applied: false,
+      reason: "Runner mapping not found for connected account payout",
+    };
+  }
+
+  const amountMinor = Number(event?.data?.object?.amount);
+  const currency = String(
+    event?.data?.object?.currency || ""
+  ).toLowerCase();
+
+  if (
+    !Number.isInteger(amountMinor) ||
+    amountMinor < 0 ||
+    !currency
+  ) {
+    return {
+      deduped: false,
+      applied: false,
+      reason: "Connected account payout payload is invalid",
+    };
+  }
+
+  const status = payoutStatusForEvent(event);
+  const arrivalDate = payoutArrivalDate(event);
+  const failureCode =
+    event.type === "payout.failed"
+      ? event?.data?.object?.failure_code || "stripe_payout_failed"
+      : null;
+
+  const bankPayout = await prisma.runnerBankPayout.upsert({
+    where: {
+      providerPayoutId,
+    },
+    create: {
+      runnerId: runner.id,
+      providerPayoutId,
+      amountMinor,
+      currency,
+      status,
+      arrivalDate,
+      failureCode,
+    },
+    update: {
+      amountMinor,
+      currency,
+      status,
+      arrivalDate,
+      failureCode,
+    },
+  });
+
+  await markEventApplied({
+    prisma,
+    eventId: event.id,
+    runId: null,
+  });
+
+  return {
+    deduped: false,
+    applied: true,
+    reason: "Connected account bank payout reconciled",
+    bankPayout,
+  };
+}
+
 async function reconcileStripeEvent({
   event,
   prisma,
@@ -340,6 +473,13 @@ async function reconcileStripeEvent({
 
   if (SUPPORTED_TRANSFER_EVENTS.has(event.type)) {
     return reconcileTransferEvent({
+      event,
+      prisma,
+    });
+  }
+
+  if (SUPPORTED_BANK_PAYOUT_EVENTS.has(event.type)) {
+    return reconcileBankPayoutEvent({
       event,
       prisma,
     });
