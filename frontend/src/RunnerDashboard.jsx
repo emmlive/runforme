@@ -194,6 +194,28 @@ function RunnerMobileNavIcon({ name }) {
   );
 }
 
+function runnerTransferStatus(status) {
+  switch (status) {
+    case "transferred":
+      return {
+        label: "Transferred to Stripe account",
+        color: "#86efac",
+      };
+    case "partially_reversed":
+      return {
+        label: "Transfer partially reversed",
+        color: "#fde68a",
+      };
+    case "reversed":
+      return {
+        label: "Transfer reversed",
+        color: "#fecaca",
+      };
+    default:
+      return null;
+  }
+}
+
 function bankPayoutStatusLabel(status) {
   switch (status) {
     case "pending":
@@ -1281,9 +1303,23 @@ export default function RunnerDashboard({ user, onLogout }) {
                         </strong>
                       </div>
 
-                      {payout.arrivalDate && (
+                      {payout.arrivalDate && payout.status !== "failed" && (
                         <div style={{ marginTop: 5, opacity: 0.68, fontSize: 12 }}>
                           Estimated arrival: {new Date(payout.arrivalDate).toLocaleDateString()}
+                        </div>
+                      )}
+
+                      {payout.status === "failed" && (
+                        <div
+                          role="alert"
+                          style={{
+                            marginTop: 6,
+                            color: "#fecaca",
+                            fontSize: 12,
+                            lineHeight: 1.45,
+                          }}
+                        >
+                          Stripe reported this bank payout as failed. Review your payout account details in Stripe before the next payout.
                         </div>
                       )}
                     </div>
@@ -1352,18 +1388,33 @@ export default function RunnerDashboard({ user, onLogout }) {
                       </button>
                     )}
 
-                  {run.payoutStatus === "transferred" && (
-                    <div
-                      style={{
-                        marginTop: 8,
-                        color: "#86efac",
-                        fontSize: 13,
-                        fontWeight: 700,
-                      }}
-                    >
-                      Transferred to Stripe account
-                    </div>
-                  )}
+                  {(() => {
+                    const transferStatus = runnerTransferStatus(
+                      run.payoutStatus
+                    );
+
+                    if (!transferStatus) {
+                      return null;
+                    }
+
+                    return (
+                      <div
+                        role={
+                          run.payoutStatus === "reversed"
+                            ? "alert"
+                            : "status"
+                        }
+                        style={{
+                          marginTop: 8,
+                          color: transferStatus.color,
+                          fontSize: 13,
+                          fontWeight: 700,
+                        }}
+                      >
+                        {transferStatus.label}
+                      </div>
+                    );
+                  })()}
                 </div>
               ))}
             </>
