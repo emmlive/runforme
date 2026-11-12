@@ -33,13 +33,13 @@ test("RUN-PAYOUTS-1B onboarding does not execute cash-out implicitly", () => {
   );
 });
 
-test("runner Earnings refreshes payout onboarding status when opened", () => {
+test("runner Earnings refreshes payout onboarding and payout summary when opened", () => {
   assert.match(
     source,
     /if \(id === "earnings"\) \{\s*fetchPayoutOnboardingStatus\(\);\s*\}/
   );
   assert.match(
     source,
-    /if \(mobileSection === "earnings"\) \{\s*fetchPayoutOnboardingStatus\(\);\s*\}/
+    /if \(mobileSection === "earnings"\) \{\s*fetchPayoutOnboardingStatus\(\);\s*fetchPayoutSummary\(\);\s*\}/
   );
 });
