@@ -73,7 +73,9 @@ router.post("/login", async (req, res) => {
     }
 
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(401).json({ error: "Invalid credentials" });
+    if (!user || user.accountStatus !== "active") {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ error: "Invalid credentials" });
@@ -126,8 +128,11 @@ router.post("/forgot-password", async (req, res) => {
       return res.json({ message: FORGOT_PASSWORD_RESPONSE });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: normalizedEmail },
+    const user = await prisma.user.findFirst({
+      where: {
+        email: normalizedEmail,
+        accountStatus: "active",
+      },
       select: { id: true, email: true },
     });
 
