@@ -69,10 +69,7 @@ function getMapCoordinates(props) {
   if (
     !Number.isFinite(lat) ||
     !Number.isFinite(lng) ||
-    lat < -90 ||
-    lat > 90 ||
-    lng < -180 ||
-    lng > 180
+    !(lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180)
   ) {
     return null;
   }
@@ -98,7 +95,7 @@ export default function LiveMap(props = {}) {
   const [mapReady, setMapReady] = useState(false);
 
   const providerConfigured =
-    googleMapsExplicitlyEnabled && Boolean(googleMapsKey);
+    googleMapsExplicitlyEnabled && googleMapsKey;
 
   useEffect(() => {
     if (!googleMapsExplicitlyEnabled || !googleMapsKey || !coordinates) return;
