@@ -216,6 +216,33 @@ function runnerTransferStatus(status) {
   }
 }
 
+function runnerOnlineStorageKey(userId) {
+  return `runforme.runner.${userId}.online`;
+}
+
+function readPersistedRunnerOnline(userId) {
+  if (!userId || typeof window === "undefined") return false;
+
+  try {
+    return window.localStorage.getItem(runnerOnlineStorageKey(userId)) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function persistRunnerOnline(userId, online) {
+  if (!userId || typeof window === "undefined") return;
+
+  try {
+    window.localStorage.setItem(
+      runnerOnlineStorageKey(userId),
+      online ? "true" : "false"
+    );
+  } catch {
+    // Browser storage can be unavailable in restricted/private contexts.
+  }
+}
+
 function bankPayoutStatusLabel(status) {
   switch (status) {
     case "pending":
@@ -234,7 +261,9 @@ function bankPayoutStatusLabel(status) {
 }
 
 export default function RunnerDashboard({ user, onLogout }) {
-  const [online, setOnline] = useState(false);
+  const [online, setOnline] = useState(() =>
+    readPersistedRunnerOnline(user?.id)
+  );
   const [runs, setRuns] = useState([]);
   const [runsLoading, setRunsLoading] = useState(true);
   const [runsError, setRunsError] = useState(null);
@@ -395,6 +424,51 @@ export default function RunnerDashboard({ user, onLogout }) {
       fetchPayoutSummary();
     }
   }, [mobileSection]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const persistedOnline = readPersistedRunnerOnline(user.id);
+
+    if (!persistedOnline) {
+      setOnline(false);
+      setStatusMessage("Offline");
+      return;
+    }
+
+    let cancelled = false;
+
+    setOnline(true);
+    setStatusMessage(
+      navigator.geolocation ? "Online" : "Online - GPS unavailable"
+    );
+
+    apiRequest("/api/runners/status", {
+      method: "POST",
+      body: { online: true },
+    })
+      .then((res) => {
+        if (cancelled) return;
+
+        if (!res?.success) {
+          throw new Error(res?.error || "Failed to restore runner status");
+        }
+
+        fetchRuns();
+      })
+      .catch((err) => {
+        if (cancelled) return;
+
+        console.error("Runner status restore failed:", err);
+        setOnline(false);
+        setStatusMessage("Status failed");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -602,6 +676,7 @@ export default function RunnerDashboard({ user, onLogout }) {
       }
 
       setOnline(nextOnline);
+      persistRunnerOnline(user?.id, nextOnline);
 
       if (nextOnline) {
         setStatusMessage(
@@ -2219,7 +2294,7 @@ return (
             fontSize: 13,
             lineHeight: 1.5
           }}>
-            Secure-hold authorized offers only. Placeholder mode does not charge a live card.
+            Only runs with an authorized secure hold appear here. Payment is handled securely before you accept.
           </p>
 
           {!online ? (
@@ -2305,7 +2380,7 @@ return (
                   lineHeight: 1.45,
                   fontWeight: 700
                 }}>
-                  Secure hold authorized before this offer appeared. No live card charge in placeholder mode.
+                  The requester’s secure hold was authorized before this offer became available.
                 </p>
               )}
 
