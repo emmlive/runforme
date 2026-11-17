@@ -264,6 +264,7 @@ export default function RunnerDashboard({ user, onLogout }) {
   const [online, setOnline] = useState(() =>
     readPersistedRunnerOnline(user?.id)
   );
+  const [runnerLocation, setRunnerLocation] = useState(null);
   const [runs, setRuns] = useState([]);
   const [runsLoading, setRunsLoading] = useState(true);
   const [runsError, setRunsError] = useState(null);
@@ -640,6 +641,11 @@ export default function RunnerDashboard({ user, onLogout }) {
         if (now - lastSentRef.current < 3000) return;
 
         lastSentRef.current = now;
+
+        setRunnerLocation({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        });
 
         await apiRequest("/api/runners/location", {
           method: "POST",
@@ -1510,7 +1516,7 @@ export default function RunnerDashboard({ user, onLogout }) {
         className={activeRun ? "runner-map-surface" : "runner-map-surface runner-ui-1l-mobile-map-secondary"}
         style={{ height: "55%" }}
       >
-        <LiveMap run={activeRun} />
+        <LiveMap run={activeRun} runnerLocation={runnerLocation} />
       </div>
 
       {/* =========================
