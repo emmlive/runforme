@@ -17,6 +17,7 @@ model User {
   role           String   // "requester" | "runner"
   createdAt      DateTime @default(now())
   sessionVersion Int      @default(0)
+  accountStatus  String   @default("active") // "active" | "retired"
 
   /* ⭐ RATING AGGREGATES */
   averageRating Float?
