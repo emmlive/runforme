@@ -107,7 +107,12 @@ test("current persisted session version is accepted and attaches persisted user 
     user: {
       async findUnique(args) {
         calls.push(args);
-        return { id: 42, role: "requester", sessionVersion: 3 };
+        return {
+          id: 42,
+          role: "requester",
+          sessionVersion: 3,
+          accountStatus: "active",
+        };
       },
     },
   };
@@ -137,6 +142,7 @@ test("current persisted session version is accepted and attaches persisted user 
         id: true,
         role: true,
         sessionVersion: true,
+        accountStatus: true,
       },
     });
   } finally {
@@ -148,7 +154,47 @@ test("stale JWT session version is rejected with 401", async () => {
   const fakePrisma = {
     user: {
       async findUnique() {
-        return { id: 42, role: "requester", sessionVersion: 4 };
+        return {
+          id: 42,
+          role: "requester",
+          sessionVersion: 4,
+          accountStatus: "active",
+        };
+      },
+    },
+  };
+
+  const loaded = loadAuthWithFakePrisma(fakePrisma);
+
+  try {
+    const token = signToken({
+      userId: 42,
+      role: "requester",
+      sessionVersion: 3,
+    });
+
+    const result = await invokeAuth(loaded.auth, token);
+
+    assert.equal(result.state.statusCode, 401);
+    assert.equal(result.state.nextCalls, 0);
+    assert.deepEqual(result.state.body, {
+      error: "Invalid or expired token",
+    });
+  } finally {
+    loaded.restore();
+  }
+});
+
+test("current JWT for a retired account is rejected with 401", async () => {
+  const fakePrisma = {
+    user: {
+      async findUnique() {
+        return {
+          id: 42,
+          role: "requester",
+          sessionVersion: 3,
+          accountStatus: "retired",
+        };
       },
     },
   };
