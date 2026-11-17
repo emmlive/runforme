@@ -54,3 +54,11 @@ test("LiveMap never renders the raw browser API key", () => {
     "the browser key must be consumed by the loader, not rendered into UI"
   );
 });
+
+
+test("LiveMap reuses the existing map and marker across GPS updates", () => {
+  assert.match(source, /const\s+mapInstanceRef\s*=\s*useRef\(null\)/);
+  assert.match(source, /const\s+markerRef\s*=\s*useRef\(null\)/);
+  assert.match(source, /mapInstanceRef\.current\.setCenter\(coordinates\)/);
+  assert.match(source, /markerRef\.current\.setPosition\(coordinates\)/);
+});
