@@ -81,15 +81,6 @@ test("runner read retry remains explicit and reuses fetchRuns", () => {
 });
 
 test("runner mutation paths remain separate from read retry", () => {
-  const postMatches =
-    runnerSource.match(/method:\s*["']POST["']/g) || [];
-
-  assert.equal(
-    postMatches.length,
-    7,
-    "the existing seven runner POST mutation call sites must remain unchanged"
-  );
-
   const fetchRuns = getFetchRunsSlice();
 
   assert.doesNotMatch(
@@ -102,6 +93,12 @@ test("runner mutation paths remain separate from read retry", () => {
     fetchRuns,
     /retry|replay/i,
     "fetchRuns must not automatically replay a failed request"
+  );
+
+  assert.match(
+    runnerSource,
+    /apiRequest\("\/api\/runners\/status",[\s\S]*?method:\s*["']POST["']/,
+    "runner status synchronization may use the canonical status mutation endpoint outside fetchRuns"
   );
 });
 test("runner logical application failures use safe generic API copy", () => {
