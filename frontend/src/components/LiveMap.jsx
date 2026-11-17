@@ -92,6 +92,8 @@ export default function LiveMap(props = {}) {
   const coordinateLabel = getCoordinateLabel(props);
   const coordinates = getMapCoordinates(props);
   const mapElementRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const markerRef = useRef(null);
   const [mapReady, setMapReady] = useState(false);
 
   const providerConfigured =
@@ -108,19 +110,28 @@ export default function LiveMap(props = {}) {
       .then((maps) => {
         if (cancelled || !mapElementRef.current) return;
 
-        const map = new maps.Map(mapElementRef.current, {
-          center: coordinates,
-          zoom: 15,
-          mapTypeControl: false,
-          streetViewControl: false,
-          fullscreenControl: false,
-        });
+        if (!mapInstanceRef.current) {
+          mapInstanceRef.current = new maps.Map(mapElementRef.current, {
+            center: coordinates,
+            zoom: 15,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false,
+          });
+        } else {
+          mapInstanceRef.current.setCenter(coordinates);
+        }
 
-        new maps.Marker({
-          map,
-          position: coordinates,
-          title: locationLabel,
-        });
+        if (!markerRef.current) {
+          markerRef.current = new maps.Marker({
+            map: mapInstanceRef.current,
+            position: coordinates,
+            title: locationLabel,
+          });
+        } else {
+          markerRef.current.setPosition(coordinates);
+          markerRef.current.setTitle(locationLabel);
+        }
 
         if (!cancelled) {
           setMapReady(true);
