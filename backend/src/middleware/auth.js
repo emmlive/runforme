@@ -47,10 +47,15 @@ module.exports = async function auth(req, res, next) {
         id: true,
         role: true,
         sessionVersion: true,
+        accountStatus: true,
       },
     });
 
-    if (!user || user.sessionVersion !== decoded.sessionVersion) {
+    if (
+      !user ||
+      user.accountStatus !== "active" ||
+      user.sessionVersion !== decoded.sessionVersion
+    ) {
       return res.status(401).json({ error: "Invalid or expired token" });
     }
 
