@@ -13,7 +13,7 @@ test("runner keeps active GPS coordinates in local UI state", () => {
   );
   assert.match(
     source,
-    /setRunnerLocation\(\{\s*lat:\s*pos\.coords\.latitude,\s*lng:\s*pos\.coords\.longitude\s*\}\)/
+    /setRunnerLocation\(\{\s*lat:\s*pos\.coords\.latitude,\s*lng:\s*pos\.coords\.longitude,?\s*\}\)/
   );
 });
 
