@@ -74,3 +74,11 @@ test("done-for-now feedback does not silently force runner offline", () => {
 
   assert.doesNotMatch(ackSection, /setOnline\(false\)|toggleOnline\(/);
 });
+
+
+test("self-pass socket acknowledgement remains positive instead of error-styled", () => {
+  assert.match(
+    source,
+    /data\.reason\s*===\s*["']You passed on this run["'][\s\S]{0,220}["']success["'][\s\S]{0,220}["']error["']/
+  );
+});
