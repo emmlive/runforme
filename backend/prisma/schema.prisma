@@ -37,6 +37,8 @@ model User {
   payoutOnboardingStatus   String  @default("not_started")
   runnerPayouts            RunnerPayout[]
   runnerBankPayouts        RunnerBankPayout[]
+  pulseState               RunnerPulseState?
+  pulseEvents              RunnerPulseEvent[]
 
   @@index([role])
 }
@@ -219,4 +221,38 @@ model RunnerBankPayout {
 
   @@index([runnerId])
   @@index([status])
+}
+
+
+/* ============================
+   RUNNER PULSE
+============================ */
+model RunnerPulseState {
+  id                Int      @id @default(autoincrement())
+  runnerId          Int      @unique
+  consecutiveMisses Int      @default(0)
+  lastMissedRunId   Int?
+  lastPromptedAt    DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  runner User @relation(fields: [runnerId], references: [id], onDelete: Cascade)
+
+  @@index([lastPromptedAt])
+}
+
+model RunnerPulseEvent {
+  id          Int       @id @default(autoincrement())
+  runnerId    Int
+  trigger     String
+  missCount   Int
+  reason      String?
+  dismissed   Boolean   @default(false)
+  respondedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  runner User @relation(fields: [runnerId], references: [id], onDelete: Cascade)
+
+  @@index([runnerId])
+  @@index([createdAt])
 }
