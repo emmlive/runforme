@@ -7,6 +7,10 @@ const source = readFileSync(
   path.resolve("src", "routes", "runs.js"),
   "utf8"
 );
+const passServiceSource = readFileSync(
+  path.resolve("src", "services", "runnerOfferPassService.js"),
+  "utf8"
+);
 
 test("runs route wires explicit runner Pass through the Pulse-aware pass service", () => {
   assert.match(
@@ -25,7 +29,10 @@ test("runs route wires explicit runner Pass through the Pulse-aware pass service
     source,
     /runnerOfferPassService\.passRunnerOffer\(\{\s*runnerId:\s*req\.user\.id,\s*runId,?\s*\}\)/
   );
-  assert.match(source, /data:\s*\{\s*status:\s*["']passed["']\s*\}/);
+  assert.match(
+    passServiceSource,
+    /data:\s*\{\s*status:\s*["']passed["']\s*\}/
+  );
 });
 
 test("accepting a run resets Pulse misses without making acceptance depend on Pulse", () => {
