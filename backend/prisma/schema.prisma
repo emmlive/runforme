@@ -247,6 +247,7 @@ model RunnerPulseEvent {
   trigger     String
   missCount   Int
   runId       Int?
+  dedupeKey   String?    @unique
   reason      String?
   dismissed   Boolean   @default(false)
   respondedAt DateTime?
@@ -254,7 +255,6 @@ model RunnerPulseEvent {
 
   runner User @relation(fields: [runnerId], references: [id], onDelete: Cascade)
 
-  @@unique([runnerId, trigger, runId])
   @@index([runnerId])
   @@index([createdAt])
 }
