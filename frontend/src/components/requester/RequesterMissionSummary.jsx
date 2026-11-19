@@ -17,8 +17,8 @@ export default function RequesterMissionSummary({
   activeRun = null,
   activeRuns = [],
   historyRuns = [],
-  title = "Your runs, secured and in motion.",
-  copy = "Track live requests, secure holds, delivery proof, and review checkpoints from one calm requester command surface.",
+  title = "Your requests, in one place.",
+  copy = "Track active runs, funding protection, delivery proof, and completed history.",
 }) {
   const activeCount = activeRuns.length || (activeRun && !isClosedRun(activeRun) ? 1 : 0);
   const historyCount = historyRuns.length;
@@ -36,14 +36,14 @@ export default function RequesterMissionSummary({
     <section className="requester-mission-summary" aria-label="Requester mission summary">
       <div className="requester-mission-summary__header">
         <div>
-          <p className="requester-mission-summary__eyebrow">Requester Command Center</p>
+          <p className="requester-mission-summary__eyebrow">Your RUNFORME</p>
           <h2 className="requester-mission-summary__title">{title}</h2>
           <p className="requester-mission-summary__copy">{copy}</p>
         </div>
 
         <div className="requester-mission-summary__status" aria-label="Requester flow status">
           <span className="requester-mission-summary__pulse" aria-hidden="true" />
-          Flow preserved
+          On track
         </div>
       </div>
 
