@@ -179,22 +179,40 @@ function createRunnerPulseService({
       throw new Error("Invalid Pulse reason");
     }
 
-    const state = await prisma.runnerPulseState.findUnique({
-      where: { runnerId },
-    });
-
     const currentTime = now();
 
-    return prisma.runnerPulseEvent.create({
-      data: {
-        runnerId,
-        trigger: FEEDBACK_TRIGGER,
-        runId: null,
-        missCount: state?.consecutiveMisses ?? 0,
-        reason: dismissed ? null : reason,
-        dismissed: Boolean(dismissed),
-        respondedAt: dismissed ? null : currentTime,
-      },
+    return prisma.$transaction(async (tx) => {
+      const state = await tx.runnerPulseState.findUnique({
+        where: { runnerId },
+      });
+
+      const event = await tx.runnerPulseEvent.create({
+        data: {
+          runnerId,
+          trigger: FEEDBACK_TRIGGER,
+          runId: null,
+          missCount: state?.consecutiveMisses ?? 0,
+          reason: dismissed ? null : reason,
+          dismissed: Boolean(dismissed),
+          respondedAt: dismissed ? null : currentTime,
+        },
+      });
+
+      await tx.runnerPulseState.upsert({
+        where: { runnerId },
+        create: {
+          runnerId,
+          consecutiveMisses: 0,
+          lastMissedRunId: null,
+          lastPromptedAt: state?.lastPromptedAt ?? currentTime,
+        },
+        update: {
+          consecutiveMisses: 0,
+          lastMissedRunId: null,
+        },
+      });
+
+      return event;
     });
   }
 
