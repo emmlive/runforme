@@ -101,7 +101,10 @@ export default function LiveMap(props = {}) {
     googleMapsExplicitlyEnabled && googleMapsKey;
 
   useEffect(() => {
-    if (!googleMapsExplicitlyEnabled || !googleMapsKey || !coordinates) return;
+    if (!googleMapsExplicitlyEnabled || !googleMapsKey || !coordinates) {
+      setMapReady(false);
+      return;
+    }
 
     let cancelled = false;
 
