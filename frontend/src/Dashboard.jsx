@@ -581,7 +581,7 @@ function RunDetailPanel({
           }}
         >
           <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: 1.2 }}>
-            MANUAL REVIEW REQUIRED
+            REVIEW PURCHASE
           </div>
 
           <p style={{ marginTop: 8, marginBottom: 12, color: "#fde68a" }}>
@@ -603,7 +603,7 @@ function RunDetailPanel({
               fontWeight: 900,
             }}
           >
-            {approvingManualReview ? "Approving..." : "Approve Manual Review"}
+            {approvingManualReview ? "Approving..." : "Approve purchase"}
           </button>
         </div>
       )}
@@ -1033,7 +1033,7 @@ export default function Dashboard({ onLogout }) {
       id: "created",
       title: "Run request created",
       copy: requesterCommandActiveRun
-        ? "Live requester run data is now feeding this command surface."
+        ? "Your request is ready."
         : "Create a run to activate this requester command surface.",
       state: requesterCommandActiveRun ? "done" : "pending",
     },
@@ -1041,24 +1041,24 @@ export default function Dashboard({ onLogout }) {
       id: "hold",
       title: "Secure hold authorization",
       copy: requesterCommandHoldReady
-        ? "Hold readiness is visible from the active requester run."
-        : "Hold readiness will appear here when available on the run.",
+        ? "Funding protection is ready."
+        : "Funding protection will appear here when it’s ready.",
       state: requesterCommandHoldReady ? "done" : requesterCommandActiveRun ? "active" : "pending",
     },
     {
       id: "runner",
       title: "Runner acceptance",
       copy: requesterCommandRunnerReady
-        ? "Runner acceptance details are reflected from the active run."
-        : "Runner acceptance will appear here after the run is picked up.",
+        ? "A runner has accepted your request."
+        : "You’ll see when a runner accepts your request.",
       state: requesterCommandRunnerReady ? "done" : requesterCommandActiveRun ? "active" : "pending",
     },
     {
       id: "proof",
       title: "Delivery proof and review",
       copy: requesterCommandProofReady
-        ? "Delivery proof signals are reflected from the active run."
-        : "Proof and review checkpoints will appear here as the run advances.",
+        ? "Delivery proof is available."
+        : "Delivery proof and any required review will appear as the run moves forward.",
       state: requesterCommandProofReady ? "done" : requesterCommandRunnerReady ? "active" : "pending",
     },
   ];
