@@ -40,13 +40,14 @@ test("runner Pulse response endpoint accepts only the authenticated runner respo
 
 test("Pulse routes do not mutate payment payout or account status", () => {
   const start = source.indexOf('router.get("/pulse"');
-  const end = source.indexOf(
-    "/* ============================\n   RUNNER STRIPE CONNECT ONBOARDING",
-    start
+  const payoutSection = /\/\*\s*=+\s*RUNNER STRIPE CONNECT ONBOARDING\s*=+\s*\*\//m.exec(
+    source.slice(start)
   );
 
   assert.notEqual(start, -1);
-  assert.notEqual(end, -1);
+  assert.ok(payoutSection, "Runner payout section marker must follow Pulse routes");
+
+  const end = start + payoutSection.index;
   const pulseSection = source.slice(start, end);
 
   assert.doesNotMatch(
