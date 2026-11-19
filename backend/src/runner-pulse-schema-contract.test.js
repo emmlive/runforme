@@ -26,7 +26,8 @@ test("schema defines categorical Pulse feedback events", () => {
   assert.match(schema, /dismissed\s+Boolean\s+@default\(false\)/);
   assert.match(schema, /respondedAt\s+DateTime\?/);
   assert.match(schema, /runId\s+Int\?/);
-  assert.match(schema, /@@unique\(\[runnerId,\s*trigger,\s*runId\]\)/);
+  assert.match(schema, /dedupeKey\s+String\?\s+@unique/);
+  assert.doesNotMatch(schema, /@@unique\(\[runnerId,\s*trigger,\s*runId\]\)/);
   assert.match(schema, /createdAt\s+DateTime\s+@default\(now\(\)\)/);
 });
 
