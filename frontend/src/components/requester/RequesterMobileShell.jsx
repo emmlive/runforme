@@ -127,7 +127,7 @@ function MobileRunDetail({ run, onBack, onAuthorizeHold, onApproveManualReview, 
     ["Final amount", Number(run.finalAmount || 0) > 0 ? `$${run.finalAmount}` : null],
     ["Purchase", formatSecurityStatus(run.purchaseStatus)],
     ["Delivery confirmed", run.deliveryConfirmedAt ? new Date(run.deliveryConfirmedAt).toLocaleDateString() : null],
-    ["Manual review", run.requiresManualReview ? "Required" : null],
+    ["Purchase review", run.requiresManualReview ? "Required" : null],
   ].filter(([, value]) => value && value !== "Not started");
   const paymentRows = [
     ["Payout", `$${run.payout || 0}`],
@@ -207,7 +207,7 @@ export default function RequesterMobileShell({
   const dominantAction = actionableHold
     ? { label: "Authorize Secure Hold", onClick: () => onAuthorizeHold?.(activeRun.id) }
     : actionableReview
-      ? { label: "Approve manual review", onClick: () => onApproveManualReview?.(activeRun.id) }
+      ? { label: "Approve purchase", onClick: () => onApproveManualReview?.(activeRun.id) }
       : { label: "View run", onClick: () => setDestination("runs") };
 
   const visibleRuns = useMemo(
