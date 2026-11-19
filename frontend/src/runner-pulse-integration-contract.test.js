@@ -24,14 +24,12 @@ test("Runner dashboard loads server-driven Pulse eligibility", () => {
     source,
     /async function fetchPulseEligibility\(\)[\s\S]*apiRequest\(["']\/api\/runners\/pulse["']\)/
   );
-  assert.match(
-    source,
-    /setPulseOpen\(Boolean\(res\.pulse\?\.eligible\)\)/
-  );
+  assert.match(source, /const\s+eligible\s*=\s*Boolean\(res\.pulse\?\.eligible\)/);
+  assert.match(source, /setPulseOpen\(eligible\)/);
 });
 
 test("Runner can explicitly pass with the human-friendly Not this one action", () => {
-  assert.match(source, />\s*Not this one\s*</);
+  assert.ok(source.includes('"Not this one"'));
   assert.match(
     source,
     /apiRequest\(\s*`\/api\/runs\/\$\{runId\}\/pass`[\s\S]*method:\s*["']POST["']/
