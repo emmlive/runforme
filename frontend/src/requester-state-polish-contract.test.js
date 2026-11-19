@@ -19,36 +19,34 @@ const runLists = readFileSync(
 );
 
 test("requester purchase review uses one customer-facing action label", () => {
-  assert.doesNotMatch(mobile, /Approve manual review/);
-  assert.doesNotMatch(dashboard, /Approve Manual Review/);
-  assert.match(mobile, /Approve purchase/);
-  assert.match(dashboard, /Approve purchase/);
+  assert.ok(!mobile.includes("Approve manual review"));
+  assert.ok(!dashboard.includes("Approve Manual Review"));
+  assert.ok(mobile.includes("Approve purchase"));
+  assert.ok(dashboard.includes("Approve purchase"));
 });
 
 test("requester detail labels avoid internal manual-review terminology", () => {
-  assert.doesNotMatch(dashboard, /["Manual Review",/);
-  assert.doesNotMatch(mobile, /["Manual review",/);
-  assert.match(dashboard, /["Purchase Review",/);
-  assert.match(mobile, /["Purchase review",/);
+  assert.ok(!dashboard.includes('["Manual Review",'));
+  assert.ok(!mobile.includes('["Manual review",'));
+  assert.ok(dashboard.includes('["Purchase Review",'));
+  assert.ok(mobile.includes('["Purchase review",'));
 });
 
 test("wide requester run list maps raw run states to friendly labels", () => {
-  assert.match(runList, /const statusLabels = {/);
-  assert.match(runList, /open:s*"Requested"/);
-  assert.match(runList, /assigned:s*"Runner assigned"/);
-  assert.match(runList, /in_progress:s*"In progress"/);
-  assert.match(runList, /completed:s*"Completed"/);
-  assert.match(
-    runList,
-    /return statusLabels[status] || status || "Ready"/
+  assert.ok(runList.includes("const statusLabels = {"));
+  assert.ok(runList.includes('open: "Requested"'));
+  assert.ok(runList.includes('assigned: "Runner assigned"'));
+  assert.ok(runList.includes('in_progress: "In progress"'));
+  assert.ok(runList.includes('completed: "Completed"'));
+  assert.ok(
+    runList.includes('return statusLabels[status] || status || "Ready"')
   );
 });
 
 test("desktop history copy matches completed-run semantics", () => {
-  assert.match(runLists, /title="Completed"/);
-  assert.match(
-    runLists,
-    /emptyMessage="Completed runs will appear here."/
+  assert.ok(runLists.includes('title="Completed"'));
+  assert.ok(
+    runLists.includes('emptyMessage="Completed runs will appear here."')
   );
-  assert.doesNotMatch(runLists, /Completed requester runs/);
+  assert.ok(!runLists.includes("Completed requester runs"));
 });
