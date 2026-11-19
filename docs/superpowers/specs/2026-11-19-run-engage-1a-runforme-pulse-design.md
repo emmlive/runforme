@@ -32,11 +32,11 @@ The experience must feel human, brief, and cross-generational. It should not imi
 
 V1 triggers only from runner offer behavior.
 
-A runner becomes eligible for a Pulse prompt after 3 consecutive job offers are missed, ignored, or otherwise expire without acceptance.
+A runner becomes eligible for a Pulse prompt after 3 consecutive offers they explicitly pass using the runner-facing “Not this one” action.
 
-An accepted run resets the consecutive-miss counter.
+An accepted run resets the consecutive-pass counter.
 
-Explicit decline behavior may be folded into the same counter once the application has a first-class decline action. V1 should not fabricate decline semantics where none exist today.
+RUNFORME does not treat “another runner accepted first” as a negative runner signal. Those offers remain neutral for Pulse because the runner did not explicitly choose to pass. V1 must not infer rejection, disinterest, or poor engagement from another runner winning the run.
 
 The prompt must use a cooldown so a runner cannot be repeatedly interrupted. Proposed default: no more than one Pulse prompt in a 24-hour period per runner.
 
@@ -171,7 +171,7 @@ Selected approach.
 
 ## Builder Decisions
 
-- Start with one behavior trigger: 3 consecutive non-accepted offers.
+- Start with one behavior trigger: 3 consecutive explicit runner Pass actions (“Not this one”).
 - Use one 24-hour cooldown.
 - Frame the prompt around improving the next run, not explaining the previous decline.
 - Use the exact v1 choices: Closer to me, Better value for the trip, Better timing, Different kind of errand, I’m done for now, Something else.
@@ -198,7 +198,7 @@ These are explicitly outside RUN-ENGAGE-1A.
 
 RUN-ENGAGE-1A is complete when:
 
-1. Three consecutive non-accepted offers can trigger one Pulse prompt.
+1. Three consecutive explicit runner Pass actions can trigger one Pulse prompt.
 2. Accepting a run resets the miss counter.
 3. The prompt never appears during an active run.
 4. The prompt can be dismissed.
