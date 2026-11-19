@@ -522,8 +522,7 @@ function RunDetailPanel({
           </div>
 
           <p style={{ marginTop: 12, marginBottom: 12, color: "#cbd5e1", lineHeight: 1.5 }}>
-            Authorize the estimated amount so a runner can accept the request. You’ll only be
-            charged according to the completed run, up to the amount you approved.
+            Authorize the estimated amount so a runner can accept the request. You’ll only be charged according to the completed run, up to the amount you approved.
           </p>
 
           <button
