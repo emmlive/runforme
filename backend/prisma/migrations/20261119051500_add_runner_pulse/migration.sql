@@ -16,6 +16,7 @@ CREATE TABLE "RunnerPulseEvent" (
   "trigger" TEXT NOT NULL,
   "missCount" INTEGER NOT NULL,
   "runId" INTEGER,
+  "dedupeKey" TEXT,
   "reason" TEXT,
   "dismissed" BOOLEAN NOT NULL DEFAULT false,
   "respondedAt" TIMESTAMP(3),
@@ -30,8 +31,8 @@ ON "RunnerPulseState"("runnerId");
 CREATE INDEX "RunnerPulseState_lastPromptedAt_idx"
 ON "RunnerPulseState"("lastPromptedAt");
 
-CREATE UNIQUE INDEX "RunnerPulseEvent_runnerId_trigger_runId_key"
-ON "RunnerPulseEvent"("runnerId", "trigger", "runId");
+CREATE UNIQUE INDEX "RunnerPulseEvent_dedupeKey_key"
+ON "RunnerPulseEvent"("dedupeKey");
 
 CREATE INDEX "RunnerPulseEvent_runnerId_idx"
 ON "RunnerPulseEvent"("runnerId");
