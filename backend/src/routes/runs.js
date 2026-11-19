@@ -11,6 +11,12 @@ const { authorizeSecureHold } = require("../services/secureHoldService");
 const {
   captureRunPayment,
 } = require("../services/runPaymentSettlement");
+const {
+  createRunnerPulseService,
+} = require("../services/runnerPulseService");
+const {
+  createRunnerOfferPassService,
+} = require("../services/runnerOfferPassService");
 
 let secureHoldPaymentService = null;
 
@@ -49,6 +55,12 @@ function getSecureHoldPaymentService() {
   return secureHoldPaymentService;
 }
 const router = express.Router();
+
+const pulseService = createRunnerPulseService({ prisma });
+const runnerOfferPassService = createRunnerOfferPassService({
+  prisma,
+  pulseService,
+});
 
 const CREATE_RUN_DUPLICATE_WINDOW_MS = 15_000;
 
@@ -558,6 +570,64 @@ router.post("/", auth, async (req, res) => {
 });
 
 /* ============================
+   PASS RUN OFFER
+============================ */
+router.post("/:runId/pass", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "runner") {
+      return res.status(403).json({
+        success: false,
+        error: "Only runners can pass on runs",
+      });
+    }
+
+    const runId = parseRunId(req.params.runId);
+
+    if (!runId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid runId",
+      });
+    }
+
+    const result = await runnerOfferPassService.passRunnerOffer({
+      runnerId: req.user.id,
+      runId,
+    });
+
+    if (result.alreadyPassed) {
+      return res.json({
+        success: true,
+        alreadyPassed: true,
+        runId,
+      });
+    }
+
+    const io = req.app.get("io");
+
+    if (io) {
+      io.to(`runner:${req.user.id}`).emit("run.unavailable", {
+        runId,
+        offerId: result.offerId,
+        reason: "You passed on this run",
+      });
+    }
+
+    return res.json({
+      success: true,
+      passed: true,
+      runId,
+    });
+  } catch (err) {
+    console.error("RUN PASS ERROR:", err);
+    return res.status(400).json({
+      success: false,
+      error: err.message || "Failed to pass on run",
+    });
+  }
+});
+
+/* ============================
    ACCEPT RUN
 ============================ */
 router.post("/:runId/accept", auth, async (req, res) => {
@@ -689,6 +759,12 @@ router.post("/:runId/accept", auth, async (req, res) => {
         where: { id: runId },
       });
     });
+
+    try {
+      await pulseService.resetPulseMisses({ runnerId });
+    } catch (pulseError) {
+      console.error("Runner Pulse reset failed:", pulseError);
+    }
 
     if (alreadyAccepted) {
       return res.json({
