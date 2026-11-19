@@ -4,25 +4,25 @@ const DEFAULT_STEPS = [
   {
     id: "created",
     title: "Run request created",
-    copy: "Requester details, destination, and mission notes remain owned by the existing dashboard flow.",
+    copy: "Your request details are saved and ready to move forward.",
     state: "done",
   },
   {
     id: "hold",
-    title: "Secure hold placeholder",
-    copy: "Authorization state can be displayed without changing money movement or server route behavior.",
+    title: "Funding protection",
+    copy: "Authorize the estimated amount before the request is sent to runners.",
     state: "active",
   },
   {
     id: "runner",
     title: "Runner acceptance",
-    copy: "Runner matching, offer acceptance, and active-run transitions stay controlled by current flows.",
+    copy: "You’ll see when a runner accepts and starts handling your request.",
     state: "pending",
   },
   {
     id: "proof",
     title: "Delivery proof and review",
-    copy: "PIN, proof, final handoff, and review checkpoints remain visible as trust milestones.",
+    copy: "Delivery proof and any required review stay visible through completion.",
     state: "pending",
   },
 ];
@@ -38,7 +38,7 @@ function normalizeState(state) {
 export default function RequesterTrustTimeline({
   steps = DEFAULT_STEPS,
   title = "Trust timeline",
-  copy = "A presentational timeline for the requester journey. It is intentionally data-neutral for this checkpoint.",
+  copy = "Follow your request from creation through delivery.",
 }) {
   return (
     <section className="requester-trust-timeline" aria-label="Requester trust timeline">
