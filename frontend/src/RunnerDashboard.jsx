@@ -714,7 +714,10 @@ export default function RunnerDashboard({ user, onLogout }) {
       );
 
       setAcceptMessage({
-        type: "error",
+        type:
+          data.reason === "You passed on this run"
+            ? "success"
+            : "error",
         text: data.reason || "This run is no longer available.",
       });
     };
