@@ -3,7 +3,11 @@ import { apiRequest } from "./api/client";
 import { classifyTransientFailure } from "./lib/transientFailure.js";
 import { socket } from "./lib/socket"; // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ shared socket (FIX)
 import LiveMap from "./components/LiveMap";
-import { RunnerCommandCenter, deriveRunnerCommandData } from "./components/runner";
+import {
+  RunnerCommandCenter,
+  RunnerPulseSheet,
+  deriveRunnerCommandData,
+} from "./components/runner";
 
 function getCompletionSafety(run) {
   if (!run) {
@@ -243,6 +247,15 @@ function persistRunnerOnline(userId, online) {
   }
 }
 
+const PULSE_ACKNOWLEDGEMENTS = {
+  closer_to_me: "Got it. We’ll keep distance in mind.",
+  better_value: "Makes sense. Trip value matters.",
+  better_timing: "Got it. Timing’s everything.",
+  different_errand: "Understood. Not every run is your run.",
+  done_for_now: "All good. We’ll give you some space.",
+  something_else: "Thanks. We’ll keep learning what works for you.",
+};
+
 function bankPayoutStatusLabel(status) {
   switch (status) {
     case "pending":
@@ -290,6 +303,10 @@ export default function RunnerDashboard({ user, onLogout }) {
   const [bankPayouts, setBankPayouts] = useState([]);
   const [payoutSummaryLoading, setPayoutSummaryLoading] = useState(false);
   const [payoutSummaryError, setPayoutSummaryError] = useState(null);
+  const [passingRunId, setPassingRunId] = useState(null);
+  const [pulseOpen, setPulseOpen] = useState(false);
+  const [pulseBusy, setPulseBusy] = useState(false);
+  const [pulseMessage, setPulseMessage] = useState(null);
 
   const watchIdRef = useRef(null);
   const lastSentRef = useRef(0);
@@ -457,6 +474,7 @@ export default function RunnerDashboard({ user, onLogout }) {
         }
 
         fetchRuns();
+        fetchPulseEligibility();
       })
       .catch((err) => {
         if (cancelled) return;
@@ -490,6 +508,106 @@ export default function RunnerDashboard({ user, onLogout }) {
       window.history.replaceState({}, "", nextUrl);
     }
   }, []);
+
+  async function fetchPulseEligibility() {
+    try {
+      const res = await apiRequest("/api/runners/pulse");
+
+      if (res?.success) {
+        const eligible = Boolean(res.pulse?.eligible);
+        setPulseOpen(eligible);
+
+        if (eligible) {
+          setPulseMessage(null);
+        }
+      }
+    } catch (err) {
+      console.error("Runner Pulse eligibility failed:", err);
+    }
+  }
+
+  async function passRun(runId) {
+    if (!runId || passingRunId || acceptingRunId) return;
+
+    setPassingRunId(runId);
+    setAcceptMessage(null);
+
+    try {
+      const res = await apiRequest(`/api/runs/${runId}/pass`, {
+        method: "POST",
+      });
+
+      if (!res?.success) {
+        throw new Error(res?.error || "Could not pass on this run.");
+      }
+
+      setRuns((prev) => prev.filter((r) => r.id !== runId));
+      setAcceptMessage({
+        type: "success",
+        text: "Passed. We’ll keep looking for a better fit.",
+      });
+
+      await fetchPulseEligibility();
+    } catch (err) {
+      console.error("Pass run failed:", err);
+      setAcceptMessage({
+        type: "error",
+        text: err.message || "Could not pass on this run.",
+      });
+    } finally {
+      setPassingRunId(null);
+    }
+  }
+
+  async function respondToPulse(reason) {
+    if (pulseBusy) return;
+
+    setPulseBusy(true);
+
+    try {
+      const res = await apiRequest("/api/runners/pulse/response", {
+        method: "POST",
+        body: { reason, dismissed: false },
+      });
+
+      if (!res?.success) {
+        throw new Error("Could not save Pulse response.");
+      }
+
+      setPulseOpen(false);
+      setPulseMessage(
+        PULSE_ACKNOWLEDGEMENTS[reason] ||
+          "Thanks. We’ll keep learning what works for you."
+      );
+    } catch (err) {
+      console.error("Runner Pulse response failed:", err);
+    } finally {
+      setPulseBusy(false);
+    }
+  }
+
+  async function dismissPulse() {
+    if (pulseBusy) return;
+
+    setPulseBusy(true);
+
+    try {
+      const res = await apiRequest("/api/runners/pulse/response", {
+        method: "POST",
+        body: { dismissed: true },
+      });
+
+      if (!res?.success) {
+        throw new Error("Could not dismiss Pulse.");
+      }
+
+      setPulseOpen(false);
+    } catch (err) {
+      console.error("Runner Pulse dismissal failed:", err);
+    } finally {
+      setPulseBusy(false);
+    }
+  }
 
   ////////////////////////////////////////////////////////
   // FETCH RUNS
@@ -722,8 +840,10 @@ export default function RunnerDashboard({ user, onLogout }) {
           navigator.geolocation ? "Online" : "Online - GPS unavailable"
         );
         await fetchRuns();
+        await fetchPulseEligibility();
       } else {
         setStatusMessage("Offline");
+        setPulseOpen(false);
         stopGpsStreaming();
       }
     } catch (err) {
@@ -1082,6 +1202,12 @@ export default function RunnerDashboard({ user, onLogout }) {
     (r) => r.status === "open" && r.offerId
   );
 
+  useEffect(() => {
+    if (activeRun) {
+      setPulseOpen(false);
+    }
+  }, [activeRun?.id, activeRun?.status]);
+
   const completedRuns = runs.filter(
     (r) => r.status === "completed"
   );
@@ -1103,6 +1229,12 @@ export default function RunnerDashboard({ user, onLogout }) {
   ////////////////////////////////////////////////////////
   return (
     <div className="runner-dashboard-shell" style={{ height: "100vh", background: "#0f0f0f", color: "#fff" }}>
+      <RunnerPulseSheet
+        open={online && !activeRun && pulseOpen}
+        busy={pulseBusy}
+        onSelect={respondToPulse}
+        onDismiss={dismissPulse}
+      />
 
       {/* =========================
         TOP STATUS BAR
@@ -1160,6 +1292,24 @@ export default function RunnerDashboard({ user, onLogout }) {
           </button>
         </div>
       </div>
+
+      {pulseMessage && (
+        <div
+          role="status"
+          style={{
+            margin: "12px 16px 0",
+            padding: "11px 13px",
+            borderRadius: 12,
+            background: "rgba(37, 99, 235, 0.14)",
+            border: "1px solid rgba(147, 197, 253, 0.22)",
+            color: "#dbeafe",
+            fontSize: 13,
+            fontWeight: 750,
+          }}
+        >
+          {pulseMessage}
+        </div>
+      )}
 
       {/* RUN-UI-1N-TASK-6-CHECKPOINT-3B: navigation moved near the top of
           the Runner experience so it is discoverable without scrolling
@@ -2431,9 +2581,36 @@ return (
                 </p>
               )}
 
+              <div
+                className="runner-available-run-card__actions"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "minmax(0, 0.9fr) minmax(0, 1.1fr)",
+                  gap: 8,
+                }}
+              >
+                <button
+                  type="button"
+                  disabled={passingRunId === run.id || acceptingRunId === run.id}
+                  aria-busy={passingRunId === run.id}
+                  onClick={() => passRun(run.id)}
+                  style={{
+                    opacity: passingRunId === run.id ? 0.55 : 1,
+                    cursor: passingRunId === run.id ? "not-allowed" : "pointer",
+                    background: "transparent",
+                    color: "#e2e8f0",
+                    border: "1px solid #475569",
+                    padding: "8px 12px",
+                    borderRadius: 6,
+                    fontWeight: 800,
+                  }}
+                >
+                  {passingRunId === run.id ? "Passing..." : "Not this one"}
+                </button>
+
               <button
                 type="button"
-                disabled={acceptingRunId === run.id}
+                disabled={acceptingRunId === run.id || passingRunId === run.id}
                 aria-busy={acceptingRunId === run.id}
                 onClick={async () => {
                   if (!run.id) return;
@@ -2460,6 +2637,7 @@ return (
                         type: "success",
                         text: "Run accepted. Head to the pickup location when ready.",
                       });
+                      setPulseOpen(false);
 
                       setRuns((prev) =>
                         prev.map((r) =>
@@ -2505,6 +2683,7 @@ return (
               >
                   {acceptingRunId === run.id ? "Accepting..." : "Accept run"}
               </button>
+              </div>
             </div>
           ))}
         </div>
