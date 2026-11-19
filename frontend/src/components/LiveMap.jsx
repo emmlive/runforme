@@ -88,6 +88,7 @@ function getCoordinateLabel(props) {
 }
 
 export default function LiveMap(props = {}) {
+  const locationStatus = props.locationStatus || "idle";
   const locationLabel = getLocationLabel(props);
   const coordinateLabel = getCoordinateLabel(props);
   const coordinates = getMapCoordinates(props);
@@ -149,15 +150,47 @@ export default function LiveMap(props = {}) {
     };
   }, [coordinates?.lat, coordinates?.lng, locationLabel]);
 
-  const mapStatus = providerConfigured
-    ? "Map provider configured"
-    : "Map preview";
+  const mapStatus = !providerConfigured
+    ? "Map preview"
+    : locationStatus === "denied"
+      ? "Location blocked"
+      : locationStatus === "acquiring"
+        ? "Locating"
+        : locationStatus === "unavailable" ||
+            locationStatus === "timeout" ||
+            locationStatus === "failed"
+          ? "Location unavailable"
+          : "Map provider configured";
 
-  const fallbackBody = providerConfigured
-    ? coordinates
-      ? "Loading live Google Maps. The run workflow remains available if the map provider cannot load."
-      : "Live Google Maps will appear when a valid run location is available."
-    : "Live Google Maps is paused until the production browser key is verified for this domain. The run workflow remains available.";
+  const locationReady = locationStatus === "ready" && coordinates;
+
+  let fallbackBody;
+
+  if (!providerConfigured) {
+    fallbackBody =
+      "Live Google Maps is paused until the production browser key is verified for this domain. The run workflow remains available.";
+  } else if (locationStatus === "acquiring") {
+    fallbackBody =
+      "Getting your live location. Keep location access enabled while this active run is in progress.";
+  } else if (locationStatus === "denied") {
+    fallbackBody =
+      "Allow location access in your browser or device settings to show your live position for this active run.";
+  } else if (locationStatus === "unavailable") {
+    fallbackBody =
+      "Your device could not provide a live location. The run workflow remains available while location is unavailable.";
+  } else if (locationStatus === "timeout") {
+    fallbackBody =
+      "Live location timed out. Keep location services enabled and the app open so RUNFORME can try again.";
+  } else if (locationStatus === "failed") {
+    fallbackBody =
+      "RUNFORME could not start live location. The run workflow remains available.";
+  } else if (locationReady) {
+    fallbackBody =
+      "Loading live Google Maps. The run workflow remains available if the map provider cannot load.";
+  } else {
+    fallbackBody =
+      "Live Google Maps will appear when an active run starts and a valid location is available.";
+  }
 
   return (
     <section
