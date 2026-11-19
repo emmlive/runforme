@@ -58,6 +58,48 @@ function createMemoryPrisma() {
         states.set(where.runnerId, next);
         return { ...next };
       },
+
+      async updateMany({ where, data }) {
+        const current = states.get(where.runnerId);
+        if (!current) return { count: 0 };
+
+        if (
+          where.consecutiveMisses?.gte !== undefined &&
+          current.consecutiveMisses < where.consecutiveMisses.gte
+        ) {
+          return { count: 0 };
+        }
+
+        if (Array.isArray(where.OR)) {
+          const matchesCooldown = where.OR.some((condition) => {
+            if (condition.lastPromptedAt === null) {
+              return current.lastPromptedAt === null;
+            }
+
+            if (condition.lastPromptedAt?.lte) {
+              return (
+                current.lastPromptedAt instanceof Date &&
+                current.lastPromptedAt.getTime() <=
+                  new Date(condition.lastPromptedAt.lte).getTime()
+              );
+            }
+
+            return false;
+          });
+
+          if (!matchesCooldown) {
+            return { count: 0 };
+          }
+        }
+
+        states.set(where.runnerId, {
+          ...current,
+          ...data,
+          updatedAt: new Date(),
+        });
+
+        return { count: 1 };
+      },
     },
 
     runnerPulseEvent: {
@@ -297,4 +339,28 @@ test("responding or dismissing resets the pass streak so old behavior cannot ret
 
   assert.equal(prisma._states.get(12).consecutiveMisses, 0);
   assert.equal(prisma._states.get(12).lastMissedRunId, null);
+});
+
+
+test("simultaneous eligibility checks allow only one cooldown claimant", async () => {
+  const prisma = createMemoryPrisma();
+  const clock = { now: new Date("2026-11-19T12:00:00Z") };
+  const pulse = createRunnerPulseService({
+    prisma,
+    now: () => new Date(clock.now),
+  });
+
+  for (const runId of [801, 802, 803]) {
+    await pulse.recordNonAcceptedOffer({ runnerId: 12, runId });
+  }
+
+  const [first, second] = await Promise.all([
+    pulse.getPulseEligibility({ runnerId: 12, hasActiveRun: false }),
+    pulse.getPulseEligibility({ runnerId: 12, hasActiveRun: false }),
+  ]);
+
+  assert.equal(
+    [first.eligible, second.eligible].filter(Boolean).length,
+    1
+  );
 });
