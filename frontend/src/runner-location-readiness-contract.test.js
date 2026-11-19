@@ -44,3 +44,11 @@ test("runner keeps one watcher and passes location lifecycle into LiveMap", () =
     /<LiveMap\s+run=\{activeRun\}\s+runnerLocation=\{runnerLocation\}\s+locationStatus=\{runnerLocationStatus\}\s*\/>/
   );
 });
+
+
+test("runner cleans up GPS watcher when dashboard unmounts", () => {
+  assert.match(
+    source,
+    /useEffect\(\(\)\s*=>\s*\{\s*return\s*\(\)\s*=>\s*stopGpsStreaming\(\);\s*\},\s*\[\]\s*\)/
+  );
+});
