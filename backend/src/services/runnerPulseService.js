@@ -33,14 +33,10 @@ function createRunnerPulseService({
 
     try {
       return await prisma.$transaction(async (tx) => {
+        const dedupeKey = `${MISSED_OFFER_TRIGGER}:${runnerId}:${runId}`;
+
         const existingEvent = await tx.runnerPulseEvent.findUnique({
-          where: {
-            runnerId_trigger_runId: {
-              runnerId,
-              trigger: MISSED_OFFER_TRIGGER,
-              runId,
-            },
-          },
+          where: { dedupeKey },
         });
 
         if (existingEvent) {
@@ -72,6 +68,7 @@ function createRunnerPulseService({
             runnerId,
             trigger: MISSED_OFFER_TRIGGER,
             runId,
+            dedupeKey,
             missCount: state.consecutiveMisses,
             dismissed: false,
           },
@@ -191,6 +188,7 @@ function createRunnerPulseService({
           runnerId,
           trigger: FEEDBACK_TRIGGER,
           runId: null,
+          dedupeKey: null,
           missCount: state?.consecutiveMisses ?? 0,
           reason: dismissed ? null : reason,
           dismissed: Boolean(dismissed),
