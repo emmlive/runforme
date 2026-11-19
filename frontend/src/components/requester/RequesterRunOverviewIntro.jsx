@@ -1,8 +1,8 @@
 ﻿import "./RequesterCommandCenter.css";
 
 export default function RequesterRunOverviewIntro({
-  kicker = "Live requester overview",
-  note = "Real run data, trust checkpoints, and current movement stay grouped before the detailed panels below.",
+  kicker = "Your run at a glance.",
+  note = "Track each step from request to completion.",
 }) {
   return (
     <div className="requester-command-shell__intro">
