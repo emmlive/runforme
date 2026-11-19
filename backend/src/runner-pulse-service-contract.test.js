@@ -62,15 +62,11 @@ function createMemoryPrisma() {
 
     runnerPulseEvent: {
       async findUnique({ where }) {
-        const key = where.runnerId_trigger_runId;
-        if (!key) return null;
+        if (!where.dedupeKey) return null;
 
         return (
           events.find(
-            (event) =>
-              event.runnerId === key.runnerId &&
-              event.trigger === key.trigger &&
-              event.runId === key.runId
+            (event) => event.dedupeKey === where.dedupeKey
           ) || null
         );
       },
