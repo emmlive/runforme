@@ -15,8 +15,12 @@ const {
   createRunnerOnboardingLink,
   refreshRunnerOnboardingStatus,
 } = require("../services/runnerConnectOnboarding");
+const {
+  createRunnerPulseService,
+} = require("../services/runnerPulseService");
 
 const router = express.Router();
+const pulseService = createRunnerPulseService({ prisma });
 
 console.log("📍 ACTIVE JS RUNNERS ROUTE LOADED");
 
@@ -149,6 +153,90 @@ router.post("/location", auth, async (req, res) => {
     return res.status(500).json({
       success: false,
       error: "Failed to update runner location",
+    });
+  }
+});
+
+/* ============================
+   RUNNER PULSE
+============================ */
+router.get("/pulse", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "runner") {
+      return res.status(403).json({
+        success: false,
+        error: "Only runners can view Pulse",
+      });
+    }
+
+    const activeRun = await prisma.run.findFirst({
+      where: {
+        assignedRunnerId: req.user.id,
+        status: { in: ["assigned", "arrived", "in_progress"] },
+      },
+      select: { id: true },
+    });
+
+    const pulse = await pulseService.getPulseEligibility({
+      runnerId: req.user.id,
+      hasActiveRun: Boolean(activeRun),
+    });
+
+    return res.json({
+      success: true,
+      pulse,
+    });
+  } catch (err) {
+    console.error("Runner Pulse eligibility error:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to load Pulse",
+    });
+  }
+});
+
+router.post("/pulse/response", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "runner") {
+      return res.status(403).json({
+        success: false,
+        error: "Only runners can respond to Pulse",
+      });
+    }
+
+    const reason =
+      typeof req.body.reason === "string"
+        ? req.body.reason.trim()
+        : null;
+    const dismissed = req.body.dismissed === true;
+
+    await pulseService.recordPulseResponse({
+      runnerId: req.user.id,
+      reason,
+      dismissed,
+    });
+
+    return res.json({
+      success: true,
+      recorded: true,
+    });
+  } catch (err) {
+    const message = String(err?.message || "");
+
+    if (
+      message.includes("Invalid Pulse reason") ||
+      message.includes("Pulse dismissal cannot include a reason")
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid Pulse response",
+      });
+    }
+
+    console.error("Runner Pulse response error:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to record Pulse response",
     });
   }
 });
