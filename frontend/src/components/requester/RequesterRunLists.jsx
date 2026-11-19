@@ -13,9 +13,9 @@ export default function RequesterRunLists({
         emptyMessage="No active requester runs yet."
       />
       <RequesterRunList
-        title="History"
+        title="Completed"
         runs={historyRuns}
-        emptyMessage="Completed requester runs will appear here."
+        emptyMessage="Completed runs will appear here."
       />
     </section>
   );
