@@ -134,28 +134,24 @@ function createRunnerPulseService({
     }
 
     const currentTime = now();
-    const lastPromptedAt = state?.lastPromptedAt
-      ? new Date(state.lastPromptedAt)
-      : null;
+    const cooldownCutoff = new Date(
+      currentTime.getTime() - PULSE_COOLDOWN_MS
+    );
 
-    if (
-      lastPromptedAt &&
-      currentTime.getTime() - lastPromptedAt.getTime() < PULSE_COOLDOWN_MS
-    ) {
-      return {
-        eligible: false,
-        trigger: ELIGIBILITY_TRIGGER,
-        missCount,
-      };
-    }
-
-    await prisma.runnerPulseState.update({
-      where: { runnerId },
+    const claimed = await prisma.runnerPulseState.updateMany({
+      where: {
+        runnerId,
+        consecutiveMisses: { gte: PULSE_TRIGGER_COUNT },
+        OR: [
+          { lastPromptedAt: null },
+          { lastPromptedAt: { lte: cooldownCutoff } },
+        ],
+      },
       data: { lastPromptedAt: currentTime },
     });
 
     return {
-      eligible: true,
+      eligible: claimed.count === 1,
       trigger: ELIGIBILITY_TRIGGER,
       missCount,
     };
