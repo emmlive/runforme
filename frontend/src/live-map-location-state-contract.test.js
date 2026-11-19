@@ -28,3 +28,11 @@ test("LiveMap does not claim readiness without coordinates", () => {
     /locationStatus\s*===\s*["']ready["']\s*&&\s*coordinates/
   );
 });
+
+
+test("LiveMap hides a previously ready map when coordinates disappear", () => {
+  assert.match(
+    source,
+    /if\s*\(!googleMapsExplicitlyEnabled\s*\|\|\s*!googleMapsKey\s*\|\|\s*!coordinates\)\s*\{\s*setMapReady\(false\);\s*return;\s*\}/
+  );
+});
