@@ -46,20 +46,31 @@ The prompt is a compact bottom-sheet/modal surface, not a blocking full-screen f
 
 Recommended headline:
 
-**Not seeing the right runs?**
+**Let’s find a better fit.**
 
 Supporting copy:
 
-**You’ve passed on a few recent requests. What’s getting in the way?**
+**You’ve passed on a few runs. What would make the next one work better for you?**
 
 One-tap response choices:
 
-- Too far away
-- Pay could be better
-- Busy right now
-- Not my type of run
-- Taking a break
+- Closer to me
+- Better value for the trip
+- Better timing
+- Different kind of errand
+- I’m done for now
 - Something else
+
+Recommended response acknowledgements:
+
+- Closer to me → “Got it. We’ll keep distance in mind.”
+- Better value for the trip → “Makes sense. Trip value matters.”
+- Better timing → “Got it. Timing’s everything.”
+- Different kind of errand → “Understood. Not every run is your run.”
+- I’m done for now → “All good. We’ll give you some space.”
+- Something else → “Thanks. We’ll keep learning what works for you.”
+
+The framing is future-oriented: RUNFORME asks what would make the *next* run a better fit instead of asking the runner to justify or defend a decline.
 
 The runner can dismiss the prompt without answering.
 
@@ -132,7 +143,7 @@ Not selected for v1.
 
 ### 2. Missed-offer feedback only
 
-Prompt after repeated non-acceptance.
+Prompt after repeated non-acceptance, using a conventional “why did you pass?” framing.
 
 Pros:
 - high relevance
@@ -141,12 +152,14 @@ Pros:
 
 Tradeoffs:
 - narrower emotional personality
+- feels similar to existing gig-economy feedback patterns
+- asks the runner to explain the past instead of helping shape the next opportunity
 
-Viable, but selected only as the foundation.
+Viable as a trigger model, but the conventional framing was not selected.
 
 ### 3. Adaptive RUNFORME Pulse
 
-A reusable branded interaction system where v1 starts with missed-offer behavior and later expands to other contextual moments.
+A reusable branded interaction system where v1 starts with missed-offer behavior, uses a future-oriented “better fit” question, and later expands to other contextual moments.
 
 Pros:
 - distinctive product identity
@@ -160,6 +173,8 @@ Selected approach.
 
 - Start with one behavior trigger: 3 consecutive non-accepted offers.
 - Use one 24-hour cooldown.
+- Frame the prompt around improving the next run, not explaining the previous decline.
+- Use the exact v1 choices: Closer to me, Better value for the trip, Better timing, Different kind of errand, I’m done for now, Something else.
 - Keep the prompt optional.
 - Keep v1 categorical only.
 - Do not introduce ranking consequences.
