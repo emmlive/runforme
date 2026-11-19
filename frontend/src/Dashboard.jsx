@@ -522,9 +522,8 @@ function RunDetailPanel({
           </div>
 
           <p style={{ marginTop: 12, marginBottom: 12, color: "#cbd5e1", lineHeight: 1.5 }}>
-            Authorize the estimated Secure Hold before this run becomes available for runner
-            dispatch. The final captured amount is determined by the completed run and remains
-            subject to the authorized hold.
+            Authorize the estimated amount so a runner can accept the request. You’ll only be
+            charged according to the completed run, up to the amount you approved.
           </p>
 
           <button
@@ -1034,7 +1033,7 @@ export default function Dashboard({ onLogout }) {
       title: "Run request created",
       copy: requesterCommandActiveRun
         ? "Your request is ready."
-        : "Create a run to activate this requester command surface.",
+        : "Create a run to start tracking it here.",
       state: requesterCommandActiveRun ? "done" : "pending",
     },
     {
