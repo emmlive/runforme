@@ -20,7 +20,7 @@ test("runner keeps active GPS coordinates in local UI state", () => {
 test("runner passes active GPS coordinates into LiveMap without backend schema changes", () => {
   assert.match(
     source,
-    /<LiveMap\s+run=\{activeRun\}\s+runnerLocation=\{runnerLocation\}\s*\/>/
+    /<LiveMap[\s\S]*?run=\{activeRun\}[\s\S]*?runnerLocation=\{runnerLocation\}[\s\S]*?locationStatus=\{runnerLocationStatus\}[\s\S]*?\/>/
   );
   assert.doesNotMatch(
     source,
