@@ -1,11 +1,21 @@
 ﻿import "./RequesterCommandCenter.css";
 
+const statusLabels = {
+  open: "Requested",
+  assigned: "Runner assigned",
+  arrived: "Runner arrived",
+  in_progress: "In progress",
+  completed: "Completed",
+  cancelled: "Cancelled",
+};
+
 function getRunTitle(run, fallback) {
   return run?.title || run?.description || run?.pickupName || run?.storeName || run?.id || fallback;
 }
 
 function getRunMeta(run) {
-  return run?.status || run?.state || "ready";
+  const status = String(run?.status || run?.state || "").toLowerCase();
+  return statusLabels[status] || status || "Ready";
 }
 
 function getRunDetail(run) {
