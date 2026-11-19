@@ -26,6 +26,8 @@ function createMemoryPrisma() {
         if (!current) {
           const value = {
             id: states.size + 1,
+            lastMissedRunId: null,
+            lastPromptedAt: null,
             createdAt: new Date(),
             updatedAt: new Date(),
             ...create,
