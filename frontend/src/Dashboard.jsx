@@ -272,7 +272,7 @@ function SecurityProofGrid({ run }) {
     ["Receipt Proof", run.receiptImageUrl ? "Uploaded" : "Not uploaded"],
     ["Payout Status", formatSecurityStatus(run.payoutStatus)],
     ["Delivery Confirmed", formatDate(run.deliveryConfirmedAt)],
-    ["Manual Review", run.requiresManualReview ? "Required" : "Not required"],
+    ["Purchase Review", run.requiresManualReview ? "Required" : "Not required"],
   ];
 
   return (
