@@ -156,8 +156,8 @@ function MobileRunDetail({ run, onBack, onAuthorizeHold, onApproveManualReview, 
       <Progress status={run.status} />
       <div className="requester-mobile-detail-facts"><div><span>Runner</span><strong>{runner}</strong></div><div><span>Next step</span><strong>{getNextStep(run.status)}</strong></div><div><span>Payout</span><strong>${run.payout || 0}</strong></div>{Number(run.holdAmount || 0) > 0 && !needsHold && <div><span>Secure Hold</span><strong>${run.holdAmount} · {formatSecurityStatus(run.authorizationStatus)}</strong></div>}</div>
       {(showPrimaryHold || needsReview) && <div className="requester-mobile-detail-action">
-        {showPrimaryHold && <><div><p className="requester-mobile-eyebrow">Funding authorization</p><strong>${run.holdAmount || 0} estimated hold</strong><span>Secure Hold authorization is required before runner dispatch.</span></div><Button fullWidth size="lg" variant="success" disabled={authorizingHold} onClick={() => onAuthorizeHold?.(run.id)}>{authorizingHold ? "Authorizing..." : "Authorize Secure Hold"}</Button></>}
-        {!showPrimaryHold && needsReview && <><div><p className="requester-mobile-eyebrow">Receipt review</p><strong>Review required before completion</strong><span>Check the receipt and final amount.</span></div><Button fullWidth size="lg" variant="warning" disabled={approvingManualReview} onClick={() => onApproveManualReview?.(run.id)}>{approvingManualReview ? "Approving..." : "Approve Manual Review"}</Button></>}
+        {showPrimaryHold && <><div><p className="requester-mobile-eyebrow">Funding authorization</p><strong>${run.holdAmount || 0} estimated hold</strong><span>Authorize the estimated amount so a runner can accept the request.</span></div><Button fullWidth size="lg" variant="success" disabled={authorizingHold} onClick={() => onAuthorizeHold?.(run.id)}>{authorizingHold ? "Authorizing..." : "Authorize Secure Hold"}</Button></>}
+        {!showPrimaryHold && needsReview && <><div><p className="requester-mobile-eyebrow">Review purchase</p><strong>Your review is needed</strong><span>Check the receipt and final amount before the run is completed.</span></div><Button fullWidth size="lg" variant="warning" disabled={approvingManualReview} onClick={() => onApproveManualReview?.(run.id)}>{approvingManualReview ? "Approving..." : "Approve purchase"}</Button></>}
       </div>}
       <details className="requester-mobile-disclosure">
         <summary><span>Run details</span><span aria-hidden="true">›</span></summary>
@@ -172,7 +172,7 @@ function MobileRunDetail({ run, onBack, onAuthorizeHold, onApproveManualReview, 
         <div className="requester-mobile-disclosure__body">
           {paymentRows.map(([label, value]) => <div className="requester-mobile-detail-row" key={label}><span>{label}</span><strong>{value}</strong></div>)}
           {needsHold && !showPrimaryHold && <div className="requester-mobile-inline-action"><p>Secure Hold authorization is available for this run.</p><Button fullWidth variant="success" disabled={authorizingHold} onClick={() => onAuthorizeHold?.(run.id)}>{authorizingHold ? "Authorizing..." : "Authorize Secure Hold"}</Button></div>}
-          <p className="requester-mobile-disclosure__copy">{needsHold ? "Secure Hold authorization protects the approved spending limit before runner dispatch." : "Spending protection supports receipt review when needed."}</p>
+          <p className="requester-mobile-disclosure__copy">{needsHold ? "Authorize the estimated amount to send this request to runners." : "Spending protection supports receipt review when needed."}</p>
         </div>
       </details>
 
@@ -276,7 +276,7 @@ export default function RequesterMobileShell({
               <span className={`requester-mobile-status-dot ${activeRun ? "is-live" : ""}`} aria-hidden="true" />
               <div>
                 <strong>{activeRun ? "Your run is being handled" : "No active run"}</strong>
-                <span>{activeRun ? "Current status is updated from your requester dashboard." : "Ready when you are."}</span>
+                <span>{activeRun ? "We’ll keep this status up to date." : "Ready when you are."}</span>
               </div>
             </div>
 
