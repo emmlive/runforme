@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build RUNFORME Pulse v1 so runners receive one optional, future-oriented “better fit” check-in after three consecutive non-accepted offers, with a 24-hour cooldown, safe dismissal, durable categorical feedback, and no impact on ranking, payments, payouts, or account status.
+**Goal:** Build RUNFORME Pulse v1 so runners receive one optional, future-oriented “better fit” check-in after three consecutive explicit runner Pass actions, with a 24-hour cooldown, safe dismissal, durable categorical feedback, and no impact on ranking, payments, payouts, or account status.
 
 **Architecture:** Add a small backend Pulse domain boundary that records consecutive non-accepted offer state and categorical responses, expose minimal authenticated runner endpoints, and render a reusable Pulse sheet in the existing Runner dashboard. Keep the feature additive and isolated: no dispatch ranking changes, no payment/payout coupling, no Google Maps dependency, and no requester-facing behavior.
 
@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Trigger after 3 consecutive non-accepted offers.
+- Trigger after 3 consecutive explicit runner Pass actions.
 - Accepting a run resets the consecutive-miss counter.
 - One Pulse prompt maximum per runner per 24-hour period.
 - Never show Pulse during an active run.
@@ -28,6 +28,7 @@
 
 - Duplicate offer-expiry processing must not increment the same runner/run miss more than once; pin idempotency in backend Pulse state tests.
 - A runner who accepts immediately after becoming eligible must not still receive a stale Pulse prompt; pin reset-before-read behavior.
+- Another runner accepting first must remain neutral and must not increment Pulse state; pin this trust boundary in lifecycle tests.
 - Cooldown must survive refresh and a new browser session; pin server-side timestamp enforcement rather than client-only state.
 - Active-run transitions must suppress a previously eligible prompt; pin frontend visibility against assigned/arrived/in_progress states.
 - Invalid or unknown feedback reason values must fail closed without mutating enforcement-sensitive fields; pin API validation and trust-boundary assertions.
@@ -306,3 +307,8 @@ Use a narrowly scoped commit message if needed; otherwise no additional commit.
 - Type consistency: service method names defined in Task 2 are reused by lifecycle/API tasks.
 - Review Focus: duplicate expiry, stale eligibility after accept, server-side cooldown, active-run suppression, and invalid reason validation are each pinned in owning tasks.
 - Proportion: plan stays at interface/test granularity and avoids embedding implementation bodies.
+
+
+## Implementation Ruling
+
+The existing offer lifecycle had no first-class runner decline/expiry event. Its only `rejected` state represented a different runner accepting the run first. Counting that as a miss would misclassify runner behavior. RUN-ENGAGE-1A therefore introduces an explicit runner Pass action, presented as **“Not this one”**, and only that action contributes to Pulse. Another runner winning a run remains neutral.
