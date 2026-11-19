@@ -24,7 +24,7 @@ test("LiveMap validates finite in-range coordinates before provider initializati
   assert.match(source, /lng\s*<=\s*180/);
   assert.match(
     source,
-    /if\s*\(!googleMapsExplicitlyEnabled\s*\|\|\s*!googleMapsKey\s*\|\|\s*!coordinates\)\s*return/,
+    /if\s*\(!googleMapsExplicitlyEnabled\s*\|\|\s*!googleMapsKey\s*\|\|\s*!coordinates\)\s*\{[\s\S]*?return;[\s\S]*?\}/,
     "missing config or coordinates must exit before provider loading"
   );
 });
