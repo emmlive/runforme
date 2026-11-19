@@ -265,6 +265,7 @@ export default function RunnerDashboard({ user, onLogout }) {
     readPersistedRunnerOnline(user?.id)
   );
   const [runnerLocation, setRunnerLocation] = useState(null);
+  const [runnerLocationStatus, setRunnerLocationStatus] = useState("idle");
   const [runs, setRuns] = useState([]);
   const [runsLoading, setRunsLoading] = useState(true);
   const [runsError, setRunsError] = useState(null);
@@ -631,9 +632,15 @@ export default function RunnerDashboard({ user, onLogout }) {
   // GPS
   ////////////////////////////////////////////////////////
   function startGpsStreaming() {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      setRunnerLocation(null);
+      setRunnerLocationStatus("unavailable");
+      return;
+    }
 
     if (watchIdRef.current !== null) return;
+
+    setRunnerLocationStatus("acquiring");
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       async (pos) => {
@@ -646,23 +653,49 @@ export default function RunnerDashboard({ user, onLogout }) {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
         });
+        setRunnerLocationStatus("ready");
 
-        await apiRequest("/api/runners/location", {
-          method: "POST",
-          body: {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-          },
-        });
+        try {
+          await apiRequest("/api/runners/location", {
+            method: "POST",
+            body: {
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+            },
+          });
+        } catch (err) {
+          console.error("Runner location sync failed:", err);
+        }
+      },
+      (error) => {
+        setRunnerLocation(null);
+
+        if (error.code === error.PERMISSION_DENIED) {
+          setRunnerLocationStatus("denied");
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          setRunnerLocationStatus("unavailable");
+        } else if (error.code === error.TIMEOUT) {
+          setRunnerLocationStatus("timeout");
+        } else {
+          setRunnerLocationStatus("failed");
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 10000,
       }
     );
   }
 
   function stopGpsStreaming() {
-    if (watchIdRef.current !== null) {
+    if (watchIdRef.current !== null && navigator.geolocation) {
       navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
     }
+
+    setRunnerLocation(null);
+    setRunnerLocationStatus("idle");
   }
 
   ////////////////////////////////////////////////////////
@@ -1516,7 +1549,11 @@ export default function RunnerDashboard({ user, onLogout }) {
         className={activeRun ? "runner-map-surface" : "runner-map-surface runner-ui-1l-mobile-map-secondary"}
         style={{ height: "55%" }}
       >
-        <LiveMap run={activeRun} runnerLocation={runnerLocation} />
+        <LiveMap
+          run={activeRun}
+          runnerLocation={runnerLocation}
+          locationStatus={runnerLocationStatus}
+        />
       </div>
 
       {/* =========================
