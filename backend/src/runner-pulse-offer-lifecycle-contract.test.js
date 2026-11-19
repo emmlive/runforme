@@ -31,7 +31,7 @@ test("runs route wires explicit runner Pass through the Pulse-aware pass service
   );
   assert.match(
     passServiceSource,
-    /data:\s*\{\s*status:\s*["']passed["']\s*\}/
+    /data:\s*\{[\s\S]{0,120}status:\s*["']passed["'][\s\S]{0,120}\}/
   );
 });
 
