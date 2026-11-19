@@ -732,6 +732,10 @@ export default function RunnerDashboard({ user, onLogout }) {
     }
   }
 
+  useEffect(() => {
+    return () => stopGpsStreaming();
+  }, []);
+
   ////////////////////////////////////////////////////////
   // AUTO GPS CONTROL
   ////////////////////////////////////////////////////////
