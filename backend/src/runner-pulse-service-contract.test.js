@@ -269,3 +269,36 @@ test("unknown feedback reason fails closed", async () => {
     ]
   );
 });
+
+
+test("responding or dismissing resets the pass streak so old behavior cannot retrigger", async () => {
+  const prisma = createMemoryPrisma();
+  const pulse = createRunnerPulseService({ prisma });
+
+  for (const runId of [701, 702, 703]) {
+    await pulse.recordNonAcceptedOffer({ runnerId: 12, runId });
+  }
+
+  assert.equal(prisma._states.get(12).consecutiveMisses, 3);
+
+  await pulse.recordPulseResponse({
+    runnerId: 12,
+    reason: "better_timing",
+    dismissed: false,
+  });
+
+  assert.equal(prisma._states.get(12).consecutiveMisses, 0);
+  assert.equal(prisma._states.get(12).lastMissedRunId, null);
+
+  for (const runId of [704, 705, 706]) {
+    await pulse.recordNonAcceptedOffer({ runnerId: 12, runId });
+  }
+
+  await pulse.recordPulseResponse({
+    runnerId: 12,
+    dismissed: true,
+  });
+
+  assert.equal(prisma._states.get(12).consecutiveMisses, 0);
+  assert.equal(prisma._states.get(12).lastMissedRunId, null);
+});
