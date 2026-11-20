@@ -33,6 +33,10 @@ test("LiveMap does not claim readiness without coordinates", () => {
 test("LiveMap hides a previously ready map when coordinates disappear", () => {
   assert.match(
     source,
-    /if\s*\(!googleMapsExplicitlyEnabled\s*\|\|\s*!googleMapsKey\s*\|\|\s*!coordinates\)\s*\{\s*setMapReady\(false\);\s*return;\s*\}/
+    /const\s+mapVisible\s*=\s*Boolean\(mapReady\s*&&\s*providerConfigured\s*&&\s*hasCoordinates\)/
+  );
+  assert.match(
+    source,
+    /\{!mapVisible\s*&&\s*\(/
   );
 });

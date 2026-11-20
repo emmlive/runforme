@@ -24,7 +24,7 @@ test("LiveMap validates finite in-range coordinates before provider initializati
   assert.match(source, /lng\s*<=\s*180/);
   assert.match(
     source,
-    /if\s*\(!googleMapsExplicitlyEnabled\s*\|\|\s*!googleMapsKey\s*\|\|\s*!coordinates\)\s*\{[\s\S]*?return;[\s\S]*?\}/,
+    /if\s*\(!googleMapsExplicitlyEnabled\s*\|\|\s*!googleMapsKey\s*\|\|\s*!hasCoordinates\)\s*\{[\s\S]*?return;[\s\S]*?\}/,
     "missing config or coordinates must exit before provider loading"
   );
 });
@@ -59,6 +59,6 @@ test("LiveMap never renders the raw browser API key", () => {
 test("LiveMap reuses the existing map and marker across GPS updates", () => {
   assert.match(source, /const\s+mapInstanceRef\s*=\s*useRef\(null\)/);
   assert.match(source, /const\s+markerRef\s*=\s*useRef\(null\)/);
-  assert.match(source, /mapInstanceRef\.current\.setCenter\(coordinates\)/);
-  assert.match(source, /markerRef\.current\.setPosition\(coordinates\)/);
+  assert.match(source, /mapInstanceRef\.current\.setCenter\(mapCoordinates\)/);
+  assert.match(source, /markerRef\.current\.setPosition\(mapCoordinates\)/);
 });
