@@ -29,7 +29,29 @@ function decodeToken(token) {
 }
 
 export default function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    if (typeof localStorage === "undefined") {
+      return null;
+    }
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      return null;
+    }
+
+    const decoded = decodeToken(token);
+
+    if (!decoded || !decoded.userId) {
+      console.warn("Invalid token structure");
+      return null;
+    }
+
+    return {
+      id: decoded.userId,
+      role: decoded.role,
+    };
+  });
 
   useEffect(() => {
     return installAuthSession401Handler({
@@ -38,38 +60,10 @@ export default function App() {
       },
     });
   }, []);
-  const [loading, setLoading] = useState(true);
+  const [loading] = useState(false);
   ////////////////////////////////////////////////////////
-  // ðŸ”¥ INIT SESSION (FIXED)
+  // INITIAL SESSION IS DERIVED SYNCHRONOUSLY ABOVE.
   ////////////////////////////////////////////////////////
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
-    const decoded = decodeToken(token);
-
-    // ðŸš¨ IMPORTANT FIX: DO NOT instantly delete token
-    if (!decoded || !decoded.userId) {
-      console.warn("âš ï¸ Invalid token structure");
-
-      setUser(null);
-      setLoading(false);
-      return;
-    }
-
-    // âœ… Normalize user object (CRITICAL)
-    setUser({
-      id: decoded.userId,
-      role: decoded.role,
-    });
-
-    setLoading(false);
-  }, []);
   function handleLogout() {
     localStorage.removeItem("token");
     setUser(null);

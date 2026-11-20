@@ -92,6 +92,10 @@ export default function LiveMap(props = {}) {
   const locationLabel = getLocationLabel(props);
   const coordinateLabel = getCoordinateLabel(props);
   const coordinates = getMapCoordinates(props);
+  const coordinateLat = coordinates?.lat;
+  const coordinateLng = coordinates?.lng;
+  const hasCoordinates =
+    coordinateLat !== undefined && coordinateLng !== undefined;
   const mapElementRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markerRef = useRef(null);
@@ -101,14 +105,15 @@ export default function LiveMap(props = {}) {
     googleMapsExplicitlyEnabled && googleMapsKey;
 
   useEffect(() => {
-    if (!googleMapsExplicitlyEnabled || !googleMapsKey || !coordinates) {
-      setMapReady(false);
+    if (!googleMapsExplicitlyEnabled || !googleMapsKey || !hasCoordinates) {
       return;
     }
 
     let cancelled = false;
-
-    setMapReady(false);
+    const mapCoordinates = {
+      lat: coordinateLat,
+      lng: coordinateLng,
+    };
 
     loadGoogleMaps({ apiKey: googleMapsKey })
       .then((maps) => {
@@ -116,24 +121,24 @@ export default function LiveMap(props = {}) {
 
         if (!mapInstanceRef.current) {
           mapInstanceRef.current = new maps.Map(mapElementRef.current, {
-            center: coordinates,
+            center: mapCoordinates,
             zoom: 15,
             mapTypeControl: false,
             streetViewControl: false,
             fullscreenControl: false,
           });
         } else {
-          mapInstanceRef.current.setCenter(coordinates);
+          mapInstanceRef.current.setCenter(mapCoordinates);
         }
 
         if (!markerRef.current) {
           markerRef.current = new maps.Marker({
             map: mapInstanceRef.current,
-            position: coordinates,
+            position: mapCoordinates,
             title: locationLabel,
           });
         } else {
-          markerRef.current.setPosition(coordinates);
+          markerRef.current.setPosition(mapCoordinates);
           markerRef.current.setTitle(locationLabel);
         }
 
@@ -151,7 +156,7 @@ export default function LiveMap(props = {}) {
     return () => {
       cancelled = true;
     };
-  }, [coordinates?.lat, coordinates?.lng, locationLabel]);
+  }, [coordinateLat, coordinateLng, hasCoordinates, locationLabel]);
 
   const mapStatus = !providerConfigured
     ? "Map preview"
@@ -166,6 +171,8 @@ export default function LiveMap(props = {}) {
           : "Map provider configured";
 
   const locationReady = locationStatus === "ready" && coordinates;
+  const mapVisible =
+    Boolean(mapReady && providerConfigured && hasCoordinates);
 
   let fallbackBody;
 
@@ -212,18 +219,18 @@ export default function LiveMap(props = {}) {
       <div
         ref={mapElementRef}
         className="run-live-google-map"
-        aria-label={mapReady ? `Google Map for ${locationLabel}` : undefined}
+        aria-label={mapVisible ? `Google Map for ${locationLabel}` : undefined}
         style={{
           position: "absolute",
           inset: 0,
           minHeight: "320px",
-          opacity: mapReady ? 1 : 0,
-          pointerEvents: mapReady ? "auto" : "none",
+          opacity: mapVisible ? 1 : 0,
+          pointerEvents: mapVisible ? "auto" : "none",
           transition: "opacity 180ms ease",
         }}
       />
 
-      {!mapReady && (
+      {!mapVisible && (
         <div
           style={{
             minHeight: "320px",

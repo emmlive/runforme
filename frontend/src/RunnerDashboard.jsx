@@ -1206,7 +1206,7 @@ export default function RunnerDashboard({ user, onLogout }) {
   );
 
   useEffect(() => {
-    if (activeRun) {
+    if (activeRun?.id) {
       setPulseOpen(false);
     }
   }, [activeRun?.id, activeRun?.status]);
